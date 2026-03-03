@@ -50,8 +50,12 @@ func InitDB(cfg *config.Config) error {
     if err := createUserTokensTable(); err != nil {
         return fmt.Errorf("failed to create user tokens table: %w", err)
     }
-    if err := createAdminTables(); err != nil { // ДОБАВЛЕНО
+    if err := createAdminTables(); err != nil {
         return fmt.Errorf("failed to create admin tables: %w", err)
+    }
+    // Новая таблица CRM
+    if err := createCRMTables(); err != nil {
+        return fmt.Errorf("failed to create CRM tables: %w", err)
     }
     if err := createTestUser(); err != nil {
         return err
@@ -506,6 +510,54 @@ func createAdminTables() error {
     }
 
     log.Println("✅ Таблицы админ-панели готовы")
+    return nil
+}
+
+// createCRMTables создаёт таблицы для CRM
+func createCRMTables() error {
+    // Таблица клиентов CRM
+    _, err := Pool.Exec(context.Background(), `
+        CREATE TABLE IF NOT EXISTS crm_customers (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            phone VARCHAR(50),
+            company VARCHAR(255),
+            status VARCHAR(50) DEFAULT 'lead',
+            created_at TIMESTAMP DEFAULT NOW(),
+            last_seen TIMESTAMP DEFAULT NOW()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_crm_customers_status ON crm_customers(status);
+        CREATE INDEX IF NOT EXISTS idx_crm_customers_email ON crm_customers(email);
+    `)
+    if err != nil {
+        return err
+    }
+
+    // Таблица сделок CRM
+    _, err = Pool.Exec(context.Background(), `
+        CREATE TABLE IF NOT EXISTS crm_deals (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            customer_id UUID NOT NULL REFERENCES crm_customers(id) ON DELETE CASCADE,
+            title VARCHAR(255) NOT NULL,
+            value DECIMAL(10,2) NOT NULL,
+            stage VARCHAR(50) DEFAULT 'lead',
+            probability INT DEFAULT 0,
+            expected_close DATE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            closed_at TIMESTAMP
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_crm_deals_customer ON crm_deals(customer_id);
+        CREATE INDEX IF NOT EXISTS idx_crm_deals_stage ON crm_deals(stage);
+    `)
+    if err != nil {
+        return err
+    }
+
+    log.Println("✅ Таблицы CRM готовы")
     return nil
 }
 

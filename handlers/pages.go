@@ -32,14 +32,6 @@ func AdminHandler(c *gin.Context) {
     })
 }
 
-func CRMHandler(c *gin.Context) {
-    c.HTML(http.StatusOK, "crm.html", gin.H{
-        "Title":   "CRM система - SaaSPro",
-        "Version": "3.0",
-        "Time":    time.Now().Format("2006-01-02 15:04:05"),
-    })
-}
-
 // AnalyticsHandler УДАЛЁН ОТСЮДА — он теперь в analytics.go
 
 func PaymentHandler(c *gin.Context) {

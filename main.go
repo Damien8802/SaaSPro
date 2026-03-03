@@ -13,14 +13,39 @@ import (
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
+    swaggerFiles "github.com/swaggo/files"
+    ginSwagger "github.com/swaggo/gin-swagger"
+
     "subscription-system/config"
     "subscription-system/database"
     "subscription-system/handlers"
     "subscription-system/middleware"
+    _ "subscription-system/docs" // для swagger
 )
 
 //go:embed templates/*.html
 var templateFS embed.FS
+
+// @title SaaSPro API
+// @version 3.0
+// @description API для управления подписками, AI-чатом и платежами
+// @termsOfService http://saaspro.ru/terms
+
+// @contact.name Поддержка API
+// @contact.url http://saaspro.ru/support
+// @contact.email support@saaspro.ru
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /api
+// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Введите токен в формате: Bearer <token>
 
 func main() {
     if err := godotenv.Load(); err != nil {
@@ -378,6 +403,9 @@ func main() {
         adminAPI.POST("/users/change-role", handlers.AdminChangeUserRole)
         adminAPI.POST("/users/delete", handlers.AdminDeleteUser)
     }
+
+    // ========== SWAGGER ==========
+    r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
     // ========== 404 ==========
     r.NoRoute(func(c *gin.Context) {

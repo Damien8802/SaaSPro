@@ -15,14 +15,6 @@ func HealthHandler(c *gin.Context) {
 	})
 }
 
-func CRMHealthHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"crm":     "operational",
-		"version": "3.0",
-		"time":    time.Now().Unix(),
-	})
-}
-
 func SystemStatsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"users":         1248,
