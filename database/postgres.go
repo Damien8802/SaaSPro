@@ -556,7 +556,7 @@ func createCRMTables() error {
         return err
     }
 
-    // NEW: Добавляем колонки "Ответственный", "Источник", "Комментарий" для клиентов
+    // Добавляем колонки "Ответственный", "Источник", "Комментарий" для клиентов
     _, err = Pool.Exec(context.Background(), `
         ALTER TABLE crm_customers
         ADD COLUMN IF NOT EXISTS responsible VARCHAR(255) DEFAULT '',
@@ -567,7 +567,7 @@ func createCRMTables() error {
         log.Printf("⚠️ Не удалось добавить колонки в crm_customers: %v", err)
     }
 
-    // NEW: Добавляем колонки для сделок
+    // Добавляем колонки для сделок
     _, err = Pool.Exec(context.Background(), `
         ALTER TABLE crm_deals
         ADD COLUMN IF NOT EXISTS responsible VARCHAR(255) DEFAULT '',
@@ -578,7 +578,7 @@ func createCRMTables() error {
         log.Printf("⚠️ Не удалось добавить колонки в crm_deals: %v", err)
     }
 
-    // NEW: Таблица для вложений к сделкам
+    // Таблица для вложений к сделкам
     _, err = Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS deal_attachments (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -597,7 +597,34 @@ func createCRMTables() error {
         log.Printf("⚠️ Не удалось создать таблицу deal_attachments: %v", err)
     }
 
-    log.Println("✅ Таблицы CRM готовы (включая новые поля и таблицу вложений)")
+    // Добавляем колонку user_id для привязки к создателю (для реализации ролей)
+    _, err = Pool.Exec(context.Background(), `
+        ALTER TABLE crm_customers
+        ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+    `)
+    if err != nil {
+        log.Printf("⚠️ Не удалось добавить колонку user_id в crm_customers: %v", err)
+    }
+
+    _, err = Pool.Exec(context.Background(), `
+        ALTER TABLE crm_deals
+        ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+    `)
+    if err != nil {
+        log.Printf("⚠️ Не удалось добавить колонку user_id в crm_deals: %v", err)
+    }
+
+    // Индексы для быстрого поиска по user_id
+    _, err = Pool.Exec(context.Background(), `CREATE INDEX IF NOT EXISTS idx_crm_customers_user ON crm_customers(user_id);`)
+    if err != nil {
+        log.Printf("⚠️ Не удалось создать индекс на user_id в crm_customers: %v", err)
+    }
+    _, err = Pool.Exec(context.Background(), `CREATE INDEX IF NOT EXISTS idx_crm_deals_user ON crm_deals(user_id);`)
+    if err != nil {
+        log.Printf("⚠️ Не удалось создать индекс на user_id в crm_deals: %v", err)
+    }
+
+    log.Println("✅ Таблицы CRM готовы (включая новые поля, таблицу вложений и привязку к пользователям)")
     return nil
 }
 
