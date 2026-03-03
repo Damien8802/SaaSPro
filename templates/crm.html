@@ -121,6 +121,94 @@
         .analytics-filters .input-group {
             max-width: 250px;
         }
+
+        /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
+        @media (max-width: 768px) {
+            /* Уменьшаем отступы */
+            .container-fluid {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            h3 {
+                font-size: 1.2rem;
+            }
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+            }
+            .filter-group .input-group,
+            .filter-group .btn {
+                width: 100%;
+                max-width: none;
+            }
+            .search-box {
+                max-width: none;
+            }
+            /* Таблицы уже обёрнуты в .table-responsive, но добавим мелкий шрифт */
+            .table {
+                font-size: 0.8rem;
+            }
+            .table td, .table th {
+                padding: 0.3rem;
+            }
+            /* Скрываем второстепенные колонки на мобильных */
+            .customers-table .col-id,
+            .customers-table .col-company,
+            .customers-table .col-comment,
+            .customers-table .col-actions .btn-edit,
+            .deals-table .col-id,
+            .deals-table .col-probability,
+            .deals-table .col-comment,
+            .deals-table .col-actions .btn-edit {
+                display: none;
+            }
+            /* Показываем только кнопку удаления в действиях */
+            .customers-table .col-actions .btn-danger,
+            .deals-table .col-actions .btn-danger {
+                display: inline-block;
+            }
+            /* Модальные окна на весь экран */
+            .modal-dialog {
+                margin: 0;
+                max-width: 100%;
+                height: 100%;
+            }
+            .modal-content {
+                border-radius: 0;
+                min-height: 100%;
+            }
+            .modal-body {
+                padding: 1rem;
+            }
+            /* Карточки статистики */
+            .stat-card {
+                padding: 1rem;
+            }
+            .stat-card h3 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Дополнительно для очень маленьких экранов */
+        @media (max-width: 480px) {
+            .table {
+                font-size: 0.7rem;
+            }
+            .badge-status {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+            .stat-card h3 {
+                font-size: 1.2rem;
+            }
+            .stat-card p {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -148,7 +236,7 @@
 
         <!-- Содержимое вкладок -->
         <div class="tab-content" id="crmTabContent">
-            <!-- Вкладка Клиенты (без изменений) -->
+            <!-- Вкладка Клиенты -->
             <div class="tab-pane fade show active" id="customers" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                     <h3>Список клиентов</h3>
@@ -176,19 +264,19 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="customersTable">
+                    <table class="table table-striped table-hover customers-table" id="customersTable">
                         <thead class="table-dark">
                             <tr>
-                                <th>ID</th>
+                                <th class="col-id">ID</th>
                                 <th>Имя</th>
                                 <th>Email</th>
                                 <th>Телефон</th>
-                                <th>Компания</th>
+                                <th class="col-company">Компания</th>
                                 <th>Статус</th>
                                 <th>Ответственный</th>
                                 <th>Источник</th>
-                                <th>Комментарий</th>
-                                <th>Действия</th>
+                                <th class="col-comment">Комментарий</th>
+                                <th class="col-actions">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -202,7 +290,7 @@
                 </nav>
             </div>
 
-            <!-- Вкладка Сделки (без изменений) -->
+            <!-- Вкладка Сделки -->
             <div class="tab-pane fade" id="deals" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                     <h3>Список сделок</h3>
@@ -239,19 +327,19 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="dealsTable">
+                    <table class="table table-striped table-hover deals-table" id="dealsTable">
                         <thead class="table-dark">
                             <tr>
-                                <th>ID</th>
+                                <th class="col-id">ID</th>
                                 <th>Клиент</th>
                                 <th>Название</th>
                                 <th>Сумма</th>
                                 <th>Стадия</th>
-                                <th>Вероятность</th>
+                                <th class="col-probability">Вероятность</th>
                                 <th>Ответственный</th>
                                 <th>Источник</th>
-                                <th>Комментарий</th>
-                                <th>Действия</th>
+                                <th class="col-comment">Комментарий</th>
+                                <th class="col-actions">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -265,11 +353,11 @@
                 </nav>
             </div>
 
-            <!-- Вкладка Аналитика (обновлена) -->
+            <!-- Вкладка Аналитика -->
             <div class="tab-pane fade" id="analytics" role="tabpanel">
                 <h3 class="mb-4">Аналитика продаж</h3>
 
-                <!-- NEW: Фильтры по дате для аналитики -->
+                <!-- Фильтры по дате для аналитики -->
                 <div class="analytics-filters">
                     <div class="input-group">
                         <span class="input-group-text">Дата от</span>
@@ -284,33 +372,33 @@
 
                 <!-- Карточки общей статистики -->
                 <div class="row mb-4">
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <div class="stat-card">
                             <h3 id="totalCustomers">0</h3>
                             <p>Всего клиентов</p>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <div class="stat-card">
                             <h3 id="totalDeals">0</h3>
                             <p>Всего сделок</p>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <div class="stat-card">
                             <h3 id="totalValue">0</h3>
-                            <p>Общая сумма сделок</p>
+                            <p>Общая сумма</p>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <div class="stat-card">
                             <h3 id="avgValue">0</h3>
-                            <p>Средняя сумма сделки</p>
+                            <p>Средняя сумма</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Первый ряд графиков (воронка и по ответственным) -->
+                <!-- Первый ряд графиков -->
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="card">
@@ -334,7 +422,7 @@
                     </div>
                 </div>
 
-                <!-- Второй ряд графиков (по источникам и динамика по месяцам) -->
+                <!-- Второй ряд графиков -->
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card">
@@ -349,7 +437,7 @@
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                Динамика создания сделок (по месяцам)
+                                Динамика создания сделок
                             </div>
                             <div class="card-body">
                                 <canvas id="monthlyChart" style="max-height: 300px;"></canvas>
@@ -361,9 +449,63 @@
         </div>
     </div>
 
-    <!-- Модальное окно для клиента (без изменений) -->
+    <!-- Модальное окно для клиента -->
     <div class="modal fade" id="customerModal" tabindex="-1">
-        <!-- ... тот же код ... -->
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить/Редактировать клиента</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customerForm">
+                        <input type="hidden" id="customerId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Имя *</label>
+                                <input type="text" class="form-control" id="customerName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="customerEmail" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Телефон</label>
+                                <input type="text" class="form-control" id="customerPhone">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Компания</label>
+                                <input type="text" class="form-control" id="customerCompany">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select" id="customerStatus">
+                                    <option value="lead">Лид</option>
+                                    <option value="active">Активный</option>
+                                    <option value="inactive">Неактивный</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Ответственный</label>
+                                <input type="text" class="form-control" id="customerResponsible">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Источник</label>
+                                <input type="text" class="form-control" id="customerSource">
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Комментарий</label>
+                                <textarea class="form-control" id="customerComment" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveCustomerBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Модальное окно для сделки (с вкладками) -->
@@ -614,20 +756,22 @@
 
         window.deleteFile = function(attachmentId) {
             if (!confirm('Удалить файл?')) return;
-            fetch(`/api/crm/attachments/${attachmentId}`, { method: 'DELETE' })
-                .then(response => {
-                    if (response.ok) {
-                        const item = document.querySelector(`.file-list-item[data-id="${attachmentId}"]`);
-                        if (item) item.remove();
-                        const container = document.getElementById('fileList');
-                        if (container.children.length === 0) {
-                            container.innerHTML = '<p class="text-muted text-center">Нет загруженных файлов</p>';
-                        }
-                    } else {
-                        alert('Ошибка удаления');
+            fetch(`/api/crm/attachments/${attachmentId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    const item = document.querySelector(`.file-list-item[data-id="${attachmentId}"]`);
+                    if (item) item.remove();
+                    const container = document.getElementById('fileList');
+                    if (container.children.length === 0) {
+                        container.innerHTML = '<p class="text-muted text-center">Нет загруженных файлов</p>';
                     }
-                })
-                .catch(error => alert('Ошибка сети: ' + error.message));
+                } else {
+                    alert('Ошибка удаления');
+                }
+            })
+            .catch(error => alert('Ошибка сети: ' + error.message));
         };
 
         // ==================== КЛИЕНТЫ ====================
@@ -652,20 +796,31 @@
             customers.forEach(customer => {
                 const row = tbody.insertRow();
                 row.setAttribute('data-id', customer.id);
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="id">${customer.id}</span>`;
+                // ID (не редактируется)
+                row.insertCell().innerHTML = `<span class="editable-cell col-id" data-field="id">${customer.id}</span>`;
+                // Имя
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="name" data-value="${customer.name || ''}">${customer.name || ''}</span>`;
+                // Email
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="email" data-value="${customer.email || ''}">${customer.email || ''}</span>`;
+                // Телефон
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="phone" data-value="${customer.phone || ''}">${customer.phone || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="company" data-value="${customer.company || ''}">${customer.company || ''}</span>`;
+                // Компания
+                row.insertCell().innerHTML = `<span class="editable-cell col-company" data-field="company" data-value="${customer.company || ''}">${customer.company || ''}</span>`;
+                // Статус (с бейджем)
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="status" data-value="${customer.status || 'lead'}">
                     <span class="badge bg-info badge-status">${customer.status || 'lead'}</span>
                 </span>`;
+                // Ответственный
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="responsible" data-value="${customer.responsible || ''}">${customer.responsible || ''}</span>`;
+                // Источник
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="source" data-value="${customer.source || ''}">${customer.source || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="comment" data-value="${customer.comment || ''}">${customer.comment || ''}</span>`;
+                // Комментарий
+                row.insertCell().innerHTML = `<span class="editable-cell col-comment" data-field="comment" data-value="${customer.comment || ''}">${customer.comment || ''}</span>`;
+                // Действия
                 const actionsCell = row.insertCell();
+                actionsCell.className = 'col-actions';
                 actionsCell.innerHTML = `
-                    <button class="btn btn-sm btn-warning" onclick="editCustomer('${customer.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-warning btn-edit" onclick="editCustomer('${customer.id}')"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${customer.id}')"><i class="fas fa-trash"></i></button>
                 `;
             });
@@ -696,20 +851,31 @@
             deals.forEach(deal => {
                 const row = tbody.insertRow();
                 row.setAttribute('data-id', deal.id);
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="id">${deal.id}</span>`;
+                // ID
+                row.insertCell().innerHTML = `<span class="editable-cell col-id" data-field="id">${deal.id}</span>`;
+                // Клиент (не редактируется inline)
                 row.insertCell().innerHTML = `<span>${deal.customer_id || ''}</span>`;
+                // Название
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="title" data-value="${deal.title || ''}">${deal.title || ''}</span>`;
+                // Сумма
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="value" data-value="${deal.value || 0}">${deal.value || 0}</span>`;
+                // Стадия
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="stage" data-value="${deal.stage || 'lead'}">
                     <span class="badge bg-primary badge-status">${deal.stage || 'lead'}</span>
                 </span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="probability" data-value="${deal.probability || 0}">${deal.probability || 0}%</span>`;
+                // Вероятность
+                row.insertCell().innerHTML = `<span class="editable-cell col-probability" data-field="probability" data-value="${deal.probability || 0}">${deal.probability || 0}%</span>`;
+                // Ответственный
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="responsible" data-value="${deal.responsible || ''}">${deal.responsible || ''}</span>`;
+                // Источник
                 row.insertCell().innerHTML = `<span class="editable-cell" data-field="source" data-value="${deal.source || ''}">${deal.source || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="comment" data-value="${deal.comment || ''}">${deal.comment || ''}</span>`;
+                // Комментарий
+                row.insertCell().innerHTML = `<span class="editable-cell col-comment" data-field="comment" data-value="${deal.comment || ''}">${deal.comment || ''}</span>`;
+                // Действия
                 const actionsCell = row.insertCell();
+                actionsCell.className = 'col-actions';
                 actionsCell.innerHTML = `
-                    <button class="btn btn-sm btn-warning" onclick="editDeal('${deal.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-warning btn-edit" onclick="editDeal('${deal.id}')"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-danger" onclick="deleteDeal('${deal.id}')"><i class="fas fa-trash"></i></button>
                 `;
             });
@@ -816,16 +982,127 @@
 
         // ==================== СОХРАНЕНИЕ ЧЕРЕЗ МОДАЛКИ ====================
         document.getElementById('saveCustomerBtn').addEventListener('click', function() {
-            // ... (без изменений) ...
+            const id = document.getElementById('customerId').value;
+            const customer = {
+                name: document.getElementById('customerName').value,
+                email: document.getElementById('customerEmail').value,
+                phone: document.getElementById('customerPhone').value,
+                company: document.getElementById('customerCompany').value,
+                status: document.getElementById('customerStatus').value,
+                responsible: document.getElementById('customerResponsible').value,
+                source: document.getElementById('customerSource').value,
+                comment: document.getElementById('customerComment').value
+            };
+
+            const url = id ? `/api/crm/customers/${id}` : '/api/crm/customers';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(customer)
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
+                    loadCustomers();
+                    loadCustomerSelect();
+                } else {
+                    response.text().then(text => alert('Ошибка сохранения: ' + text));
+                }
+            })
+            .catch(error => alert('Ошибка сети: ' + error.message));
         });
 
         document.getElementById('saveDealBtn').addEventListener('click', function() {
-            // ... (без изменений) ...
+            // Проверка обязательных полей
+            const customerId = document.getElementById('dealCustomerId').value;
+            if (!customerId) {
+                alert('Выберите клиента');
+                document.getElementById('dealCustomerId').classList.add('is-invalid');
+                return;
+            } else {
+                document.getElementById('dealCustomerId').classList.remove('is-invalid');
+            }
+
+            const title = document.getElementById('dealTitle').value.trim();
+            if (!title) {
+                alert('Введите название сделки');
+                document.getElementById('dealTitle').classList.add('is-invalid');
+                return;
+            } else {
+                document.getElementById('dealTitle').classList.remove('is-invalid');
+            }
+
+            // Преобразование суммы
+            const valueStr = document.getElementById('dealValue').value.replace(',', '.');
+            const value = parseFloat(valueStr);
+            if (isNaN(value) || value <= 0) {
+                alert('Введите корректную положительную сумму');
+                document.getElementById('dealValue').classList.add('is-invalid');
+                return;
+            } else {
+                document.getElementById('dealValue').classList.remove('is-invalid');
+            }
+
+            const id = document.getElementById('dealId').value;
+            
+            // Преобразование даты в RFC3339 (UTC полночь)
+            const expectedCloseInput = document.getElementById('dealExpectedClose').value;
+            const expectedClose = expectedCloseInput ? expectedCloseInput + 'T00:00:00Z' : null;
+
+            const deal = {
+                customer_id: customerId,
+                title: title,
+                value: value,
+                stage: document.getElementById('dealStage').value,
+                probability: parseInt(document.getElementById('dealProbability').value) || 0,
+                responsible: document.getElementById('dealResponsible').value,
+                source: document.getElementById('dealSource').value,
+                comment: document.getElementById('dealComment').value,
+                expected_close: expectedClose
+            };
+
+            const url = id ? `/api/crm/deals/${id}` : '/api/crm/deals';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(deal)
+            })
+            .then(async response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('dealModal')).hide();
+                    loadDeals();
+                } else {
+                    const errorText = await response.text();
+                    alert('Ошибка сохранения: ' + errorText);
+                }
+            })
+            .catch(error => alert('Ошибка сети: ' + error.message));
         });
 
-        // ==================== РЕДАКТИРОВАНИЕ ====================
+        // ==================== РЕДАКТИРОВАНИЕ (открытие модалок) ====================
         window.editCustomer = function(id) {
-            // ... (без изменений) ...
+            fetch(`/api/crm/customers?page=1&page_size=1000`)
+                .then(r => r.json())
+                .then(resp => {
+                    const customers = resp.data || [];
+                    const customer = customers.find(c => c.id === id);
+                    if (customer) {
+                        document.getElementById('customerId').value = customer.id;
+                        document.getElementById('customerName').value = customer.name || '';
+                        document.getElementById('customerEmail').value = customer.email || '';
+                        document.getElementById('customerPhone').value = customer.phone || '';
+                        document.getElementById('customerCompany').value = customer.company || '';
+                        document.getElementById('customerStatus').value = customer.status || 'lead';
+                        document.getElementById('customerResponsible').value = customer.responsible || '';
+                        document.getElementById('customerSource').value = customer.source || '';
+                        document.getElementById('customerComment').value = customer.comment || '';
+                        new bootstrap.Modal(document.getElementById('customerModal')).show();
+                    }
+                });
         };
 
         window.editDeal = function(id) {
@@ -853,16 +1130,31 @@
 
         // ==================== УДАЛЕНИЕ ====================
         window.deleteCustomer = function(id) {
-            // ... (без изменений) ...
+            if (confirm('Удалить клиента?')) {
+                fetch(`/api/crm/customers/${id}`, {method: 'DELETE'})
+                    .then(() => {
+                        loadCustomers();
+                        loadCustomerSelect();
+                    })
+                    .catch(error => console.error('Error deleting customer:', error));
+            }
         };
 
         window.deleteDeal = function(id) {
-            // ... (без изменений) ...
+            if (confirm('Удалить сделку?')) {
+                fetch(`/api/crm/deals/${id}`, {method: 'DELETE'})
+                    .then(() => loadDeals())
+                    .catch(error => console.error('Error deleting deal:', error));
+            }
         };
 
         // ==================== ОЧИСТКА МОДАЛОК ====================
         document.getElementById('customerModal').addEventListener('show.bs.modal', function(event) {
-            // ... (без изменений) ...
+            if (!event.relatedTarget) {
+                document.getElementById('customerId').value = '';
+                document.getElementById('customerForm').reset();
+                document.querySelectorAll('#customerForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            }
         });
 
         document.getElementById('dealModal').addEventListener('show.bs.modal', function(event) {
@@ -900,26 +1192,8 @@
             else loadDeals(page);
         };
 
-        // ==================== АНАЛИТИКА (обновлена) ====================
+        // ==================== АНАЛИТИКА ====================
         function loadAnalytics() {
-            let url = '/api/crm/advanced-stats';
-            const params = new URLSearchParams();
-            if (analyticsDateFrom) params.append('date_from', analyticsDateFrom);
-            if (analyticsDateTo) params.append('date_to', analyticsDateTo);
-            if (params.toString()) url += '?' + params.toString();
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    // Обновляем общие карточки (оставим старые данные, но можно взять из data, если есть)
-                    // Для простоты оставим как есть, но можно дополнить
-                    // Сейчас data содержит responsible_stats, source_stats, monthly_stats
-                    // Для воронки по стадиям нужно отдельно запросить /api/crm/stats или объединить
-                    // Чтобы не плодить запросы, оставим старый вызов /api/crm/stats для воронки
-                    // Поэтому loadAnalytics будет вызываться и для /api/crm/stats тоже.
-                })
-                .catch(error => console.error('Error loading advanced analytics:', error));
-
             // Загружаем обычную статистику для воронки и общих карточек
             fetch('/api/crm/stats')
                 .then(response => response.json())
@@ -933,7 +1207,13 @@
                 })
                 .catch(error => console.error('Error loading stats:', error));
 
-            // Загружаем расширенную статистику
+            // Загружаем расширенную статистику с фильтром по дате
+            let url = '/api/crm/advanced-stats';
+            const params = new URLSearchParams();
+            if (analyticsDateFrom) params.append('date_from', analyticsDateFrom);
+            if (analyticsDateTo) params.append('date_to', analyticsDateTo);
+            if (params.toString()) url += '?' + params.toString();
+
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
@@ -942,6 +1222,10 @@
                     renderMonthlyChart(data.monthly_stats);
                 })
                 .catch(error => console.error('Error loading advanced stats:', error));
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         }
 
         function renderFunnelChart(stageStats) {
@@ -1063,10 +1347,6 @@
                     }
                 }
             });
-        }
-
-        function formatNumber(num) {
-            return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         }
     </script>
 </body>
