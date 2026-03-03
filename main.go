@@ -351,6 +351,17 @@ func main() {
         api.POST("/2fa/verify-backup", handlers.VerifyWithBackupCode)
         api.POST("/2fa/trust-device", handlers.TrustDevice)
         api.GET("/2fa/check-trust", handlers.CheckTrustedDevice)
+
+        api.GET("/crm/customers", handlers.GetCustomers)
+        api.POST("/crm/customers", handlers.CreateCustomer)
+        api.PUT("/crm/customers/:id", handlers.UpdateCustomer)
+        api.DELETE("/crm/customers/:id", handlers.DeleteCustomer)
+
+        api.GET("/crm/deals", handlers.GetDeals)
+        api.POST("/crm/deals", handlers.CreateDeal)
+        api.PUT("/crm/deals/:id", handlers.UpdateDeal)
+        api.DELETE("/crm/deals/:id", handlers.DeleteDeal)
+        api.PUT("/crm/deals/:id/stage", handlers.UpdateDealStage)
     }
 
     // ========== ЗАЩИЩЕННЫЕ API ==========

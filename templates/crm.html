@@ -2,144 +2,675 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
-    <title>CRM система | SaaSPro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome для иконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background: #f8fafc;
-            font-family: 'Inter', sans-serif;
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.1);
+            cursor: pointer;
         }
-        .crm-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 0;
-            margin-bottom: 30px;
+        .badge-status {
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
         }
-        .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            transition: all 0.2s;
-            border: 1px solid rgba(0,0,0,0.05);
+        .nav-tabs .nav-link {
+            font-weight: 500;
+            color: #495057;
         }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(102,126,234,0.1);
+        .nav-tabs .nav-link.active {
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
         }
-        .stat-icon {
-            font-size: 2rem;
-            color: #667eea;
-            margin-bottom: 16px;
+        .pagination {
+            margin-top: 1rem;
+            justify-content: center;
         }
-        .client-table {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        .search-box {
+            max-width: 300px;
         }
-        .badge-prospect { background: #ffeaa5; color: #7b5e00; }
-        .badge-client { background: #b2f5ea; color: #1e4a4a; }
-        .badge-lost { background: #fed7d7; color: #7b3a3a; }
-        @media (max-width: 768px) {
-            .crm-header { padding: 30px 0; }
-            .stat-card { margin-bottom: 15px; }
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
         }
     </style>
 </head>
 <body>
-    <div class="crm-header">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h2"><i class="fas fa-users me-3"></i>CRM система</h1>
-                <a href="/" class="btn btn-light rounded-pill"><i class="fas fa-arrow-left me-2"></i>На главную</a>
-            </div>
-            <p class="lead mb-0 opacity-75">Управление клиентами и сделками</p>
-        </div>
-    </div>
+    <div class="container-fluid mt-4">
+        <h1 class="mb-4">CRM система <small class="text-muted">Управление клиентами и сделками</small></h1>
 
-    <div class="container">
-        <!-- Статистика -->
-        <div class="row g-4 mb-5">
-            <div class="col-md-3 col-6">
-                <div class="stat-card text-center">
-                    <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
-                    <h3 class="h2 mb-0">148</h3>
-                    <p class="text-muted mb-0">Активные клиенты</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card text-center">
-                    <div class="stat-icon"><i class="fas fa-hand-holding-usd"></i></div>
-                    <h3 class="h2 mb-0">₽2.4M</h3>
-                    <p class="text-muted mb-0">Выручка</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card text-center">
-                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                    <h3 class="h2 mb-0">23</h3>
-                    <p class="text-muted mb-0">В работе</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card text-center">
-                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                    <h3 class="h2 mb-0">89%</h3>
-                    <p class="text-muted mb-0">Конверсия</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Таблица клиентов -->
-        <div class="client-table">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="h5 mb-0"><i class="fas fa-list me-2"></i>Последние клиенты</h4>
-                <button class="btn btn-sm btn-primary rounded-pill">
-                    <i class="fas fa-plus me-2"></i>Добавить
+        <!-- Вкладки -->
+        <ul class="nav nav-tabs mb-4" id="crmTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Клиенты
                 </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="deals-tab" data-bs-toggle="tab" data-bs-target="#deals" type="button" role="tab">
+                    <i class="fas fa-handshake me-2"></i>Сделки
+                </button>
+            </li>
+        </ul>
+
+        <!-- Содержимое вкладок -->
+        <div class="tab-content" id="crmTabContent">
+            <!-- Вкладка Клиенты -->
+            <div class="tab-pane fade show active" id="customers" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    <h3>Список клиентов</h3>
+                    <div class="filter-group">
+                        <!-- Фильтры по дате создания -->
+                        <div class="input-group" style="max-width: 250px;">
+                            <span class="input-group-text">Создан от</span>
+                            <input type="date" class="form-control" id="customerCreatedFrom">
+                        </div>
+                        <div class="input-group" style="max-width: 250px;">
+                            <span class="input-group-text">до</span>
+                            <input type="date" class="form-control" id="customerCreatedTo">
+                        </div>
+                        <!-- Поиск -->
+                        <div class="input-group search-box">
+                            <input type="text" class="form-control" id="customerSearch" placeholder="Поиск по имени или email...">
+                            <button class="btn btn-outline-secondary" type="button" id="customerSearchBtn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <!-- Кнопка применения фильтров -->
+                        <button class="btn btn-outline-primary" id="applyCustomerFilters">Применить фильтры</button>
+                        <!-- Добавление -->
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customerModal">
+                            <i class="fas fa-plus me-2"></i>Добавить клиента
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="customersTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя</th>
+                                <th>Email</th>
+                                <th>Телефон</th>
+                                <th>Компания</th>
+                                <th>Статус</th>
+                                <th>Ответственный</th>
+                                <th>Источник</th>
+                                <th>Комментарий</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Данные будут загружены через JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Пагинация для клиентов -->
+                <nav>
+                    <ul class="pagination" id="customersPagination"></ul>
+                </nav>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Клиент</th>
-                            <th>Email</th>
-                            <th>Статус</th>
-                            <th>Сумма</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><i class="fas fa-building me-2 text-secondary"></i>ООО "Ромашка"</td>
-                            <td>info@romashka.ru</td>
-                            <td><span class="badge rounded-pill badge-client">Клиент</span></td>
-                            <td>₽450 000</td>
-                            <td><a href="#" class="text-decoration-none"><i class="fas fa-chevron-right"></i></a></td>
-                        </tr>
-                        <tr>
-                            <td><i class="fas fa-user me-2 text-secondary"></i>Иван Петров</td>
-                            <td>ivan@example.com</td>
-                            <td><span class="badge rounded-pill badge-prospect">Потенциальный</span></td>
-                            <td>₽120 000</td>
-                            <td><a href="#" class="text-decoration-none"><i class="fas fa-chevron-right"></i></a></td>
-                        </tr>
-                        <tr>
-                            <td><i class="fas fa-building me-2 text-secondary"></i>ЗАО "ТехноСервис"</td>
-                            <td>sales@techno.ru</td>
-                            <td><span class="badge rounded-pill badge-client">Клиент</span></td>
-                            <td>₽890 000</td>
-                            <td><a href="#" class="text-decoration-none"><i class="fas fa-chevron-right"></i></a></td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <!-- Вкладка Сделки -->
+            <div class="tab-pane fade" id="deals" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    <h3>Список сделок</h3>
+                    <div class="filter-group">
+                        <!-- Фильтры по сумме -->
+                        <div class="input-group" style="max-width: 150px;">
+                            <span class="input-group-text">Сумма от</span>
+                            <input type="number" step="0.01" class="form-control" id="dealValueMin">
+                        </div>
+                        <div class="input-group" style="max-width: 150px;">
+                            <span class="input-group-text">до</span>
+                            <input type="number" step="0.01" class="form-control" id="dealValueMax">
+                        </div>
+                        <!-- Фильтры по дате закрытия -->
+                        <div class="input-group" style="max-width: 250px;">
+                            <span class="input-group-text">Закрытие от</span>
+                            <input type="date" class="form-control" id="dealCloseFrom">
+                        </div>
+                        <div class="input-group" style="max-width: 250px;">
+                            <span class="input-group-text">до</span>
+                            <input type="date" class="form-control" id="dealCloseTo">
+                        </div>
+                        <!-- Поиск -->
+                        <div class="input-group search-box">
+                            <input type="text" class="form-control" id="dealSearch" placeholder="Поиск по названию...">
+                            <button class="btn btn-outline-secondary" type="button" id="dealSearchBtn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <!-- Кнопка применения фильтров -->
+                        <button class="btn btn-outline-primary" id="applyDealFilters">Применить фильтры</button>
+                        <!-- Добавление -->
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dealModal">
+                            <i class="fas fa-plus me-2"></i>Добавить сделку
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="dealsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Клиент</th>
+                                <th>Название</th>
+                                <th>Сумма</th>
+                                <th>Стадия</th>
+                                <th>Вероятность</th>
+                                <th>Ответственный</th>
+                                <th>Источник</th>
+                                <th>Комментарий</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Данные будут загружены через JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Пагинация для сделок -->
+                <nav>
+                    <ul class="pagination" id="dealsPagination"></ul>
+                </nav>
             </div>
         </div>
     </div>
 
+    <!-- Модальное окно для клиента -->
+    <div class="modal fade" id="customerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить/Редактировать клиента</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customerForm">
+                        <input type="hidden" id="customerId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Имя *</label>
+                                <input type="text" class="form-control" id="customerName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="customerEmail" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Телефон</label>
+                                <input type="text" class="form-control" id="customerPhone">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Компания</label>
+                                <input type="text" class="form-control" id="customerCompany">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select" id="customerStatus">
+                                    <option value="lead">Лид</option>
+                                    <option value="active">Активный</option>
+                                    <option value="inactive">Неактивный</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Ответственный</label>
+                                <input type="text" class="form-control" id="customerResponsible">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Источник</label>
+                                <input type="text" class="form-control" id="customerSource">
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Комментарий</label>
+                                <textarea class="form-control" id="customerComment" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveCustomerBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для сделки -->
+    <div class="modal fade" id="dealModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить/Редактировать сделку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dealForm">
+                        <input type="hidden" id="dealId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Клиент *</label>
+                                <select class="form-select" id="dealCustomerId" required>
+                                    <option value="">Выберите клиента</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Название сделки *</label>
+                                <input type="text" class="form-control" id="dealTitle" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Сумма *</label>
+                                <input type="number" class="form-control" id="dealValue" step="0.01" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Стадия</label>
+                                <select class="form-select" id="dealStage">
+                                    <option value="lead">Лид</option>
+                                    <option value="negotiation">Переговоры</option>
+                                    <option value="proposal">Предложение</option>
+                                    <option value="closed_won">Успешно</option>
+                                    <option value="closed_lost">Проиграно</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Вероятность (%)</label>
+                                <input type="number" class="form-control" id="dealProbability" min="0" max="100">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Ответственный</label>
+                                <input type="text" class="form-control" id="dealResponsible">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Источник</label>
+                                <input type="text" class="form-control" id="dealSource">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Ожидаемая дата закрытия</label>
+                                <input type="date" class="form-control" id="dealExpectedClose">
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Комментарий</label>
+                                <textarea class="form-control" id="dealComment" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveDealBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS и зависимости -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Переменные для пагинации, поиска и фильтров
+        let currentCustomersPage = 1;
+        let currentDealsPage = 1;
+        let currentCustomerSearch = '';
+        let currentDealSearch = '';
+        // Фильтры для клиентов
+        let customerCreatedFrom = '';
+        let customerCreatedTo = '';
+        // Фильтры для сделок
+        let dealValueMin = '';
+        let dealValueMax = '';
+        let dealCloseFrom = '';
+        let dealCloseTo = '';
+        const pageSize = 20;
+
+        // Загрузка данных при открытии страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCustomers();
+            loadDeals();
+            loadCustomerSelect();
+
+            // Обработчики поиска
+            document.getElementById('customerSearchBtn').addEventListener('click', function() {
+                currentCustomerSearch = document.getElementById('customerSearch').value;
+                currentCustomersPage = 1;
+                loadCustomers();
+            });
+            document.getElementById('dealSearchBtn').addEventListener('click', function() {
+                currentDealSearch = document.getElementById('dealSearch').value;
+                currentDealsPage = 1;
+                loadDeals();
+            });
+            // Поиск при нажатии Enter
+            document.getElementById('customerSearch').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    currentCustomerSearch = this.value;
+                    currentCustomersPage = 1;
+                    loadCustomers();
+                }
+            });
+            document.getElementById('dealSearch').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    currentDealSearch = this.value;
+                    currentDealsPage = 1;
+                    loadDeals();
+                }
+            });
+
+            // Обработчики применения фильтров
+            document.getElementById('applyCustomerFilters').addEventListener('click', function() {
+                customerCreatedFrom = document.getElementById('customerCreatedFrom').value;
+                customerCreatedTo = document.getElementById('customerCreatedTo').value;
+                currentCustomersPage = 1;
+                loadCustomers();
+            });
+            document.getElementById('applyDealFilters').addEventListener('click', function() {
+                dealValueMin = document.getElementById('dealValueMin').value;
+                dealValueMax = document.getElementById('dealValueMax').value;
+                dealCloseFrom = document.getElementById('dealCloseFrom').value;
+                dealCloseTo = document.getElementById('dealCloseTo').value;
+                currentDealsPage = 1;
+                loadDeals();
+            });
+        });
+
+        // Загрузка списка клиентов с учётом страницы, поиска и фильтров
+        function loadCustomers(page = currentCustomersPage) {
+            let url = `/api/crm/customers?page=${page}&page_size=${pageSize}`;
+            if (currentCustomerSearch) {
+                url += `&search=${encodeURIComponent(currentCustomerSearch)}`;
+            }
+            if (customerCreatedFrom) {
+                url += `&created_from=${encodeURIComponent(customerCreatedFrom)}`;
+            }
+            if (customerCreatedTo) {
+                url += `&created_to=${encodeURIComponent(customerCreatedTo)}`;
+            }
+            fetch(url)
+                .then(response => response.json())
+                .then(resp => {
+                    renderCustomersTable(resp.data);
+                    renderPagination('customers', resp.total, resp.page, resp.total_pages);
+                    currentCustomersPage = resp.page;
+                })
+                .catch(error => console.error('Error loading customers:', error));
+        }
+
+        // Загрузка списка сделок с учётом страницы, поиска и фильтров
+        function loadDeals(page = currentDealsPage) {
+            let url = `/api/crm/deals?page=${page}&page_size=${pageSize}`;
+            if (currentDealSearch) {
+                url += `&search=${encodeURIComponent(currentDealSearch)}`;
+            }
+            if (dealValueMin) {
+                url += `&value_min=${encodeURIComponent(dealValueMin)}`;
+            }
+            if (dealValueMax) {
+                url += `&value_max=${encodeURIComponent(dealValueMax)}`;
+            }
+            if (dealCloseFrom) {
+                url += `&close_from=${encodeURIComponent(dealCloseFrom)}`;
+            }
+            if (dealCloseTo) {
+                url += `&close_to=${encodeURIComponent(dealCloseTo)}`;
+            }
+            fetch(url)
+                .then(response => response.json())
+                .then(resp => {
+                    renderDealsTable(resp.data);
+                    renderPagination('deals', resp.total, resp.page, resp.total_pages);
+                    currentDealsPage = resp.page;
+                })
+                .catch(error => console.error('Error loading deals:', error));
+        }
+
+        // Отрисовка таблицы клиентов
+        function renderCustomersTable(customers) {
+            const tbody = document.querySelector('#customersTable tbody');
+            tbody.innerHTML = '';
+            customers.forEach(customer => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${customer.id}</td>
+                    <td>${customer.name || ''}</td>
+                    <td>${customer.email || ''}</td>
+                    <td>${customer.phone || ''}</td>
+                    <td>${customer.company || ''}</td>
+                    <td><span class="badge bg-info badge-status">${customer.status || 'lead'}</span></td>
+                    <td>${customer.responsible || ''}</td>
+                    <td>${customer.source || ''}</td>
+                    <td>${customer.comment || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editCustomer('${customer.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${customer.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+            });
+        }
+
+        // Отрисовка таблицы сделок
+        function renderDealsTable(deals) {
+            const tbody = document.querySelector('#dealsTable tbody');
+            tbody.innerHTML = '';
+            deals.forEach(deal => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${deal.id}</td>
+                    <td>${deal.customer_id || ''}</td>
+                    <td>${deal.title || ''}</td>
+                    <td>${deal.value || 0}</td>
+                    <td><span class="badge bg-primary badge-status">${deal.stage || 'lead'}</span></td>
+                    <td>${deal.probability || 0}%</td>
+                    <td>${deal.responsible || ''}</td>
+                    <td>${deal.source || ''}</td>
+                    <td>${deal.comment || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editDeal('${deal.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDeal('${deal.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+            });
+        }
+
+        // Загрузка списка клиентов для выпадающего списка в форме сделки (без фильтров, загружаем до 1000)
+        function loadCustomerSelect() {
+            fetch('/api/crm/customers?page=1&page_size=1000')
+                .then(response => response.json())
+                .then(resp => {
+                    const customers = resp.data || [];
+                    const select = document.getElementById('dealCustomerId');
+                    select.innerHTML = '<option value="">Выберите клиента</option>';
+                    customers.forEach(customer => {
+                        const option = document.createElement('option');
+                        option.value = customer.id;
+                        option.textContent = `${customer.name} (${customer.email})`;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading customer select:', error));
+        }
+
+        // Сохранение клиента
+        document.getElementById('saveCustomerBtn').addEventListener('click', function() {
+            const id = document.getElementById('customerId').value;
+            const customer = {
+                name: document.getElementById('customerName').value,
+                email: document.getElementById('customerEmail').value,
+                phone: document.getElementById('customerPhone').value,
+                company: document.getElementById('customerCompany').value,
+                status: document.getElementById('customerStatus').value,
+                responsible: document.getElementById('customerResponsible').value,
+                source: document.getElementById('customerSource').value,
+                comment: document.getElementById('customerComment').value
+            };
+
+            const url = id ? `/api/crm/customers/${id}` : '/api/crm/customers';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(customer)
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
+                    loadCustomers();
+                    loadCustomerSelect(); // обновить выпадающий список в сделках
+                } else {
+                    alert('Ошибка сохранения');
+                }
+            })
+            .catch(error => console.error('Error saving customer:', error));
+        });
+
+        // Сохранение сделки
+        document.getElementById('saveDealBtn').addEventListener('click', function() {
+            const id = document.getElementById('dealId').value;
+            const deal = {
+                customer_id: document.getElementById('dealCustomerId').value,
+                title: document.getElementById('dealTitle').value,
+                value: parseFloat(document.getElementById('dealValue').value),
+                stage: document.getElementById('dealStage').value,
+                probability: parseInt(document.getElementById('dealProbability').value) || 0,
+                responsible: document.getElementById('dealResponsible').value,
+                source: document.getElementById('dealSource').value,
+                comment: document.getElementById('dealComment').value,
+                expected_close: document.getElementById('dealExpectedClose').value
+            };
+
+            const url = id ? `/api/crm/deals/${id}` : '/api/crm/deals';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(deal)
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('dealModal')).hide();
+                    loadDeals();
+                } else {
+                    alert('Ошибка сохранения');
+                }
+            })
+            .catch(error => console.error('Error saving deal:', error));
+        });
+
+        // Редактирование клиента
+        window.editCustomer = function(id) {
+            fetch(`/api/crm/customers?page=1&page_size=1000`)
+                .then(r => r.json())
+                .then(resp => {
+                    const customers = resp.data || [];
+                    const customer = customers.find(c => c.id === id);
+                    if (customer) {
+                        document.getElementById('customerId').value = customer.id;
+                        document.getElementById('customerName').value = customer.name || '';
+                        document.getElementById('customerEmail').value = customer.email || '';
+                        document.getElementById('customerPhone').value = customer.phone || '';
+                        document.getElementById('customerCompany').value = customer.company || '';
+                        document.getElementById('customerStatus').value = customer.status || 'lead';
+                        document.getElementById('customerResponsible').value = customer.responsible || '';
+                        document.getElementById('customerSource').value = customer.source || '';
+                        document.getElementById('customerComment').value = customer.comment || '';
+                        new bootstrap.Modal(document.getElementById('customerModal')).show();
+                    }
+                });
+        };
+
+        // Редактирование сделки
+        window.editDeal = function(id) {
+            fetch(`/api/crm/deals?page=1&page_size=1000`)
+                .then(r => r.json())
+                .then(resp => {
+                    const deals = resp.data || [];
+                    const deal = deals.find(d => d.id === id);
+                    if (deal) {
+                        document.getElementById('dealId').value = deal.id;
+                        document.getElementById('dealCustomerId').value = deal.customer_id || '';
+                        document.getElementById('dealTitle').value = deal.title || '';
+                        document.getElementById('dealValue').value = deal.value || 0;
+                        document.getElementById('dealStage').value = deal.stage || 'lead';
+                        document.getElementById('dealProbability').value = deal.probability || 0;
+                        document.getElementById('dealResponsible').value = deal.responsible || '';
+                        document.getElementById('dealSource').value = deal.source || '';
+                        document.getElementById('dealComment').value = deal.comment || '';
+                        document.getElementById('dealExpectedClose').value = deal.expected_close ? deal.expected_close.slice(0,10) : '';
+                        new bootstrap.Modal(document.getElementById('dealModal')).show();
+                    }
+                });
+        };
+
+        // Удаление клиента
+        window.deleteCustomer = function(id) {
+            if (confirm('Удалить клиента?')) {
+                fetch(`/api/crm/customers/${id}`, {method: 'DELETE'})
+                    .then(() => {
+                        loadCustomers();
+                        loadCustomerSelect();
+                    })
+                    .catch(error => console.error('Error deleting customer:', error));
+            }
+        };
+
+        // Удаление сделки
+        window.deleteDeal = function(id) {
+            if (confirm('Удалить сделку?')) {
+                fetch(`/api/crm/deals/${id}`, {method: 'DELETE'})
+                    .then(() => loadDeals())
+                    .catch(error => console.error('Error deleting deal:', error));
+            }
+        };
+
+        // Очистка формы при открытии модального окна для добавления нового
+        document.getElementById('customerModal').addEventListener('show.bs.modal', function(event) {
+            if (!event.relatedTarget) { // открытие по кнопке "Добавить"
+                document.getElementById('customerId').value = '';
+                document.getElementById('customerForm').reset();
+            }
+        });
+
+        document.getElementById('dealModal').addEventListener('show.bs.modal', function(event) {
+            if (!event.relatedTarget) {
+                document.getElementById('dealId').value = '';
+                document.getElementById('dealForm').reset();
+            }
+        });
+
+        // Отрисовка пагинации
+        function renderPagination(type, total, currentPage, totalPages) {
+            const container = document.getElementById(`${type}Pagination`);
+            if (!container) return;
+            let html = '';
+            if (totalPages > 1) {
+                html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage('${type}', ${currentPage - 1}); return false;">Предыдущая</a>
+                </li>`;
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                        html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage('${type}', ${i}); return false;">${i}</a>
+                        </li>`;
+                    } else if (i === currentPage - 3 || i === currentPage + 3) {
+                        html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                    }
+                }
+                html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage('${type}', ${currentPage + 1}); return false;">Следующая</a>
+                </li>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // Смена страницы
+        window.changePage = function(type, page) {
+            if (type === 'customers') {
+                loadCustomers(page);
+            } else {
+                loadDeals(page);
+            }
+        };
+    </script>
 </body>
 </html>

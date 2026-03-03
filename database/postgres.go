@@ -513,7 +513,7 @@ func createAdminTables() error {
     return nil
 }
 
-// createCRMTables создаёт таблицы для CRM
+// createCRMTables создаёт таблицы для CRM и добавляет новые колонки
 func createCRMTables() error {
     // Таблица клиентов CRM
     _, err := Pool.Exec(context.Background(), `
@@ -557,7 +557,29 @@ func createCRMTables() error {
         return err
     }
 
-    log.Println("✅ Таблицы CRM готовы")
+    // NEW: Добавляем колонки "Ответственный", "Источник", "Комментарий" для клиентов
+    _, err = Pool.Exec(context.Background(), `
+        ALTER TABLE crm_customers
+        ADD COLUMN IF NOT EXISTS responsible VARCHAR(255) DEFAULT '',
+        ADD COLUMN IF NOT EXISTS source VARCHAR(255) DEFAULT '',
+        ADD COLUMN IF NOT EXISTS comment TEXT DEFAULT '';
+    `)
+    if err != nil {
+        log.Printf("⚠️ Не удалось добавить колонки в crm_customers: %v", err)
+    }
+
+    // NEW: Добавляем колонки для сделок
+    _, err = Pool.Exec(context.Background(), `
+        ALTER TABLE crm_deals
+        ADD COLUMN IF NOT EXISTS responsible VARCHAR(255) DEFAULT '',
+        ADD COLUMN IF NOT EXISTS source VARCHAR(255) DEFAULT '',
+        ADD COLUMN IF NOT EXISTS comment TEXT DEFAULT '';
+    `)
+    if err != nil {
+        log.Printf("⚠️ Не удалось добавить колонки в crm_deals: %v", err)
+    }
+
+    log.Println("✅ Таблицы CRM готовы (включая новые поля)")
     return nil
 }
 
