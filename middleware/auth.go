@@ -5,7 +5,6 @@ import (
     "net/http"
     "strings"
     "subscription-system/config"
-    "subscription-system/database"
     "subscription-system/utils"
 
     "github.com/gin-gonic/gin"
@@ -16,23 +15,23 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
     return func(c *gin.Context) {
         // Публичные маршруты – всегда пропускаем
         publicRoutes := map[string]bool{
-            "/":                true,
-            "/about":           true,
-            "/contact":         true,
-            "/info":            true,
-            "/pricing":         true,
-            "/partner":         true,
-            "/referral":        true,
-            "/login":           true,
-            "/register":        true,
-            "/forgot-password": true,
-            "/api/health":      true,
-            "/api/crm/health":  true,
-            "/api/test":        true,
-            "/api/auth/login":  true,
-            "/api/auth/register": true,
-            "/api/auth/refresh": true,
-            "/api/auth/logout":  true,
+            "/":                     true,
+            "/about":                true,
+            "/contact":              true,
+            "/info":                 true,
+            "/pricing":              true,
+            "/partner":              true,
+            "/referral":             true,
+            "/login":                true,
+            "/register":             true,
+            "/forgot-password":      true,
+            "/api/health":           true,
+            "/api/crm/health":       true,
+            "/api/test":             true,
+            "/api/auth/login":       true,
+            "/api/auth/register":    true,
+            "/api/auth/refresh":     true,
+            "/api/auth/logout":      true,
         }
         if publicRoutes[c.Request.URL.Path] {
             c.Next()
@@ -41,17 +40,10 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 
         // ========== РЕЖИМ РАЗРАБОТКИ ==========
         if cfg.SkipAuth {
-            // Подставляем первого пользователя (обычно админ) для всех запросов
-            var id string
-            err := database.Pool.QueryRow(c.Request.Context(), "SELECT id FROM users ORDER BY created_at LIMIT 1").Scan(&id)
-            if err != nil {
-                log.Printf("⚠️ Не удалось получить первого пользователя: %v", err)
-                c.Next()
-                return
-            }
-            c.Set("userID", id)
-            c.Set("userRole", "admin")
-            log.Printf("🔓 SkipAuth: установлен userID=%s, role=admin", id)
+            // Используем фиксированный ID тестового администратора
+            c.Set("userID", "aa5f14e6-30e1-476c-ac42-8c11ced838a4")
+            c.Set("role", "admin")
+            log.Printf("🔓 SkipAuth: установлен userID=aa5f14e6-30e1-476c-ac42-8c11ced838a4, role=admin")
             c.Next()
             return
         }
@@ -82,7 +74,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
         }
 
         c.Set("userID", claims.UserID)
-        c.Set("userRole", claims.Role)
+        c.Set("role", claims.Role)
         c.Next()
     }
 }
@@ -94,7 +86,7 @@ func AdminMiddleware(cfg *config.Config) gin.HandlerFunc {
             c.Next()
             return
         }
-        role, exists := c.Get("userRole")
+        role, exists := c.Get("role")
         if !exists {
             c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
             return

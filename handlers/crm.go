@@ -1,7 +1,10 @@
 package handlers
 
 import (
+    "bytes"
     "database/sql"
+    "encoding/csv"
+    "fmt"
     "net/http"
     "os"
     "path/filepath"
@@ -10,6 +13,7 @@ import (
 
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
+    "github.com/xuri/excelize/v2"
     "subscription-system/config"
     "subscription-system/database"
     "subscription-system/services"
@@ -1480,4 +1484,418 @@ func GetCRMAdvancedStats(c *gin.Context) {
         "source_stats":      sourceStats,
         "monthly_stats":     monthlyStats,
     })
+}
+
+// ========== ЭКСПОРТ ==========
+
+// exportFilteredCustomers возвращает отфильтрованный список клиентов (общая логика для экспорта)
+func exportFilteredCustomers(c *gin.Context) ([]Customer, error) {
+    userID := getUserIDFromContext(c)
+    isAdmin := isAdmin(c)
+    status := c.Query("status")
+    search := c.Query("search")
+    createdFrom := c.Query("created_from")
+    createdTo := c.Query("created_to")
+
+    query := `SELECT id, name, email, phone, company, status, responsible, source, comment, created_at, last_seen
+              FROM crm_customers`
+    args := []interface{}{}
+    where := ""
+
+    if !isAdmin && userID != "" {
+        where += " user_id = $" + strconv.Itoa(len(args)+1)
+        args = append(args, userID)
+    }
+    if status != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " status = $" + strconv.Itoa(len(args)+1)
+        args = append(args, status)
+    }
+    if search != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " (name ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%')"
+        args = append(args, search)
+    }
+    if createdFrom != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " created_at >= $" + strconv.Itoa(len(args)+1) + "::date"
+        args = append(args, createdFrom)
+    }
+    if createdTo != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " created_at < ($" + strconv.Itoa(len(args)+1) + "::date + '1 day'::interval)"
+        args = append(args, createdTo)
+    }
+    if where != "" {
+        query += " WHERE" + where
+    }
+    query += " ORDER BY created_at DESC"
+
+    rows, err := database.Pool.Query(c.Request.Context(), query, args...)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var customers []Customer
+    for rows.Next() {
+        var cst Customer
+        err := rows.Scan(&cst.ID, &cst.Name, &cst.Email, &cst.Phone, &cst.Company, &cst.Status,
+            &cst.Responsible, &cst.Source, &cst.Comment, &cst.CreatedAt, &cst.LastSeen)
+        if err != nil {
+            continue
+        }
+        customers = append(customers, cst)
+    }
+    return customers, nil
+}
+
+// ExportCustomersCSV экспортирует клиентов в CSV
+// @Summary Экспорт клиентов в CSV
+// @Description Возвращает CSV-файл со списком клиентов (с учётом текущих фильтров)
+// @Tags CRM
+// @Produce text/csv
+// @Param status query string false "Статус клиента"
+// @Param search query string false "Поиск по имени или email"
+// @Param created_from query string false "Дата создания от (YYYY-MM-DD)"
+// @Param created_to query string false "Дата создания до (YYYY-MM-DD)"
+// @Success 200 {file} binary
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/crm/customers/export/csv [get]
+func ExportCustomersCSV(c *gin.Context) {
+    customers, err := exportFilteredCustomers(c)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    buf := new(bytes.Buffer)
+    writer := csv.NewWriter(buf)
+    defer writer.Flush()
+
+    // Заголовки
+    writer.Write([]string{"ID", "Имя", "Email", "Телефон", "Компания", "Статус", "Ответственный", "Источник", "Комментарий", "Дата создания", "Последний визит"})
+
+    // Данные
+    for _, cst := range customers {
+        writer.Write([]string{
+            cst.ID,
+            cst.Name,
+            cst.Email,
+            cst.Phone,
+            cst.Company,
+            cst.Status,
+            cst.Responsible,
+            cst.Source,
+            cst.Comment,
+            cst.CreatedAt.Format("2006-01-02 15:04:05"),
+            cst.LastSeen.Format("2006-01-02 15:04:05"),
+        })
+    }
+
+    c.Header("Content-Description", "File Transfer")
+    c.Header("Content-Disposition", "attachment; filename=customers.csv")
+    c.Data(http.StatusOK, "text/csv", buf.Bytes())
+}
+
+// ExportCustomersExcel экспортирует клиентов в Excel
+// @Summary Экспорт клиентов в Excel
+// @Description Возвращает Excel-файл со списком клиентов (с учётом текущих фильтров)
+// @Tags CRM
+// @Produce application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+// @Param status query string false "Статус клиента"
+// @Param search query string false "Поиск по имени или email"
+// @Param created_from query string false "Дата создания от (YYYY-MM-DD)"
+// @Param created_to query string false "Дата создания до (YYYY-MM-DD)"
+// @Success 200 {file} binary
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/crm/customers/export/excel [get]
+func ExportCustomersExcel(c *gin.Context) {
+    customers, err := exportFilteredCustomers(c)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    f := excelize.NewFile()
+    defer f.Close()
+
+    sheet := "Клиенты"
+    f.SetSheetName("Sheet1", sheet)
+
+    // Заголовки
+    headers := []string{"ID", "Имя", "Email", "Телефон", "Компания", "Статус", "Ответственный", "Источник", "Комментарий", "Дата создания", "Последний визит"}
+    for i, h := range headers {
+        cell := fmt.Sprintf("%c%d", 'A'+i, 1)
+        f.SetCellValue(sheet, cell, h)
+    }
+
+    // Данные
+    for i, cst := range customers {
+        row := i + 2
+        f.SetCellValue(sheet, fmt.Sprintf("A%d", row), cst.ID)
+        f.SetCellValue(sheet, fmt.Sprintf("B%d", row), cst.Name)
+        f.SetCellValue(sheet, fmt.Sprintf("C%d", row), cst.Email)
+        f.SetCellValue(sheet, fmt.Sprintf("D%d", row), cst.Phone)
+        f.SetCellValue(sheet, fmt.Sprintf("E%d", row), cst.Company)
+        f.SetCellValue(sheet, fmt.Sprintf("F%d", row), cst.Status)
+        f.SetCellValue(sheet, fmt.Sprintf("G%d", row), cst.Responsible)
+        f.SetCellValue(sheet, fmt.Sprintf("H%d", row), cst.Source)
+        f.SetCellValue(sheet, fmt.Sprintf("I%d", row), cst.Comment)
+        f.SetCellValue(sheet, fmt.Sprintf("J%d", row), cst.CreatedAt.Format("2006-01-02 15:04:05"))
+        f.SetCellValue(sheet, fmt.Sprintf("K%d", row), cst.LastSeen.Format("2006-01-02 15:04:05"))
+    }
+
+    // Стили для заголовков
+    style, _ := f.NewStyle(&excelize.Style{
+        Font: &excelize.Font{Bold: true},
+        Fill: excelize.Fill{Type: "pattern", Color: []string{"#DDDDDD"}, Pattern: 1},
+    })
+    f.SetCellStyle(sheet, "A1", "K1", style)
+
+    // Автоширина колонок
+    for i := 1; i <= 11; i++ {
+        col := string(rune('A' + i - 1))
+        f.SetColWidth(sheet, col, col, 20)
+    }
+
+    buf, err := f.WriteToBuffer()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate Excel"})
+        return
+    }
+
+    c.Header("Content-Description", "File Transfer")
+    c.Header("Content-Disposition", "attachment; filename=customers.xlsx")
+    c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
+}
+
+// exportFilteredDeals возвращает отфильтрованный список сделок (общая логика для экспорта)
+func exportFilteredDeals(c *gin.Context) ([]Deal, error) {
+    userID := getUserIDFromContext(c)
+    isAdmin := isAdmin(c)
+    stage := c.Query("stage")
+    search := c.Query("search")
+    valueMin := c.Query("value_min")
+    valueMax := c.Query("value_max")
+    closeFrom := c.Query("close_from")
+    closeTo := c.Query("close_to")
+
+    query := `SELECT id, customer_id, title, value, stage, probability, responsible, source, comment, expected_close, created_at, closed_at
+              FROM crm_deals`
+    args := []interface{}{}
+    where := ""
+
+    if !isAdmin && userID != "" {
+        where += " user_id = $" + strconv.Itoa(len(args)+1)
+        args = append(args, userID)
+    }
+    if stage != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " stage = $" + strconv.Itoa(len(args)+1)
+        args = append(args, stage)
+    }
+    if search != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " title ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%'"
+        args = append(args, search)
+    }
+    if valueMin != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " value >= $" + strconv.Itoa(len(args)+1)
+        args = append(args, valueMin)
+    }
+    if valueMax != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " value <= $" + strconv.Itoa(len(args)+1)
+        args = append(args, valueMax)
+    }
+    if closeFrom != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " expected_close >= $" + strconv.Itoa(len(args)+1) + "::date"
+        args = append(args, closeFrom)
+    }
+    if closeTo != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " expected_close < ($" + strconv.Itoa(len(args)+1) + "::date + '1 day'::interval)"
+        args = append(args, closeTo)
+    }
+    if where != "" {
+        query += " WHERE" + where
+    }
+    query += " ORDER BY created_at DESC"
+
+    rows, err := database.Pool.Query(c.Request.Context(), query, args...)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var deals []Deal
+    for rows.Next() {
+        var d Deal
+        err := rows.Scan(&d.ID, &d.CustomerID, &d.Title, &d.Value, &d.Stage, &d.Probability,
+            &d.Responsible, &d.Source, &d.Comment, &d.ExpectedClose, &d.CreatedAt, &d.ClosedAt)
+        if err != nil {
+            continue
+        }
+        deals = append(deals, d)
+    }
+    return deals, nil
+}
+
+// ExportDealsCSV экспортирует сделки в CSV
+// @Summary Экспорт сделок в CSV
+// @Description Возвращает CSV-файл со списком сделок (с учётом текущих фильтров)
+// @Tags CRM
+// @Produce text/csv
+// @Param stage query string false "Стадия сделки"
+// @Param search query string false "Поиск по названию"
+// @Param value_min query number false "Минимальная сумма"
+// @Param value_max query number false "Максимальная сумма"
+// @Param close_from query string false "Ожидаемая дата закрытия от (YYYY-MM-DD)"
+// @Param close_to query string false "Ожидаемая дата закрытия до (YYYY-MM-DD)"
+// @Success 200 {file} binary
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/crm/deals/export/csv [get]
+func ExportDealsCSV(c *gin.Context) {
+    deals, err := exportFilteredDeals(c)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    buf := new(bytes.Buffer)
+    writer := csv.NewWriter(buf)
+    defer writer.Flush()
+
+    writer.Write([]string{"ID", "Клиент ID", "Название", "Сумма", "Стадия", "Вероятность", "Ответственный", "Источник", "Комментарий", "Ожидаемая дата", "Дата создания", "Дата закрытия"})
+
+    for _, d := range deals {
+        expectedClose := ""
+        if d.ExpectedClose != nil {
+            expectedClose = d.ExpectedClose.Format("2006-01-02")
+        }
+        closedAt := ""
+        if d.ClosedAt != nil {
+            closedAt = d.ClosedAt.Format("2006-01-02 15:04:05")
+        }
+        writer.Write([]string{
+            d.ID,
+            d.CustomerID,
+            d.Title,
+            strconv.FormatFloat(d.Value, 'f', 2, 64),
+            d.Stage,
+            strconv.Itoa(d.Probability),
+            d.Responsible,
+            d.Source,
+            d.Comment,
+            expectedClose,
+            d.CreatedAt.Format("2006-01-02 15:04:05"),
+            closedAt,
+        })
+    }
+
+    c.Header("Content-Description", "File Transfer")
+    c.Header("Content-Disposition", "attachment; filename=deals.csv")
+    c.Data(http.StatusOK, "text/csv", buf.Bytes())
+}
+
+// ExportDealsExcel экспортирует сделки в Excel
+// @Summary Экспорт сделок в Excel
+// @Description Возвращает Excel-файл со списком сделок (с учётом текущих фильтров)
+// @Tags CRM
+// @Produce application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+// @Param stage query string false "Стадия сделки"
+// @Param search query string false "Поиск по названию"
+// @Param value_min query number false "Минимальная сумма"
+// @Param value_max query number false "Максимальная сумма"
+// @Param close_from query string false "Ожидаемая дата закрытия от (YYYY-MM-DD)"
+// @Param close_to query string false "Ожидаемая дата закрытия до (YYYY-MM-DD)"
+// @Success 200 {file} binary
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/crm/deals/export/excel [get]
+func ExportDealsExcel(c *gin.Context) {
+    deals, err := exportFilteredDeals(c)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    f := excelize.NewFile()
+    defer f.Close()
+
+    sheet := "Сделки"
+    f.SetSheetName("Sheet1", sheet)
+
+    headers := []string{"ID", "Клиент ID", "Название", "Сумма", "Стадия", "Вероятность", "Ответственный", "Источник", "Комментарий", "Ожидаемая дата", "Дата создания", "Дата закрытия"}
+    for i, h := range headers {
+        cell := fmt.Sprintf("%c%d", 'A'+i, 1)
+        f.SetCellValue(sheet, cell, h)
+    }
+
+    for i, d := range deals {
+        row := i + 2
+        expectedClose := ""
+        if d.ExpectedClose != nil {
+            expectedClose = d.ExpectedClose.Format("2006-01-02")
+        }
+        closedAt := ""
+        if d.ClosedAt != nil {
+            closedAt = d.ClosedAt.Format("2006-01-02 15:04:05")
+        }
+        f.SetCellValue(sheet, fmt.Sprintf("A%d", row), d.ID)
+        f.SetCellValue(sheet, fmt.Sprintf("B%d", row), d.CustomerID)
+        f.SetCellValue(sheet, fmt.Sprintf("C%d", row), d.Title)
+        f.SetCellValue(sheet, fmt.Sprintf("D%d", row), d.Value)
+        f.SetCellValue(sheet, fmt.Sprintf("E%d", row), d.Stage)
+        f.SetCellValue(sheet, fmt.Sprintf("F%d", row), d.Probability)
+        f.SetCellValue(sheet, fmt.Sprintf("G%d", row), d.Responsible)
+        f.SetCellValue(sheet, fmt.Sprintf("H%d", row), d.Source)
+        f.SetCellValue(sheet, fmt.Sprintf("I%d", row), d.Comment)
+        f.SetCellValue(sheet, fmt.Sprintf("J%d", row), expectedClose)
+        f.SetCellValue(sheet, fmt.Sprintf("K%d", row), d.CreatedAt.Format("2006-01-02 15:04:05"))
+        f.SetCellValue(sheet, fmt.Sprintf("L%d", row), closedAt)
+    }
+
+    style, _ := f.NewStyle(&excelize.Style{
+        Font: &excelize.Font{Bold: true},
+        Fill: excelize.Fill{Type: "pattern", Color: []string{"#DDDDDD"}, Pattern: 1},
+    })
+    f.SetCellStyle(sheet, "A1", "L1", style)
+
+    for i := 1; i <= 12; i++ {
+        col := string(rune('A' + i - 1))
+        f.SetColWidth(sheet, col, col, 20)
+    }
+
+    buf, err := f.WriteToBuffer()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate Excel"})
+        return
+    }
+
+    c.Header("Content-Description", "File Transfer")
+    c.Header("Content-Disposition", "attachment; filename=deals.xlsx")
+    c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
 }

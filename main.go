@@ -305,6 +305,8 @@ func main() {
         }
         c.Next()
     })
+    // NEW: Добавляем middleware аутентификации
+    api.Use(middleware.AuthMiddleware(cfg))
     {
         api.GET("/health", handlers.HealthHandler)
         api.GET("/crm/health", handlers.CRMHealthHandler)
@@ -383,6 +385,12 @@ func main() {
         api.POST("/crm/deals/batch/delete", handlers.BatchDeleteDeals)
         api.PUT("/crm/deals/batch/stage", handlers.BatchUpdateDealsStage)
         api.PUT("/crm/deals/batch/responsible", handlers.BatchUpdateDealsResponsible)
+
+        // Экспорт
+        api.GET("/crm/customers/export/csv", handlers.ExportCustomersCSV)
+        api.GET("/crm/customers/export/excel", handlers.ExportCustomersExcel)
+        api.GET("/crm/deals/export/csv", handlers.ExportDealsCSV)
+        api.GET("/crm/deals/export/excel", handlers.ExportDealsExcel)
     }
 
     // ========== ЗАЩИЩЕННЫЕ API ==========
