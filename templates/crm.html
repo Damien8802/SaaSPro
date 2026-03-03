@@ -69,6 +69,9 @@
             margin-bottom: 0;
             opacity: 0.9;
         }
+        .is-invalid {
+            border-color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -355,7 +358,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Сумма *</label>
-                                <input type="number" class="form-control" id="dealValue" step="0.01" required>
+                                <input type="text" class="form-control" id="dealValue" required placeholder="Например: 1500.50 или 1500,50">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Стадия</label>
@@ -721,24 +724,59 @@
                     loadCustomers();
                     loadCustomerSelect();
                 } else {
-                    alert('Ошибка сохранения');
+                    response.text().then(text => alert('Ошибка сохранения: ' + text));
                 }
             })
-            .catch(error => console.error('Error saving customer:', error));
+            .catch(error => alert('Ошибка сети: ' + error.message));
         });
 
         document.getElementById('saveDealBtn').addEventListener('click', function() {
+            // Проверка обязательных полей
+            const customerId = document.getElementById('dealCustomerId').value;
+            if (!customerId) {
+                alert('Выберите клиента');
+                document.getElementById('dealCustomerId').classList.add('is-invalid');
+                return;
+            } else {
+                document.getElementById('dealCustomerId').classList.remove('is-invalid');
+            }
+
+            const title = document.getElementById('dealTitle').value.trim();
+            if (!title) {
+                alert('Введите название сделки');
+                document.getElementById('dealTitle').classList.add('is-invalid');
+                return;
+            } else {
+                document.getElementById('dealTitle').classList.remove('is-invalid');
+            }
+
+            // Преобразование суммы
+            const valueStr = document.getElementById('dealValue').value.replace(',', '.');
+            const value = parseFloat(valueStr);
+            if (isNaN(value) || value <= 0) {
+                alert('Введите корректную положительную сумму');
+                document.getElementById('dealValue').classList.add('is-invalid');
+                return;
+            } else {
+                document.getElementById('dealValue').classList.remove('is-invalid');
+            }
+
             const id = document.getElementById('dealId').value;
+            
+            // Преобразование даты в RFC3339 (UTC полночь)
+            const expectedCloseInput = document.getElementById('dealExpectedClose').value;
+            const expectedClose = expectedCloseInput ? expectedCloseInput + 'T00:00:00Z' : null;
+
             const deal = {
-                customer_id: document.getElementById('dealCustomerId').value,
-                title: document.getElementById('dealTitle').value,
-                value: parseFloat(document.getElementById('dealValue').value),
+                customer_id: customerId,
+                title: title,
+                value: value,
                 stage: document.getElementById('dealStage').value,
                 probability: parseInt(document.getElementById('dealProbability').value) || 0,
                 responsible: document.getElementById('dealResponsible').value,
                 source: document.getElementById('dealSource').value,
                 comment: document.getElementById('dealComment').value,
-                expected_close: document.getElementById('dealExpectedClose').value
+                expected_close: expectedClose
             };
 
             const url = id ? `/api/crm/deals/${id}` : '/api/crm/deals';
@@ -749,15 +787,16 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(deal)
             })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) {
                     bootstrap.Modal.getInstance(document.getElementById('dealModal')).hide();
                     loadDeals();
                 } else {
-                    alert('Ошибка сохранения');
+                    const errorText = await response.text();
+                    alert('Ошибка сохранения: ' + errorText);
                 }
             })
-            .catch(error => console.error('Error saving deal:', error));
+            .catch(error => alert('Ошибка сети: ' + error.message));
         });
 
         // ==================== РЕДАКТИРОВАНИЕ (открытие модалок) ====================
@@ -798,6 +837,7 @@
                         document.getElementById('dealResponsible').value = deal.responsible || '';
                         document.getElementById('dealSource').value = deal.source || '';
                         document.getElementById('dealComment').value = deal.comment || '';
+                        // Если дата приходит в формате ISO, обрезаем до YYYY-MM-DD
                         document.getElementById('dealExpectedClose').value = deal.expected_close ? deal.expected_close.slice(0,10) : '';
                         new bootstrap.Modal(document.getElementById('dealModal')).show();
                     }
@@ -829,6 +869,8 @@
             if (!event.relatedTarget) {
                 document.getElementById('customerId').value = '';
                 document.getElementById('customerForm').reset();
+                // Сброс классов ошибок
+                document.querySelectorAll('#customerForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
             }
         });
 
@@ -836,6 +878,7 @@
             if (!event.relatedTarget) {
                 document.getElementById('dealId').value = '';
                 document.getElementById('dealForm').reset();
+                document.querySelectorAll('#dealForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
             }
         });
 

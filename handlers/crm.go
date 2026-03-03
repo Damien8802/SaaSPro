@@ -1,13 +1,26 @@
 package handlers
 
 import (
+    "database/sql"
     "net/http"
+    "os"
+    "path/filepath"
     "strconv"
     "time"
 
     "github.com/gin-gonic/gin"
+    "github.com/google/uuid"
+    "subscription-system/config"
     "subscription-system/database"
+    "subscription-system/services"
 )
+
+var notifier *services.NotificationService
+
+// InitNotifier инициализирует сервис уведомлений (вызывается из main)
+func InitNotifier(cfg *config.Config) {
+    notifier = services.NewNotificationService(cfg)
+}
 
 // Customer представляет клиента в CRM
 type Customer struct {
@@ -35,7 +48,7 @@ type Deal struct {
     Responsible   string     `json:"responsible"`
     Source        string     `json:"source"`
     Comment       string     `json:"comment"`
-    ExpectedClose time.Time  `json:"expected_close"`
+    ExpectedClose *time.Time `json:"expected_close,omitempty"` // теперь указатель
     CreatedAt     time.Time  `json:"created_at"`
     ClosedAt      *time.Time `json:"closed_at,omitempty"`
 }
@@ -212,6 +225,11 @@ func CreateCustomer(c *gin.Context) {
         return
     }
 
+    // NOTIFY: уведомление о создании клиента
+    if notifier != nil {
+        notifier.NotifyCustomerCreated(req.Name, req.Email, req.Phone, req.Company, req.Responsible)
+    }
+
     c.JSON(http.StatusCreated, gin.H{"id": id})
 }
 
@@ -235,6 +253,11 @@ func UpdateCustomer(c *gin.Context) {
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
+    }
+
+    // NOTIFY: уведомление об изменении клиента
+    if notifier != nil {
+        notifier.NotifyCustomerUpdated(id, req.Name, req.Email, req.Phone)
     }
 
     c.JSON(http.StatusOK, gin.H{"success": true})
@@ -419,6 +442,11 @@ func CreateDeal(c *gin.Context) {
         return
     }
 
+    // NOTIFY: уведомление о создании сделки
+    if notifier != nil {
+        notifier.NotifyDealCreated(d.Title, d.Value, d.Stage, d.Responsible, d.CustomerID)
+    }
+
     c.JSON(http.StatusCreated, d)
 }
 
@@ -442,6 +470,11 @@ func UpdateDeal(c *gin.Context) {
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
+    }
+
+    // NOTIFY: уведомление об изменении сделки
+    if notifier != nil {
+        notifier.NotifyDealUpdated(id, d.Title, d.Value, d.Stage)
     }
 
     c.JSON(http.StatusOK, gin.H{"success": true})
@@ -569,4 +602,166 @@ func GetCRMStats(c *gin.Context) {
         "total_customers": totalCustomers,
         "total_value":     totalValue,
     })
+}
+
+// ========== ВЛОЖЕНИЯ К СДЕЛКАМ ==========
+
+const uploadDir = "./uploads/crm"
+
+// UploadDealAttachment загружает файл и прикрепляет к сделке
+func UploadDealAttachment(c *gin.Context) {
+    dealID := c.Param("id")
+    if dealID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "deal_id required"})
+        return
+    }
+
+    // Проверяем существование сделки
+    var exists bool
+    err := database.Pool.QueryRow(c.Request.Context(), "SELECT EXISTS(SELECT 1 FROM crm_deals WHERE id = $1)", dealID).Scan(&exists)
+    if err != nil || !exists {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Deal not found"})
+        return
+    }
+
+    file, err := c.FormFile("file")
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+        return
+    }
+
+    // Создаём директорию для загрузок, если её нет
+    if err := os.MkdirAll(uploadDir, 0755); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot create upload directory"})
+        return
+    }
+
+    // Генерируем уникальное имя файла
+    ext := filepath.Ext(file.Filename)
+    newFileName := uuid.New().String() + ext
+    filePath := filepath.Join(uploadDir, newFileName)
+
+    // Сохраняем файл
+    if err := c.SaveUploadedFile(file, filePath); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+        return
+    }
+
+    // Получаем ID пользователя из контекста (если есть)
+    userID, _ := c.Get("userID")
+    userIDStr, _ := userID.(string)
+
+    // Вставляем запись в БД
+    var attachmentID string
+    err = database.Pool.QueryRow(c.Request.Context(), `
+        INSERT INTO deal_attachments (deal_id, file_name, file_path, file_size, mime_type, uploaded_by)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id
+    `, dealID, file.Filename, filePath, file.Size, file.Header.Get("Content-Type"), userIDStr).Scan(&attachmentID)
+
+    if err != nil {
+        // Если не удалось записать в БД, удаляем загруженный файл
+        os.Remove(filePath)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "id":          attachmentID,
+        "file_name":   file.Filename,
+        "file_size":   file.Size,
+        "mime_type":   file.Header.Get("Content-Type"),
+        "uploaded_at": time.Now(),
+    })
+}
+
+// GetDealAttachments возвращает список вложений для сделки
+func GetDealAttachments(c *gin.Context) {
+    dealID := c.Param("id")
+    if dealID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "deal_id required"})
+        return
+    }
+
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, file_name, file_path, file_size, mime_type, uploaded_by, uploaded_at
+        FROM deal_attachments
+        WHERE deal_id = $1
+        ORDER BY uploaded_at DESC
+    `, dealID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+    defer rows.Close()
+
+    type Attachment struct {
+        ID         string    `json:"id"`
+        FileName   string    `json:"file_name"`
+        FilePath   string    `json:"file_path"`
+        FileSize   int64     `json:"file_size"`
+        MimeType   string    `json:"mime_type"`
+        UploadedBy *string   `json:"uploaded_by,omitempty"`
+        UploadedAt time.Time `json:"uploaded_at"`
+    }
+
+    var attachments []Attachment
+    for rows.Next() {
+        var a Attachment
+        var uploadedBy sql.NullString
+        err := rows.Scan(&a.ID, &a.FileName, &a.FilePath, &a.FileSize, &a.MimeType, &uploadedBy, &a.UploadedAt)
+        if err != nil {
+            continue
+        }
+        if uploadedBy.Valid {
+            a.UploadedBy = &uploadedBy.String
+        }
+        attachments = append(attachments, a)
+    }
+
+    c.JSON(http.StatusOK, attachments)
+}
+
+// DownloadDealAttachment скачивает файл
+func DownloadDealAttachment(c *gin.Context) {
+    attachmentID := c.Param("attachment_id")
+    if attachmentID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "attachment_id required"})
+        return
+    }
+
+    var filePath, fileName string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT file_path, file_name FROM deal_attachments WHERE id = $1
+    `, attachmentID).Scan(&filePath, &fileName)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Attachment not found"})
+        return
+    }
+
+    c.FileAttachment(filePath, fileName)
+}
+
+// DeleteDealAttachment удаляет вложение
+func DeleteDealAttachment(c *gin.Context) {
+    attachmentID := c.Param("attachment_id")
+    if attachmentID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "attachment_id required"})
+        return
+    }
+
+    var filePath string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        DELETE FROM deal_attachments WHERE id = $1
+        RETURNING file_path
+    `, attachmentID).Scan(&filePath)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Attachment not found"})
+        return
+    }
+
+    // Удаляем файл с диска
+    os.Remove(filePath)
+
+    c.JSON(http.StatusOK, gin.H{"success": true})
 }

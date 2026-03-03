@@ -53,7 +53,6 @@ func InitDB(cfg *config.Config) error {
     if err := createAdminTables(); err != nil {
         return fmt.Errorf("failed to create admin tables: %w", err)
     }
-    // Новая таблица CRM
     if err := createCRMTables(); err != nil {
         return fmt.Errorf("failed to create CRM tables: %w", err)
     }
@@ -579,7 +578,26 @@ func createCRMTables() error {
         log.Printf("⚠️ Не удалось добавить колонки в crm_deals: %v", err)
     }
 
-    log.Println("✅ Таблицы CRM готовы (включая новые поля)")
+    // NEW: Таблица для вложений к сделкам
+    _, err = Pool.Exec(context.Background(), `
+        CREATE TABLE IF NOT EXISTS deal_attachments (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            deal_id UUID NOT NULL REFERENCES crm_deals(id) ON DELETE CASCADE,
+            file_name VARCHAR(255) NOT NULL,
+            file_path VARCHAR(512) NOT NULL,
+            file_size BIGINT NOT NULL,
+            mime_type VARCHAR(100),
+            uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+            uploaded_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_deal_attachments_deal ON deal_attachments(deal_id);
+    `)
+    if err != nil {
+        log.Printf("⚠️ Не удалось создать таблицу deal_attachments: %v", err)
+    }
+
+    log.Println("✅ Таблицы CRM готовы (включая новые поля и таблицу вложений)")
     return nil
 }
 

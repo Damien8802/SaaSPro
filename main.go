@@ -61,6 +61,8 @@ func main() {
     defer database.CloseDB()
 
     handlers.InitAuthHandler(cfg)
+    // Инициализация сервиса уведомлений для CRM
+    handlers.InitNotifier(cfg)
 
     if cfg.Env == "release" {
         gin.SetMode(gin.ReleaseMode)
@@ -76,10 +78,10 @@ func main() {
     // ========== НОВЫЕ MIDDLEWARE БЕЗОПАСНОСТИ ==========
     // Rate limiting для защиты от брутфорса
     rateLimiter := middleware.NewRateLimiter(5, time.Minute) // 5 попыток в минуту
-    
+
     // Security monitor для отслеживания подозрительной активности
     r.Use(middleware.SecurityMonitor())
-    
+
     // Защита от брутфорса на роутах авторизации
     authLimiter := middleware.NewRateLimiter(3, time.Minute) // 3 попытки в минуту для входа
 
@@ -156,7 +158,7 @@ func main() {
     r.GET("/security", handlers.SecurityPageHandler)
     r.GET("/referral", handlers.ReferralPageHandler)
     r.GET("/ai-settings", handlers.AISettingsPageHandler)
-  
+
     // ========== ПУБЛИЧНЫЕ СТРАНИЦЫ ==========
     public := r.Group("/")
     {
@@ -229,7 +231,7 @@ func main() {
         protected.GET("/my-subscriptions", handlers.MySubscriptionsPageHandler)
         protected.GET("/security-hub", handlers.SecurityHubHandler)
         protected.GET("/security-panel", handlers.SecurityPanelHandler)
-        protected.GET("/trusted-devices", handlers.TrustedDevicesHandler) 
+        protected.GET("/trusted-devices", handlers.TrustedDevicesHandler)
         protected.GET("/integrations", handlers.IntegrationsHandler)
         protected.GET("/monetization", handlers.MonetizationHandler)
         protected.GET("/profile", handlers.ProfilePageHandler)
@@ -261,7 +263,7 @@ func main() {
         dashboards.GET("/revenue-dashboard", handlers.RevenueDashboardHandler)
         dashboards.GET("/partner-dashboard", handlers.PartnerDashboardHandler)
         dashboards.GET("/unified-dashboard", handlers.UnifiedDashboardHandler)
-        dashboards.GET("/dashboard-stats", handlers.DashboardStatsHandler) 
+        dashboards.GET("/dashboard-stats", handlers.DashboardStatsHandler)
     }
 
     // ========== ПЛАТЕЖИ ==========
@@ -308,44 +310,44 @@ func main() {
         api.GET("/crm/health", handlers.CRMHealthHandler)
         api.GET("/system/stats", handlers.SystemStatsHandler)
         api.GET("/test", handlers.TestHandler)
-        
+
         api.POST("/user/profile", handlers.UpdateProfileHandler)
         api.POST("/user/password", handlers.UpdatePasswordHandler)
-        
+
         api.GET("/plans", handlers.GetPlansHandler)
         api.POST("/subscriptions", handlers.CreateSubscriptionHandler)
-        
+
         api.POST("/ai/ask", handlers.AIAskHandler)
         api.POST("/ai/ask-with-file", handlers.AskWithFileHandler)
-        
+
         api.GET("/user/subscriptions", handlers.GetUserSubscriptionsHandler)
         api.GET("/user/ai-usage", handlers.GetUserAIUsageHandler)
-        
+
         api.POST("/telegram/ensure-key", handlers.EnsureAPIKeyForTelegram)
         api.POST("/webapp/auth", handlers.WebAppAuthHandler)
-        
+
         api.POST("/chat/save", handlers.SaveChatMessage)
         api.GET("/chat/history", handlers.GetChatHistory)
-        
+
         api.POST("/knowledge/upload", handlers.UploadKnowledgeHandler)
         api.GET("/knowledge/list", handlers.ListKnowledgeHandler)
         api.DELETE("/knowledge/delete/:id", handlers.DeleteKnowledgeHandler)
-        
+
         api.POST("/notify", handlers.NotifyHandler)
-        
+
         api.POST("/keys/create", handlers.CreateAPIKeyHandler)
         api.GET("/user/keys", handlers.GetUserAPIKeysHandler)
         api.POST("/keys/revoke", handlers.RevokeAPIKeyHandler)
         api.POST("/keys/validate", handlers.ValidateAPIKeyHandler)
-        
+
         api.GET("/referral/stats", handlers.GetReferralStatsHandler)
         api.GET("/referral/friends", handlers.GetReferralFriendsHandler)
-        
+
         api.GET("/2fa/status", handlers.GetTwoFAStatus)
         api.GET("/2fa/generate", handlers.GenerateTwoFASecret)
         api.POST("/2fa/verify", handlers.VerifyTwoFACode)
         api.POST("/2fa/disable", handlers.DisableTwoFA)
-        
+
         api.GET("/2fa/settings", handlers.Get2FASettings)
         api.POST("/2fa/backup-codes", handlers.GenerateBackupCodes)
         api.POST("/2fa/verify-backup", handlers.VerifyWithBackupCode)
@@ -364,6 +366,12 @@ func main() {
         api.PUT("/crm/deals/:id/stage", handlers.UpdateDealStage)
 
         api.GET("/crm/stats", handlers.GetCRMStats)
+
+        // ===== Вложения к сделкам =====
+        api.POST("/crm/deals/:id/attachments", handlers.UploadDealAttachment)
+        api.GET("/crm/deals/:id/attachments", handlers.GetDealAttachments)
+        api.GET("/crm/attachments/:attachment_id/download", handlers.DownloadDealAttachment)
+        api.DELETE("/crm/attachments/:attachment_id", handlers.DeleteDealAttachment)
     }
 
     // ========== ЗАЩИЩЕННЫЕ API ==========
@@ -406,7 +414,7 @@ func main() {
         adminAPI.GET("/stats", handlers.AdminStatsHandler)
         adminAPI.GET("/users", handlers.AdminUsersHandler)
         adminAPI.PUT("/users/:id/block", handlers.AdminToggleUserBlockHandler)
-        
+
         // НОВЫЕ АДМИН РОУТЫ
         adminAPI.GET("/payments", handlers.AdminPaymentsHandler)
         adminAPI.GET("/payment-stats", handlers.AdminPaymentStats)
