@@ -280,6 +280,143 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* ===== AI-ассистент ===== */
+        .ai-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            z-index: 999;
+            border: none;
+        }
+        .ai-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+        .ai-fab i {
+            pointer-events: none;
+        }
+
+        .ai-chat-modal .modal-dialog {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            margin: 0;
+            width: 380px;
+            max-width: calc(100% - 60px);
+        }
+        .ai-chat-modal .modal-content {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .ai-chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ai-chat-header h5 {
+            margin: 0;
+            font-weight: 500;
+        }
+        .ai-chat-header button {
+            color: white;
+            opacity: 0.8;
+        }
+        .ai-chat-header button:hover {
+            opacity: 1;
+        }
+        .ai-chat-body {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+        .ai-message {
+            margin-bottom: 10px;
+            max-width: 85%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s;
+        }
+        .ai-message.user {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-message.assistant {
+            background-color: #e9ecef;
+            color: #212529;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .ai-message.system {
+            background-color: #ffc107;
+            color: #212529;
+            align-self: center;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        .ai-typing {
+            background-color: #e9ecef;
+            color: #6c757d;
+            align-self: flex-start;
+            border-radius: 18px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            font-style: italic;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .ai-chat-footer {
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 10px;
+        }
+        .ai-chat-footer input {
+            flex: 1;
+            border-radius: 20px;
+            border: 1px solid #ced4da;
+            padding: 8px 15px;
+            outline: none;
+        }
+        .ai-chat-footer input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        .ai-chat-footer button {
+            border-radius: 20px;
+            padding: 8px 20px;
+        }
     </style>
 </head>
 <body>
@@ -754,6 +891,32 @@
         </div>
     </div>
 
+    <!-- Кнопка AI-ассистента -->
+    <button class="ai-fab" onclick="openAIChat()" title="AI-ассистент CRM">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <!-- Модальное окно AI-чата -->
+    <div class="modal fade ai-chat-modal" id="aiChatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="ai-chat-header">
+                    <h5><i class="fas fa-robot me-2"></i>AI-ассистент CRM</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="ai-chat-body" id="aiChatMessages">
+                    <div class="ai-message assistant">
+                        Здравствуйте! Я AI-ассистент CRM. Задайте мне вопрос о ваших клиентах, сделках или статистике. Я могу проанализировать данные и помочь с рекомендациями.
+                    </div>
+                </div>
+                <div class="ai-chat-footer">
+                    <input type="text" id="aiChatInput" class="form-control" placeholder="Введите ваш вопрос..." onkeypress="if(event.key==='Enter') sendAIMessage()">
+                    <button class="btn btn-primary" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -1023,6 +1186,9 @@
                 const id = document.getElementById('dealId').value;
                 if (id) loadDealHistory(id);
             });
+
+            // Инициализация AI-чата
+            window.aiChatModal = new bootstrap.Modal(document.getElementById('aiChatModal'));
         });
 
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
@@ -1849,6 +2015,75 @@
                 close_to: dealCloseTo
             });
             window.location.href = `/api/crm/deals/export/${format}?${params.toString()}`;
+        }
+
+        // ==================== AI-АССИСТЕНТ CRM ====================
+        function openAIChat() {
+            window.aiChatModal.show();
+        }
+
+        function addAIMessage(text, sender) {
+            const container = document.getElementById('aiChatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `ai-message ${sender}`;
+            msgDiv.textContent = text;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const container = document.getElementById('aiChatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'ai-typing';
+            typingDiv.id = 'aiTypingIndicator';
+            typingDiv.textContent = 'Ассистент печатает...';
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typing = document.getElementById('aiTypingIndicator');
+            if (typing) typing.remove();
+        }
+
+        async function sendAIMessage() {
+            const input = document.getElementById('aiChatInput');
+            const question = input.value.trim();
+            if (!question) return;
+
+            // Добавляем сообщение пользователя
+            addAIMessage(question, 'user');
+            input.value = '';
+            showTypingIndicator();
+
+            try {
+                const response = await fetchWithLoader('/api/crm/ai/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: question,
+                        crm_context: true  // включаем CRM-контекст
+                    })
+                });
+
+                hideTypingIndicator();
+
+                if (!response.ok) {
+                    let errorMsg = 'Ошибка при обращении к AI';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) {}
+                    addAIMessage('❌ ' + errorMsg, 'system');
+                    return;
+                }
+
+                const data = await response.json();
+                addAIMessage(data.answer, 'assistant');
+            } catch (error) {
+                hideTypingIndicator();
+                addAIMessage('❌ Ошибка сети: ' + error.message, 'system');
+            }
         }
     </script>
 </body>

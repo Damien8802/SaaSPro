@@ -687,32 +687,44 @@ func GetDeals(c *gin.Context) {
     }
 
     if stage != "" {
-        if whereClause != "" { whereClause += " AND" }
+        if whereClause != "" {
+            whereClause += " AND"
+        }
         whereClause += " stage = $" + strconv.Itoa(len(countArgs)+1)
         countArgs = append(countArgs, stage)
     }
     if search != "" {
-        if whereClause != "" { whereClause += " AND" }
+        if whereClause != "" {
+            whereClause += " AND"
+        }
         whereClause += " title ILIKE '%' || $" + strconv.Itoa(len(countArgs)+1) + " || '%'"
         countArgs = append(countArgs, search)
     }
     if valueMin != "" {
-        if whereClause != "" { whereClause += " AND" }
+        if whereClause != "" {
+            whereClause += " AND"
+        }
         whereClause += " value >= $" + strconv.Itoa(len(countArgs)+1)
         countArgs = append(countArgs, valueMin)
     }
     if valueMax != "" {
-        if whereClause != "" { whereClause += " AND" }
+        if whereClause != "" {
+            whereClause += " AND"
+        }
         whereClause += " value <= $" + strconv.Itoa(len(countArgs)+1)
         countArgs = append(countArgs, valueMax)
     }
     if closeFrom != "" {
-        if whereClause != "" { whereClause += " AND" }
+        if whereClause != "" {
+            whereClause += " AND"
+        }
         whereClause += " expected_close >= $" + strconv.Itoa(len(countArgs)+1) + "::date"
         countArgs = append(countArgs, closeFrom)
     }
     if closeTo != "" {
-        if whereClause != "" { whereClause += " AND" }
+        if whereClause != "" {
+            whereClause += " AND"
+        }
         whereClause += " expected_close < ($" + strconv.Itoa(len(countArgs)+1) + "::date + '1 day'::interval)"
         countArgs = append(countArgs, closeTo)
     }
@@ -739,32 +751,44 @@ func GetDeals(c *gin.Context) {
     }
 
     if stage != "" {
-        if whereData != "" { whereData += " AND" }
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " stage = $" + strconv.Itoa(len(args)+1)
         args = append(args, stage)
     }
     if search != "" {
-        if whereData != "" { whereData += " AND" }
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " title ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%'"
         args = append(args, search)
     }
     if valueMin != "" {
-        if whereData != "" { whereData += " AND" }
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " value >= $" + strconv.Itoa(len(args)+1)
         args = append(args, valueMin)
     }
     if valueMax != "" {
-        if whereData != "" { whereData += " AND" }
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " value <= $" + strconv.Itoa(len(args)+1)
         args = append(args, valueMax)
     }
     if closeFrom != "" {
-        if whereData != "" { whereData += " AND" }
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " expected_close >= $" + strconv.Itoa(len(args)+1) + "::date"
         args = append(args, closeFrom)
     }
     if closeTo != "" {
-        if whereData != "" { whereData += " AND" }
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " expected_close < ($" + strconv.Itoa(len(args)+1) + "::date + '1 day'::interval)"
         args = append(args, closeTo)
     }
@@ -1746,22 +1770,30 @@ func exportFilteredCustomers(c *gin.Context) ([]Customer, error) {
         args = append(args, userID)
     }
     if status != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " status = $" + strconv.Itoa(len(args)+1)
         args = append(args, status)
     }
     if search != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " (name ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%')"
         args = append(args, search)
     }
     if createdFrom != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " created_at >= $" + strconv.Itoa(len(args)+1) + "::date"
         args = append(args, createdFrom)
     }
     if createdTo != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " created_at < ($" + strconv.Itoa(len(args)+1) + "::date + '1 day'::interval)"
         args = append(args, createdTo)
     }
@@ -1899,32 +1931,44 @@ func exportFilteredDeals(c *gin.Context) ([]Deal, error) {
         args = append(args, userID)
     }
     if stage != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " stage = $" + strconv.Itoa(len(args)+1)
         args = append(args, stage)
     }
     if search != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " title ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%'"
         args = append(args, search)
     }
     if valueMin != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " value >= $" + strconv.Itoa(len(args)+1)
         args = append(args, valueMin)
     }
     if valueMax != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " value <= $" + strconv.Itoa(len(args)+1)
         args = append(args, valueMax)
     }
     if closeFrom != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " expected_close >= $" + strconv.Itoa(len(args)+1) + "::date"
         args = append(args, closeFrom)
     }
     if closeTo != "" {
-        if where != "" { where += " AND" }
+        if where != "" {
+            where += " AND"
+        }
         where += " expected_close < ($" + strconv.Itoa(len(args)+1) + "::date + '1 day'::interval)"
         args = append(args, closeTo)
     }

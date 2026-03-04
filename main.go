@@ -20,32 +20,11 @@ import (
     "subscription-system/database"
     "subscription-system/handlers"
     "subscription-system/middleware"
-    _ "subscription-system/docs" // для swagger
+    _ "subscription-system/docs"
 )
 
 //go:embed templates/*.html
 var templateFS embed.FS
-
-// @title SaaSPro API
-// @version 3.0
-// @description API для управления подписками, AI-чатом и платежами
-// @termsOfService http://saaspro.ru/terms
-
-// @contact.name Поддержка API
-// @contact.url http://saaspro.ru/support
-// @contact.email support@saaspro.ru
-
-// @license.name MIT
-// @license.url https://opensource.org/licenses/MIT
-
-// @host localhost:8080
-// @BasePath /api
-// @schemes http https
-
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Введите токен в формате: Bearer <token>
 
 func main() {
     if err := godotenv.Load(); err != nil {
@@ -61,7 +40,6 @@ func main() {
     defer database.CloseDB()
 
     handlers.InitAuthHandler(cfg)
-    // Инициализация сервиса уведомлений для CRM
     handlers.InitNotifier(cfg)
 
     if cfg.Env == "release" {
@@ -75,15 +53,13 @@ func main() {
     r.SetTrustedProxies(cfg.TrustedProxies)
     r.Use(middleware.SetupCORS(cfg))
 
-    // ========== НОВЫЕ MIDDLEWARE БЕЗОПАСНОСТИ ==========
-    // Rate limiting для защиты от брутфорса
-    rateLimiter := middleware.NewRateLimiter(5, time.Minute) // 5 попыток в минуту
+    // ========== MIDDLEWARE БЕЗОПАСНОСТИ ==========
+    // Увеличил лимит для API с 5 до 30 запросов в минуту, чтобы AI не блокировался
+    rateLimiter := middleware.NewRateLimiter(30, time.Minute)
 
-    // Security monitor для отслеживания подозрительной активности
     r.Use(middleware.SecurityMonitor())
 
-    // Защита от брутфорса на роутах авторизации
-    authLimiter := middleware.NewRateLimiter(3, time.Minute) // 3 попытки в минуту для входа
+    authLimiter := middleware.NewRateLimiter(3, time.Minute)
 
     // Загрузка шаблонов
     subFS, err := fs.Sub(templateFS, "templates")
@@ -170,7 +146,7 @@ func main() {
         public.GET("/partner", handlers.PartnerHandler)
     }
 
-    // ========== СТРАНИЦЫ АВТОРИЗАЦИИ (ТОЛЬКО GET) ==========
+    // ========== СТРАНИЦЫ АВТОРИЗАЦИИ ==========
     authPages := r.Group("/")
     {
         authPages.GET("/login", handlers.LoginPageHandler)
@@ -178,7 +154,7 @@ func main() {
         authPages.GET("/forgot-password", handlers.ForgotPasswordHandler)
     }
 
-    // ========== API АВТОРИЗАЦИИ С ЗАЩИТОЙ ОТ БРУТФОРСА ==========
+    // ========== API АВТОРИЗАЦИИ С ЗАЩИТОЙ ==========
     authAPI := r.Group("/api/auth")
     authAPI.Use(func(c *gin.Context) {
         ip := c.ClientIP()
@@ -201,7 +177,7 @@ func main() {
         authAPI.GET("/trusted-devices/list", handlers.GetTrustedDevices)
     }
 
-    // ========== ПАРТНЁРСКАЯ ПРОГРАММА (TELEGRAM STARS) ==========
+    // ========== ПАРТНЁРСКАЯ ПРОГРАММА ==========
     referralAPI := r.Group("/api/referral")
     referralAPI.Use(middleware.AuthMiddleware(cfg))
     {
@@ -210,8 +186,6 @@ func main() {
         referralAPI.GET("/commissions", handlers.GetReferralCommissions)
         referralAPI.POST("/commissions/pay", handlers.PayCommission)
     }
-
-    // Публичный эндпоинт для отслеживания переходов
     r.GET("/ref", handlers.ProcessReferral)
 
     // ========== ВЕРИФИКАЦИЯ ==========
@@ -284,8 +258,6 @@ func main() {
         logistics.GET("/logistics", handlers.LogisticsHandler)
         logistics.GET("/track", handlers.TrackHandler)
     }
-
-    // ========== API ДОСТАВКИ ==========
     deliveryAPI := r.Group("/api/delivery")
     deliveryAPI.Use(middleware.AuthMiddleware(cfg))
     {
@@ -305,95 +277,68 @@ func main() {
         }
         c.Next()
     })
-    // NEW: Добавляем middleware аутентификации
     api.Use(middleware.AuthMiddleware(cfg))
     {
         api.GET("/health", handlers.HealthHandler)
         api.GET("/crm/health", handlers.CRMHealthHandler)
         api.GET("/system/stats", handlers.SystemStatsHandler)
         api.GET("/test", handlers.TestHandler)
-
         api.POST("/user/profile", handlers.UpdateProfileHandler)
         api.POST("/user/password", handlers.UpdatePasswordHandler)
-
         api.GET("/plans", handlers.GetPlansHandler)
         api.POST("/subscriptions", handlers.CreateSubscriptionHandler)
-
         api.POST("/ai/ask", handlers.AIAskHandler)
         api.POST("/ai/ask-with-file", handlers.AskWithFileHandler)
-
         api.GET("/user/subscriptions", handlers.GetUserSubscriptionsHandler)
         api.GET("/user/ai-usage", handlers.GetUserAIUsageHandler)
-
         api.POST("/telegram/ensure-key", handlers.EnsureAPIKeyForTelegram)
         api.POST("/webapp/auth", handlers.WebAppAuthHandler)
-
         api.POST("/chat/save", handlers.SaveChatMessage)
         api.GET("/chat/history", handlers.GetChatHistory)
-
         api.POST("/knowledge/upload", handlers.UploadKnowledgeHandler)
         api.GET("/knowledge/list", handlers.ListKnowledgeHandler)
         api.DELETE("/knowledge/delete/:id", handlers.DeleteKnowledgeHandler)
-
         api.POST("/notify", handlers.NotifyHandler)
-
         api.POST("/keys/create", handlers.CreateAPIKeyHandler)
         api.GET("/user/keys", handlers.GetUserAPIKeysHandler)
         api.POST("/keys/revoke", handlers.RevokeAPIKeyHandler)
         api.POST("/keys/validate", handlers.ValidateAPIKeyHandler)
-
         api.GET("/referral/stats", handlers.GetReferralStatsHandler)
         api.GET("/referral/friends", handlers.GetReferralFriendsHandler)
-
         api.GET("/2fa/status", handlers.GetTwoFAStatus)
         api.GET("/2fa/generate", handlers.GenerateTwoFASecret)
         api.POST("/2fa/verify", handlers.VerifyTwoFACode)
         api.POST("/2fa/disable", handlers.DisableTwoFA)
-
         api.GET("/2fa/settings", handlers.Get2FASettings)
         api.POST("/2fa/backup-codes", handlers.GenerateBackupCodes)
         api.POST("/2fa/verify-backup", handlers.VerifyWithBackupCode)
         api.POST("/2fa/trust-device", handlers.TrustDevice)
         api.GET("/2fa/check-trust", handlers.CheckTrustedDevice)
-
         api.GET("/crm/customers", handlers.GetCustomers)
         api.POST("/crm/customers", handlers.CreateCustomer)
         api.PUT("/crm/customers/:id", handlers.UpdateCustomer)
         api.DELETE("/crm/customers/:id", handlers.DeleteCustomer)
-
         api.GET("/crm/deals", handlers.GetDeals)
         api.POST("/crm/deals", handlers.CreateDeal)
         api.PUT("/crm/deals/:id", handlers.UpdateDeal)
         api.DELETE("/crm/deals/:id", handlers.DeleteDeal)
         api.PUT("/crm/deals/:id/stage", handlers.UpdateDealStage)
-
         api.GET("/crm/stats", handlers.GetCRMStats)
-
-        // ===== Вложения к сделкам =====
         api.POST("/crm/deals/:id/attachments", handlers.UploadDealAttachment)
         api.GET("/crm/deals/:id/attachments", handlers.GetDealAttachments)
         api.GET("/crm/attachments/:attachment_id/download", handlers.DownloadDealAttachment)
         api.DELETE("/crm/attachments/:attachment_id", handlers.DeleteDealAttachment)
-
         api.GET("/crm/advanced-stats", handlers.GetCRMAdvancedStats)
-
-        // Массовые операции для клиентов
         api.POST("/crm/customers/batch/delete", handlers.BatchDeleteCustomers)
         api.PUT("/crm/customers/batch/status", handlers.BatchUpdateCustomersStatus)
-
-        // Массовые операции для сделок
         api.POST("/crm/deals/batch/delete", handlers.BatchDeleteDeals)
         api.PUT("/crm/deals/batch/stage", handlers.BatchUpdateDealsStage)
         api.PUT("/crm/deals/batch/responsible", handlers.BatchUpdateDealsResponsible)
-
-        // Экспорт
         api.GET("/crm/customers/export/csv", handlers.ExportCustomersCSV)
         api.GET("/crm/customers/export/excel", handlers.ExportCustomersExcel)
         api.GET("/crm/deals/export/csv", handlers.ExportDealsCSV)
         api.GET("/crm/deals/export/excel", handlers.ExportDealsExcel)
-
         api.GET("/crm/history/:type/:id", handlers.GetEntityHistory)
-
         api.POST("/crm/ai/ask", handlers.AIAskHandler)
     }
 
@@ -405,24 +350,20 @@ func main() {
         secureAPI.GET("/user/ai-history", handlers.GetUserAIHistoryHandler)
     }
 
-    // ========== УВЕДОМЛЕНИЯ ==========
     r.GET("/notify", handlers.NotifyPageHandler)
 
-    // ========== ПОЛЬЗОВАТЕЛЬСКИЕ КЛЮЧИ ==========
     userKeys := r.Group("/api/user/keys")
     userKeys.Use(middleware.AuthMiddleware(cfg))
     {
         userKeys.DELETE("/:id", handlers.RevokeAPIKeyHandler)
     }
 
-    // ========== API V1 ==========
     v1 := r.Group("/api/v1")
     v1.Use(middleware.APIKeyAuthMiddleware())
     {
-        // Зарезервировано для будущих эндпоинтов
+        // Зарезервировано
     }
 
-    // ========== АДМИН API ==========
     adminAPI := r.Group("/api/admin")
     adminAPI.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
     {
@@ -437,8 +378,6 @@ func main() {
         adminAPI.GET("/stats", handlers.AdminStatsHandler)
         adminAPI.GET("/users", handlers.AdminUsersHandler)
         adminAPI.PUT("/users/:id/block", handlers.AdminToggleUserBlockHandler)
-
-        // НОВЫЕ АДМИН РОУТЫ
         adminAPI.GET("/payments", handlers.AdminPaymentsHandler)
         adminAPI.GET("/payment-stats", handlers.AdminPaymentStats)
         adminAPI.GET("/security-logs", handlers.AdminSecurityLogs)
@@ -448,10 +387,8 @@ func main() {
         adminAPI.POST("/users/delete", handlers.AdminDeleteUser)
     }
 
-    // ========== SWAGGER ==========
     r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-    // ========== 404 ==========
     r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
@@ -459,7 +396,6 @@ func main() {
         })
     })
 
-    // ========== БАННЕР ==========
     port := ":" + cfg.Port
     baseURL := "http://localhost:" + cfg.Port
     fmt.Printf("\n============================================================\n")

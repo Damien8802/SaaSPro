@@ -13,15 +13,18 @@ import (
     "strings"
     "time"
 
+    "github.com/gin-gonic/gin"
+    "github.com/jackc/pgx/v5" // добавлен импорт
+
     "subscription-system/config"
     "subscription-system/database"
     "subscription-system/internal/yandex_search"
     "subscription-system/models"
-    "github.com/gin-gonic/gin"
 )
 
 type AskRequest struct {
-    Question string `json:"question" binding:"required"`
+    Question   string `json:"question" binding:"required"`
+    CRMContext bool   `json:"crm_context"` // новый флаг
 }
 
 type YandexGPTRequest struct {
@@ -53,6 +56,171 @@ type YandexGPTResponse struct {
         ModelVersion string `json:"modelVersion"`
     } `json:"result"`
 }
+
+// --- НОВЫЕ ФУНКЦИИ ДЛЯ CRM-КОНТЕКСТА ---
+
+// getCRMStats возвращает статистику CRM для пользователя
+func getCRMStats(ctx context.Context, userID string) (map[string]interface{}, error) {
+    stats := make(map[string]interface{})
+
+    // Общее количество клиентов
+    var totalCustomers int
+    err := database.Pool.QueryRow(ctx, `
+        SELECT COUNT(*) FROM crm_customers WHERE user_id = $1::uuid
+    `, userID).Scan(&totalCustomers)
+    if err != nil && err != pgx.ErrNoRows {
+        return nil, err
+    }
+    stats["total_customers"] = totalCustomers
+
+    // Общее количество сделок
+    var totalDeals int
+    err = database.Pool.QueryRow(ctx, `
+        SELECT COUNT(*) FROM crm_deals WHERE user_id = $1::uuid
+    `, userID).Scan(&totalDeals)
+    if err != nil && err != pgx.ErrNoRows {
+        return nil, err
+    }
+    stats["total_deals"] = totalDeals
+
+    // Общая сумма сделок
+    var totalValue float64
+    err = database.Pool.QueryRow(ctx, `
+        SELECT COALESCE(SUM(value), 0) FROM crm_deals WHERE user_id = $1::uuid
+    `, userID).Scan(&totalValue)
+    if err != nil && err != pgx.ErrNoRows {
+        return nil, err
+    }
+    stats["total_value"] = totalValue
+
+    // Распределение по стадиям
+    rows, err := database.Pool.Query(ctx, `
+        SELECT stage, COUNT(*) FROM crm_deals 
+        WHERE user_id = $1::uuid GROUP BY stage
+    `, userID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    stageStats := make(map[string]int)
+    for rows.Next() {
+        var stage string
+        var count int
+        if err := rows.Scan(&stage, &count); err != nil {
+            return nil, err
+        }
+        stageStats[stage] = count
+    }
+    stats["stage_stats"] = stageStats
+
+    return stats, nil
+}
+
+// getRecentCRMRecords возвращает последние 5 клиентов и сделок
+func getRecentCRMRecords(ctx context.Context, userID string, limit int) (customers []string, deals []string, err error) {
+    // Последние клиенты
+    rows, err := database.Pool.Query(ctx, `
+        SELECT name, email, company, status
+        FROM crm_customers
+        WHERE user_id = $1::uuid
+        ORDER BY created_at DESC
+        LIMIT $2
+    `, userID, limit)
+    if err != nil {
+        return nil, nil, err
+    }
+    defer rows.Close()
+    for rows.Next() {
+        var name, email, company, status string
+        if err := rows.Scan(&name, &email, &company, &status); err != nil {
+            return nil, nil, err
+        }
+        line := fmt.Sprintf("👤 %s (%s) — %s, статус: %s", name, email, company, status)
+        customers = append(customers, line)
+    }
+
+    // Последние сделки
+    rows, err = database.Pool.Query(ctx, `
+        SELECT title, value, stage, expected_close
+        FROM crm_deals
+        WHERE user_id = $1::uuid
+        ORDER BY created_at DESC
+        LIMIT $2
+    `, userID, limit)
+    if err != nil {
+        return nil, nil, err
+    }
+    defer rows.Close()
+    for rows.Next() {
+        var title, stage string
+        var value float64
+        var expectedClose *time.Time
+        if err := rows.Scan(&title, &value, &stage, &expectedClose); err != nil {
+            return nil, nil, err
+        }
+        closeStr := "не указана"
+        if expectedClose != nil {
+            closeStr = expectedClose.Format("2006-01-02")
+        }
+        line := fmt.Sprintf("💰 %s — %.2f руб., стадия: %s, ожидаемая дата: %s", title, value, stage, closeStr)
+        deals = append(deals, line)
+    }
+
+    return customers, deals, nil
+}
+
+// searchCRM выполняет полнотекстовый поиск по клиентам и сделкам
+func searchCRM(ctx context.Context, userID, query string) ([]string, error) {
+    var results []string
+
+    // Поиск по клиентам (имя, email, компания)
+    rows, err := database.Pool.Query(ctx, `
+        SELECT name, email, company, status
+        FROM crm_customers
+        WHERE user_id = $1::uuid
+          AND (name ILIKE '%' || $2 || '%' 
+               OR email ILIKE '%' || $2 || '%' 
+               OR company ILIKE '%' || $2 || '%')
+        LIMIT 5
+    `, userID, query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    for rows.Next() {
+        var name, email, company, status string
+        if err := rows.Scan(&name, &email, &company, &status); err != nil {
+            return nil, err
+        }
+        results = append(results, fmt.Sprintf("Клиент: %s (%s) — %s, статус: %s", name, email, company, status))
+    }
+
+    // Поиск по сделкам (название, комментарий)
+    rows, err = database.Pool.Query(ctx, `
+        SELECT title, value, stage
+        FROM crm_deals
+        WHERE user_id = $1::uuid
+          AND (title ILIKE '%' || $2 || '%' 
+               OR comment ILIKE '%' || $2 || '%')
+        LIMIT 5
+    `, userID, query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    for rows.Next() {
+        var title, stage string
+        var value float64
+        if err := rows.Scan(&title, &value, &stage); err != nil {
+            return nil, err
+        }
+        results = append(results, fmt.Sprintf("Сделка: %s — %.2f руб., стадия: %s", title, value, stage))
+    }
+
+    return results, nil
+}
+
+// --- КОНЕЦ НОВЫХ ФУНКЦИЙ ---
 
 // Поиск по документам пользователя (RAG)
 func searchUserDocs(ctx context.Context, userID, query string, limit int) ([]string, error) {
@@ -149,7 +317,7 @@ func getWeather(city string) (string, error) {
 func GetUserActivePlan(userID string) (*models.Plan, *models.UserSubscription, error) {
     var plan models.Plan
     var sub models.UserSubscription
-    
+
     err := database.Pool.QueryRow(context.Background(), `
         SELECT 
             p.id, p.name, p.code, p.description, 
@@ -177,11 +345,11 @@ func GetUserActivePlan(userID string) (*models.Plan, *models.UserSubscription, e
         &sub.AIQuotaUsed, &sub.AIQuotaReset,
         &sub.CreatedAt, &sub.UpdatedAt,
     )
-    
+
     if err != nil {
         return nil, nil, err
     }
-    
+
     return &plan, &sub, nil
 }
 
@@ -264,6 +432,50 @@ func AIAskHandler(c *gin.Context) {
         }
     }
 
+    // ========== CRM-КОНТЕКСТ ==========
+    if req.CRMContext {
+        // Получаем статистику CRM
+        stats, err := getCRMStats(c.Request.Context(), userID.(string))
+        if err != nil {
+            log.Printf("⚠️ Ошибка получения CRM-статистики: %v", err)
+        } else {
+            extraInfo = append(extraInfo, fmt.Sprintf("📊 Статистика CRM:\n- Клиентов: %v\n- Сделок: %v\n- Общая сумма: %.2f руб.",
+                stats["total_customers"], stats["total_deals"], stats["total_value"]))
+            if stageStats, ok := stats["stage_stats"].(map[string]int); ok && len(stageStats) > 0 {
+                var stages []string
+                for stage, count := range stageStats {
+                    stages = append(stages, fmt.Sprintf("%s: %d", stage, count))
+                }
+                extraInfo = append(extraInfo, "Распределение по стадиям: "+strings.Join(stages, ", "))
+            }
+        }
+
+        // Получаем последние записи
+        recentCustomers, recentDeals, err := getRecentCRMRecords(c.Request.Context(), userID.(string), 5)
+        if err != nil {
+            log.Printf("⚠️ Ошибка получения последних записей CRM: %v", err)
+        } else {
+            if len(recentCustomers) > 0 {
+                extraInfo = append(extraInfo, "🆕 Последние клиенты:\n"+strings.Join(recentCustomers, "\n"))
+            }
+            if len(recentDeals) > 0 {
+                extraInfo = append(extraInfo, "🆕 Последние сделки:\n"+strings.Join(recentDeals, "\n"))
+            }
+        }
+
+        // Если в вопросе есть ключевые слова для поиска, выполняем поиск по CRM
+        lowerQ := strings.ToLower(req.Question)
+        if strings.Contains(lowerQ, "найди") || strings.Contains(lowerQ, "поиск") || strings.Contains(lowerQ, "кто") || strings.Contains(lowerQ, "что") {
+            searchResults, err := searchCRM(c.Request.Context(), userID.(string), req.Question)
+            if err != nil {
+                log.Printf("⚠️ Ошибка поиска по CRM: %v", err)
+            } else if len(searchResults) > 0 {
+                extraInfo = append(extraInfo, "🔍 Результаты поиска по CRM:\n"+strings.Join(searchResults, "\n"))
+            }
+        }
+    }
+    // ========== КОНЕЦ CRM-КОНТЕКСТА ==========
+
     // Собираем системный промпт
     var sb strings.Builder
     sb.WriteString(`Ты — профессиональный AI-ассистент платформы ServerAgent.
@@ -280,6 +492,7 @@ func AIAskHandler(c *gin.Context) {
 • Отвечать на вопросы об оплате
 • Давать ссылки на поддержку
 • Консультировать по функционалу платформы
+• Если пользователь запросил CRM-контекст, используй предоставленную информацию о его клиентах и сделках для ответов.
 
 ⚠️ Важно:
 • Всегда предлагай лучшее решение под запрос пользователя
@@ -298,7 +511,7 @@ func AIAskHandler(c *gin.Context) {
         }
     }
 
-    // Добавляем дополнительную информацию (погода, новости)
+    // Добавляем дополнительную информацию (погода, новости, CRM)
     for _, info := range extraInfo {
         sb.WriteString(info + "\n\n")
     }
@@ -339,7 +552,7 @@ func AIAskHandler(c *gin.Context) {
     if plan != nil && !isAdmin && subscription != nil {
         caps := plan.GetAICapabilities()
         maxRequests := int(caps["max_requests"].(float64))
-        
+
         // Если квота обнулилась (прошёл день)
         if time.Now().After(subscription.AIQuotaReset) {
             _, err = database.Pool.Exec(c.Request.Context(), `
@@ -352,7 +565,7 @@ func AIAskHandler(c *gin.Context) {
             }
             subscription.AIQuotaUsed = 0
         }
-        
+
         if subscription.AIQuotaUsed >= maxRequests {
             c.JSON(http.StatusForbidden, gin.H{
                 "error":       "Превышен лимит бесплатных запросов. Купите подписку для продолжения.",
@@ -392,7 +605,7 @@ func AIAskHandler(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
         return
     }
-    
+
     apiReq.Header.Set("Authorization", "Api-Key "+cfg.YandexAPIKey)
     apiReq.Header.Set("Content-Type", "application/json")
     apiReq.Header.Set("x-folder-id", cfg.YandexFolderID)
@@ -438,7 +651,7 @@ func AIAskHandler(c *gin.Context) {
     // ========== СПИСЫВАЕМ ТОКЕНЫ ==========
     if plan != nil && !isAdmin && subscription != nil {
         totalTokens, _ := strconv.Atoi(yandexResp.Result.Usage.TotalTokens)
-        
+
         _, err = database.Pool.Exec(c.Request.Context(), `
             UPDATE user_subscriptions 
             SET ai_quota_used = ai_quota_used + $1 
@@ -449,12 +662,12 @@ func AIAskHandler(c *gin.Context) {
         } else {
             caps := plan.GetAICapabilities()
             maxRequests := int(caps["max_requests"].(float64))
-            
+
             var newUsed int
-            database.Pool.QueryRow(c.Request.Context(), 
+            database.Pool.QueryRow(c.Request.Context(),
                 "SELECT ai_quota_used FROM user_subscriptions WHERE user_id = $1::uuid AND status = 'active'",
                 userID).Scan(&newUsed)
-            
+
             log.Printf("✅ Списано %d токенов, осталось %d", totalTokens, maxRequests-newUsed)
         }
     }
