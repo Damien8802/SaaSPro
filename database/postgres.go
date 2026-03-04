@@ -26,9 +26,22 @@ func InitDB(cfg *config.Config) error {
     }
 
     log.Println("✅ Подключение к PostgreSQL установлено")
+
+    // Существующие функции
     if err := createUsersTable(); err != nil {
         return fmt.Errorf("failed to create users table: %w", err)
     }
+    // НОВЫЕ ФУНКЦИИ ДЛЯ УВЕДОМЛЕНИЙ
+    if err := addTelegramIDToUsers(); err != nil {
+        return fmt.Errorf("failed to add telegram_id: %w", err)
+    }
+    if err := createNotificationSettingsTable(); err != nil {
+        return fmt.Errorf("failed to create notification settings table: %w", err)
+    }
+    if err := createNotificationLogTable(); err != nil {
+        return fmt.Errorf("failed to create notification log table: %w", err)
+    }
+    // Остальные существующие таблицы
     if err := createSubscriptionsTables(); err != nil {
         return fmt.Errorf("failed to create subscriptions tables: %w", err)
     }
@@ -68,6 +81,8 @@ func CloseDB() {
         log.Println("🛑 Соединение с PostgreSQL закрыто")
     }
 }
+
+// ========== СУЩЕСТВУЮЩИЕ ФУНКЦИИ (КОТОРЫЕ БЫЛИ У ПОЛЬЗОВАТЕЛЯ) ==========
 
 func createUsersTable() error {
     // pgcrypto для gen_random_uuid()
@@ -364,7 +379,7 @@ func createReferralProgramTables() error {
     if err != nil {
         return err
     }
-    
+
     // Таблица комиссий
     _, err = Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS referral_commissions (
@@ -380,7 +395,7 @@ func createReferralProgramTables() error {
     if err != nil {
         return err
     }
-    
+
     // Индексы для быстрого поиска
     _, err = Pool.Exec(context.Background(), `
         CREATE INDEX IF NOT EXISTS idx_referral_programs_user ON referral_programs(user_id);
@@ -390,7 +405,7 @@ func createReferralProgramTables() error {
     if err != nil {
         return err
     }
-    
+
     log.Println("✅ Таблицы партнёрских программ готовы")
     return nil
 }
@@ -681,5 +696,66 @@ func createTestUser() error {
         }
         log.Println("✅ Создан тестовый пользователь: admin@example.com / admin123")
     }
+    return nil
+}
+
+// ========== НОВЫЕ ФУНКЦИИ ДЛЯ УВЕДОМЛЕНИЙ ==========
+
+func addTelegramIDToUsers() error {
+    _, err := Pool.Exec(context.Background(), `
+        DO $$ 
+        BEGIN 
+            BEGIN
+                ALTER TABLE users ADD COLUMN telegram_id BIGINT UNIQUE;
+            EXCEPTION
+                WHEN duplicate_column THEN 
+                    NULL;
+            END;
+        END $$;
+    `)
+    if err != nil {
+        return fmt.Errorf("failed to add telegram_id to users: %w", err)
+    }
+    log.Println("✅ Поле telegram_id добавлено в таблицу users (если отсутствовало)")
+    return nil
+}
+
+func createNotificationSettingsTable() error {
+    _, err := Pool.Exec(context.Background(), `
+        CREATE TABLE IF NOT EXISTS user_notification_settings (
+            user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            telegram_enabled BOOLEAN DEFAULT false,
+            email_enabled BOOLEAN DEFAULT true,
+            events TEXT[] DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_notification_settings_user ON user_notification_settings(user_id);
+    `)
+    if err != nil {
+        return fmt.Errorf("failed to create notification_settings table: %w", err)
+    }
+    log.Println("✅ Таблица user_notification_settings готова")
+    return nil
+}
+
+func createNotificationLogTable() error {
+    _, err := Pool.Exec(context.Background(), `
+        CREATE TABLE IF NOT EXISTS notification_log (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+            type VARCHAR(50) NOT NULL,
+            details JSONB,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_notification_log_user ON notification_log(user_id);
+        CREATE INDEX IF NOT EXISTS idx_notification_log_created ON notification_log(created_at);
+    `)
+    if err != nil {
+        return fmt.Errorf("failed to create notification_log table: %w", err)
+    }
+    log.Println("✅ Таблица notification_log готова")
     return nil
 }
