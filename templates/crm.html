@@ -1997,126 +1997,182 @@
         }
 
         function renderFunnelChart(stageStats) {
-            const ctx = document.getElementById('funnelChart').getContext('2d');
-            if (window.funnelChart) window.funnelChart.destroy();
-            const stages = stageStats.map(s => s.stage);
-            const counts = stageStats.map(s => s.count);
-            const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
-            window.funnelChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: stages,
-                    datasets: [{
+    const ctx = document.getElementById('funnelChart').getContext('2d');
+    // Безопасно уничтожаем предыдущий график, если он существует
+    if (window.funnelChart) {
+        if (typeof window.funnelChart.destroy === 'function') {
+            window.funnelChart.destroy();
+        } else {
+            delete window.funnelChart;
+        }
+    }
+    // Если данных нет, используем пустой массив
+    if (!stageStats || stageStats.length === 0) {
+        stageStats = [];
+    }
+    const stages = stageStats.map(s => s.stage);
+    const counts = stageStats.map(s => s.count);
+    const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+    try {
+        window.funnelChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: stages,
+                datasets: [{
+                    label: 'Количество сделок',
+                    data: counts,
+                    backgroundColor: colors.slice(0, stages.length),
+                    borderColor: 'white',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    } catch (e) {
+        console.error('Ошибка создания funnelChart:', e);
+        window.funnelChart = null;
+    }
+}
+
+function renderResponsibleChart(responsibleStats) {
+    const ctx = document.getElementById('responsibleChart').getContext('2d');
+    if (window.responsibleChart) {
+        if (typeof window.responsibleChart.destroy === 'function') {
+            window.responsibleChart.destroy();
+        } else {
+            delete window.responsibleChart;
+        }
+    }
+    if (!responsibleStats || responsibleStats.length === 0) {
+        responsibleStats = [];
+    }
+    const labels = responsibleStats.map(r => r.responsible);
+    const counts = responsibleStats.map(r => r.deals_count);
+    const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
+    try {
+        window.responsibleChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Количество сделок',
+                    data: counts,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderColor: 'white',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    } catch (e) {
+        console.error('Ошибка создания responsibleChart:', e);
+        window.responsibleChart = null;
+    }
+}
+
+function renderSourceChart(sourceStats) {
+    const ctx = document.getElementById('sourceChart').getContext('2d');
+    if (window.sourceChart) {
+        if (typeof window.sourceChart.destroy === 'function') {
+            window.sourceChart.destroy();
+        } else {
+            delete window.sourceChart;
+        }
+    }
+    if (!sourceStats || sourceStats.length === 0) {
+        sourceStats = [];
+    }
+    const labels = sourceStats.map(s => s.source);
+    const counts = sourceStats.map(s => s.deals_count);
+    const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
+    try {
+        window.sourceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: counts,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+    } catch (e) {
+        console.error('Ошибка создания sourceChart:', e);
+        window.sourceChart = null;
+    }
+}
+
+function renderMonthlyChart(monthlyStats) {
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    if (window.monthlyChart) {
+        if (typeof window.monthlyChart.destroy === 'function') {
+            window.monthlyChart.destroy();
+        } else {
+            delete window.monthlyChart;
+        }
+    }
+    if (!monthlyStats || monthlyStats.length === 0) {
+        monthlyStats = [];
+    }
+    const months = monthlyStats.map(m => m.month);
+    const dealsCount = monthlyStats.map(m => m.deals_count);
+    const values = monthlyStats.map(m => m.total_value);
+    try {
+        window.monthlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    {
                         label: 'Количество сделок',
-                        data: counts,
-                        backgroundColor: colors.slice(0, stages.length),
-                        borderColor: 'white',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
-
-        function renderResponsibleChart(responsibleStats) {
-            const ctx = document.getElementById('responsibleChart').getContext('2d');
-            if (window.responsibleChart) window.responsibleChart.destroy();
-            const labels = responsibleStats.map(r => r.responsible);
-            const counts = responsibleStats.map(r => r.deals_count);
-            const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
-            window.responsibleChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Количество сделок',
-                        data: counts,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderColor: 'white',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
-
-        function renderSourceChart(sourceStats) {
-            const ctx = document.getElementById('sourceChart').getContext('2d');
-            if (window.sourceChart) window.sourceChart.destroy();
-            const labels = sourceStats.map(s => s.source);
-            const counts = sourceStats.map(s => s.deals_count);
-            const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
-            window.sourceChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: counts,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right' } }
-                }
-            });
-        }
-
-        function renderMonthlyChart(monthlyStats) {
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
-            if (window.monthlyChart) window.monthlyChart.destroy();
-            const months = monthlyStats.map(m => m.month);
-            const dealsCount = monthlyStats.map(m => m.deals_count);
-            const values = monthlyStats.map(m => m.total_value);
-
-            window.monthlyChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [
-                        {
-                            label: 'Количество сделок',
-                            data: dealsCount,
-                            borderColor: '#4e73df',
-                            backgroundColor: 'rgba(78,115,223,0.05)',
-                            yAxisID: 'y',
-                            tension: 0.1
-                        },
-                        {
-                            label: 'Сумма сделок',
-                            data: values,
-                            borderColor: '#1cc88a',
-                            backgroundColor: 'rgba(28,200,138,0.05)',
-                            yAxisID: 'y1',
-                            tension: 0.1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { position: 'top' } },
-                    scales: {
-                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Количество' } },
-                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Сумма' }, grid: { drawOnChartArea: false } }
+                        data: dealsCount,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78,115,223,0.05)',
+                        yAxisID: 'y',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Сумма сделок',
+                        data: values,
+                        borderColor: '#1cc88a',
+                        backgroundColor: 'rgba(28,200,138,0.05)',
+                        yAxisID: 'y1',
+                        tension: 0.1
                     }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Количество' } },
+                    y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Сумма' }, grid: { drawOnChartArea: false } }
                 }
-            });
-        }
-
+            }
+        });
+    } catch (e) {
+        console.error('Ошибка создания monthlyChart:', e);
+        window.monthlyChart = null;
+    }
+}
         // ==================== ЭКСПОРТ ====================
         function exportCustomers(format) {
             const params = new URLSearchParams({

@@ -406,6 +406,22 @@ func CreateCustomer(c *gin.Context) {
         return
     }
 
+    // Проверка на существующий email
+    if req.Email != "" {
+        var exists bool
+        err := database.Pool.QueryRow(c.Request.Context(),
+            "SELECT EXISTS(SELECT 1 FROM crm_customers WHERE email = $1)", req.Email).Scan(&exists)
+        if err != nil {
+            log.Printf("❌ CreateCustomer check email error: %v", err)
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error checking email"})
+            return
+        }
+        if exists {
+            c.JSON(http.StatusConflict, gin.H{"error": "Клиент с таким email уже существует"})
+            return
+        }
+    }
+
     var id string
     err := database.Pool.QueryRow(c.Request.Context(), `
         INSERT INTO crm_customers (name, email, phone, company, status, responsible, source, comment, user_id, created_at, last_seen)
@@ -415,7 +431,8 @@ func CreateCustomer(c *gin.Context) {
         req.Responsible, req.Source, req.Comment, userID).Scan(&id)
 
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        log.Printf("❌ CreateCustomer insert error: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
 
@@ -444,19 +461,9 @@ func UpdateCustomer(c *gin.Context) {
     userID := getUserIDFromContext(c)
     isAdmin := isAdmin(c)
 
-    var oldData Customer
-    err := database.Pool.QueryRow(c.Request.Context(), `
-        SELECT name, email, phone, company, status, responsible, source, comment
-        FROM crm_customers WHERE id = $1
-    `, id).Scan(&oldData.Name, &oldData.Email, &oldData.Phone, &oldData.Company,
-        &oldData.Status, &oldData.Responsible, &oldData.Source, &oldData.Comment)
-    if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
-        return
-    }
-
+    // Проверка прав доступа
     var ownerID string
-    err = database.Pool.QueryRow(c.Request.Context(), "SELECT user_id FROM crm_customers WHERE id = $1", id).Scan(&ownerID)
+    err := database.Pool.QueryRow(c.Request.Context(), "SELECT user_id FROM crm_customers WHERE id = $1", id).Scan(&ownerID)
     if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
         return
@@ -464,6 +471,34 @@ func UpdateCustomer(c *gin.Context) {
     if !isAdmin && ownerID != userID {
         c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
         return
+    }
+
+    // Получаем старые данные для истории
+    var oldData Customer
+    err = database.Pool.QueryRow(c.Request.Context(), `
+        SELECT name, email, phone, company, status, responsible, source, comment
+        FROM crm_customers WHERE id = $1
+    `, id).Scan(&oldData.Name, &oldData.Email, &oldData.Phone, &oldData.Company,
+        &oldData.Status, &oldData.Responsible, &oldData.Source, &oldData.Comment)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    // Если email меняется, проверяем, не занят ли он другим клиентом
+    if req.Email != "" && req.Email != oldData.Email {
+        var exists bool
+        err := database.Pool.QueryRow(c.Request.Context(),
+            "SELECT EXISTS(SELECT 1 FROM crm_customers WHERE email = $1 AND id != $2)", req.Email, id).Scan(&exists)
+        if err != nil {
+            log.Printf("❌ UpdateCustomer check email error: %v", err)
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error checking email"})
+            return
+        }
+        if exists {
+            c.JSON(http.StatusConflict, gin.H{"error": "Клиент с таким email уже существует"})
+            return
+        }
     }
 
     _, err = database.Pool.Exec(c.Request.Context(), `
@@ -475,6 +510,7 @@ func UpdateCustomer(c *gin.Context) {
         req.Responsible, req.Source, req.Comment, id)
 
     if err != nil {
+        log.Printf("❌ UpdateCustomer error: %v", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
     }
