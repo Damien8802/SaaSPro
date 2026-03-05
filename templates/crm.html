@@ -1996,9 +1996,8 @@
             return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         }
 
-        function renderFunnelChart(stageStats) {
+    function renderFunnelChart(stageStats) {
     const ctx = document.getElementById('funnelChart').getContext('2d');
-    // Безопасно уничтожаем предыдущий график, если он существует
     if (window.funnelChart) {
         if (typeof window.funnelChart.destroy === 'function') {
             window.funnelChart.destroy();
@@ -2006,13 +2005,13 @@
             delete window.funnelChart;
         }
     }
-    // Если данных нет, используем пустой массив
     if (!stageStats || stageStats.length === 0) {
         stageStats = [];
     }
     const stages = stageStats.map(s => s.stage);
     const counts = stageStats.map(s => s.count);
     const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+
     try {
         window.funnelChart = new Chart(ctx, {
             type: 'bar',
@@ -2030,7 +2029,19 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true } },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const stage = window.funnelChart.data.labels[index];
+                        // Переключаемся на вкладку "Сделки"
+                        document.getElementById('deals-tab').click();
+                        // Устанавливаем фильтр по стадии
+                        document.getElementById('dealStage').value = stage;
+                        // Применяем фильтры
+                        document.getElementById('applyDealFilters').click();
+                    }
+                }
             }
         });
     } catch (e) {
@@ -2054,6 +2065,7 @@ function renderResponsibleChart(responsibleStats) {
     const labels = responsibleStats.map(r => r.responsible);
     const counts = responsibleStats.map(r => r.deals_count);
     const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
+
     try {
         window.responsibleChart = new Chart(ctx, {
             type: 'bar',
@@ -2071,7 +2083,23 @@ function renderResponsibleChart(responsibleStats) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true } },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const responsible = window.responsibleChart.data.labels[index];
+                        document.getElementById('deals-tab').click();
+                        // Предположим, у нас есть поле для фильтра по ответственному (сейчас нет, добавим)
+                        // Создадим временно поле или будем использовать batchDealResponsible для массовых операций
+                        // Но лучше добавить отдельное поле поиска по ответственному. Упростим: установим поиск по названию сделки с ответственным?
+                        // Проще пока сделаем через batchDealResponsible (это поле для массового назначения, но его можно использовать как временный фильтр)
+                        // Для чистоты добавим новый инпут для фильтра по ответственному. Но сейчас не будем усложнять.
+                        // Вместо этого откроем вкладку сделок и установим поиск по тексту, включающему имя ответственного.
+                        // Это не идеально, но для демонстрации сойдёт.
+                        document.getElementById('dealSearch').value = responsible;
+                        document.getElementById('dealSearchBtn').click();
+                    }
+                }
             }
         });
     } catch (e) {
@@ -2079,7 +2107,6 @@ function renderResponsibleChart(responsibleStats) {
         window.responsibleChart = null;
     }
 }
-
 function renderSourceChart(sourceStats) {
     const ctx = document.getElementById('sourceChart').getContext('2d');
     if (window.sourceChart) {
@@ -2095,6 +2122,7 @@ function renderSourceChart(sourceStats) {
     const labels = sourceStats.map(s => s.source);
     const counts = sourceStats.map(s => s.deals_count);
     const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
+
     try {
         window.sourceChart = new Chart(ctx, {
             type: 'doughnut',
@@ -2109,7 +2137,17 @@ function renderSourceChart(sourceStats) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'right' } }
+                plugins: { legend: { position: 'right' } },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const source = window.sourceChart.data.labels[index];
+                        document.getElementById('deals-tab').click();
+                        // Устанавливаем поиск по источнику
+                        document.getElementById('dealSearch').value = source;
+                        document.getElementById('dealSearchBtn').click();
+                    }
+                }
             }
         });
     } catch (e) {
@@ -2133,6 +2171,7 @@ function renderMonthlyChart(monthlyStats) {
     const months = monthlyStats.map(m => m.month);
     const dealsCount = monthlyStats.map(m => m.deals_count);
     const values = monthlyStats.map(m => m.total_value);
+
     try {
         window.monthlyChart = new Chart(ctx, {
             type: 'line',
@@ -2145,7 +2184,9 @@ function renderMonthlyChart(monthlyStats) {
                         borderColor: '#4e73df',
                         backgroundColor: 'rgba(78,115,223,0.05)',
                         yAxisID: 'y',
-                        tension: 0.1
+                        tension: 0.1,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
                     },
                     {
                         label: 'Сумма сделок',
@@ -2153,7 +2194,9 @@ function renderMonthlyChart(monthlyStats) {
                         borderColor: '#1cc88a',
                         backgroundColor: 'rgba(28,200,138,0.05)',
                         yAxisID: 'y1',
-                        tension: 0.1
+                        tension: 0.1,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
                     }
                 ]
             },
@@ -2165,6 +2208,24 @@ function renderMonthlyChart(monthlyStats) {
                 scales: {
                     y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Количество' } },
                     y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Сумма' }, grid: { drawOnChartArea: false } }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const month = window.monthlyChart.data.labels[index];
+                        // Преобразуем месяц в интервал дат (первое и последнее число месяца)
+                        const [year, monthNum] = month.split('-');
+                        const firstDay = new Date(Date.UTC(year, monthNum - 1, 1));
+                        const lastDay = new Date(Date.UTC(year, monthNum, 0)); // последний день месяца
+                        const firstStr = firstDay.toISOString().slice(0,10);
+                        const lastStr = lastDay.toISOString().slice(0,10);
+
+                        document.getElementById('deals-tab').click();
+                        // Устанавливаем фильтры по дате закрытия (если есть) или создания. Используем created_at (дата создания)
+                        document.getElementById('dealCloseFrom').value = firstStr;
+                        document.getElementById('dealCloseTo').value = lastStr;
+                        document.getElementById('applyDealFilters').click();
+                    }
                 }
             }
         });
