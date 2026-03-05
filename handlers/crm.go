@@ -31,19 +31,24 @@ func InitNotifier(cfg *config.Config) {
 
 // Customer представляет клиента в CRM
 type Customer struct {
-    ID          string    `json:"id"`
-    Name        string    `json:"name"`
-    Email       string    `json:"email"`
-    Phone       string    `json:"phone"`
-    Company     string    `json:"company"`
-    Status      string    `json:"status"`
-    Responsible string    `json:"responsible"`
-    Source      string    `json:"source"`
-    Comment     string    `json:"comment"`
-    UserID      string    `json:"user_id,omitempty"`
-    LeadScore   float64   `json:"lead_score"`
-    CreatedAt   time.Time `json:"created_at"`
-    LastSeen    time.Time `json:"last_seen"`
+    ID          string          `json:"id"`
+    Name        string          `json:"name"`
+    Email       string          `json:"email"`
+    Phone       string          `json:"phone"`
+    Company     string          `json:"company"`
+    Status      string          `json:"status"`
+    Responsible string          `json:"responsible"`
+    Source      string          `json:"source"`
+    Comment     string          `json:"comment"`
+    UserID      string          `json:"user_id,omitempty"`
+    LeadScore   float64         `json:"lead_score"`
+    CreatedAt   time.Time       `json:"created_at"`
+    LastSeen    time.Time       `json:"last_seen"`
+    // Новые поля
+    City        string          `json:"city,omitempty"`
+    SocialMedia json.RawMessage `json:"social_media,omitempty"`
+    Birthday    *time.Time      `json:"birthday,omitempty"`
+    Notes       string          `json:"notes,omitempty"`
 }
 
 // Deal представляет сделку в CRM
@@ -61,6 +66,10 @@ type Deal struct {
     ExpectedClose *time.Time `json:"expected_close,omitempty"`
     CreatedAt     time.Time  `json:"created_at"`
     ClosedAt      *time.Time `json:"closed_at,omitempty"`
+    // Новые поля для сделок
+    ProductCategory string     `json:"product_category,omitempty"`
+    Discount        float64    `json:"discount,omitempty"`
+    NextActionDate  *time.Time `json:"next_action_date,omitempty"`
 }
 
 // HistoryRecord представляет запись истории
@@ -264,6 +273,7 @@ func GetCustomers(c *gin.Context) {
 
     status := c.Query("status")
     search := c.Query("search")
+    city := c.Query("city")
     createdFrom := c.Query("created_from")
     createdTo := c.Query("created_to")
     page, pageSize := getPaginationParams(c)
@@ -290,8 +300,15 @@ func GetCustomers(c *gin.Context) {
         if whereClause != "" {
             whereClause += " AND"
         }
-        whereClause += " (name ILIKE '%' || $" + strconv.Itoa(len(countArgs)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(countArgs)+1) + " || '%')"
+        whereClause += " (name ILIKE '%' || $" + strconv.Itoa(len(countArgs)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(countArgs)+1) + " || '%' OR city ILIKE '%' || $" + strconv.Itoa(len(countArgs)+1) + " || '%')"
         countArgs = append(countArgs, search)
+    }
+    if city != "" {
+        if whereClause != "" {
+            whereClause += " AND"
+        }
+        whereClause += " city = $" + strconv.Itoa(len(countArgs)+1)
+        countArgs = append(countArgs, city)
     }
     if createdFrom != "" {
         if whereClause != "" {
@@ -320,7 +337,7 @@ func GetCustomers(c *gin.Context) {
     }
 
     // ---- Запрос данных с теми же фильтрами и пагинацией ----
-    query := `SELECT id, name, email, phone, company, status, responsible, source, comment, lead_score, created_at, last_seen
+    query := `SELECT id, name, email, phone, company, status, responsible, source, comment, lead_score, created_at, last_seen, city, social_media, birthday, notes
               FROM crm_customers`
     args := []interface{}{}
     whereData := ""
@@ -341,8 +358,15 @@ func GetCustomers(c *gin.Context) {
         if whereData != "" {
             whereData += " AND"
         }
-        whereData += " (name ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%')"
+        whereData += " (name ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR city ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%')"
         args = append(args, search)
+    }
+    if city != "" {
+        if whereData != "" {
+            whereData += " AND"
+        }
+        whereData += " city = $" + strconv.Itoa(len(args)+1)
+        args = append(args, city)
     }
     if createdFrom != "" {
         if whereData != "" {
@@ -375,10 +399,19 @@ func GetCustomers(c *gin.Context) {
     customers := make([]Customer, 0)
     for rows.Next() {
         var cst Customer
+        var socialMedia []byte
+        var birthday sql.NullTime
         err := rows.Scan(&cst.ID, &cst.Name, &cst.Email, &cst.Phone, &cst.Company, &cst.Status,
-            &cst.Responsible, &cst.Source, &cst.Comment, &cst.LeadScore, &cst.CreatedAt, &cst.LastSeen)
+            &cst.Responsible, &cst.Source, &cst.Comment, &cst.LeadScore, &cst.CreatedAt, &cst.LastSeen,
+            &cst.City, &socialMedia, &birthday, &cst.Notes)
         if err != nil {
             continue
+        }
+        if socialMedia != nil {
+            cst.SocialMedia = json.RawMessage(socialMedia)
+        }
+        if birthday.Valid {
+            cst.Birthday = &birthday.Time
         }
         customers = append(customers, cst)
     }
@@ -424,11 +457,12 @@ func CreateCustomer(c *gin.Context) {
 
     var id string
     err := database.Pool.QueryRow(c.Request.Context(), `
-        INSERT INTO crm_customers (name, email, phone, company, status, responsible, source, comment, user_id, created_at, last_seen)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        INSERT INTO crm_customers (name, email, phone, company, status, responsible, source, comment, user_id, created_at, last_seen, city, social_media, birthday, notes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), $10, $11, $12, $13)
         RETURNING id
     `, req.Name, req.Email, req.Phone, req.Company, req.Status,
-        req.Responsible, req.Source, req.Comment, userID).Scan(&id)
+        req.Responsible, req.Source, req.Comment, userID,
+        req.City, req.SocialMedia, req.Birthday, req.Notes).Scan(&id)
 
     if err != nil {
         log.Printf("❌ CreateCustomer insert error: %v", err)
@@ -475,14 +509,23 @@ func UpdateCustomer(c *gin.Context) {
 
     // Получаем старые данные для истории
     var oldData Customer
+    var oldSocialMedia []byte
+    var oldBirthday sql.NullTime
     err = database.Pool.QueryRow(c.Request.Context(), `
-        SELECT name, email, phone, company, status, responsible, source, comment
+        SELECT name, email, phone, company, status, responsible, source, comment, city, social_media, birthday, notes
         FROM crm_customers WHERE id = $1
     `, id).Scan(&oldData.Name, &oldData.Email, &oldData.Phone, &oldData.Company,
-        &oldData.Status, &oldData.Responsible, &oldData.Source, &oldData.Comment)
+        &oldData.Status, &oldData.Responsible, &oldData.Source, &oldData.Comment,
+        &oldData.City, &oldSocialMedia, &oldBirthday, &oldData.Notes)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
+    }
+    if oldSocialMedia != nil {
+        oldData.SocialMedia = json.RawMessage(oldSocialMedia)
+    }
+    if oldBirthday.Valid {
+        oldData.Birthday = &oldBirthday.Time
     }
 
     // Если email меняется, проверяем, не занят ли он другим клиентом
@@ -504,10 +547,12 @@ func UpdateCustomer(c *gin.Context) {
     _, err = database.Pool.Exec(c.Request.Context(), `
         UPDATE crm_customers
         SET name = $1, email = $2, phone = $3, company = $4, status = $5,
-            responsible = $6, source = $7, comment = $8, last_seen = NOW()
-        WHERE id = $9
+            responsible = $6, source = $7, comment = $8, last_seen = NOW(),
+            city = $9, social_media = $10, birthday = $11, notes = $12
+        WHERE id = $13
     `, req.Name, req.Email, req.Phone, req.Company, req.Status,
-        req.Responsible, req.Source, req.Comment, id)
+        req.Responsible, req.Source, req.Comment,
+        req.City, req.SocialMedia, req.Birthday, req.Notes, id)
 
     if err != nil {
         log.Printf("❌ UpdateCustomer error: %v", err)
@@ -548,6 +593,29 @@ func UpdateCustomer(c *gin.Context) {
     if oldData.Comment != req.Comment {
         changes["comment"] = map[string]string{"old": oldData.Comment, "new": req.Comment}
     }
+    if oldData.City != req.City {
+        changes["city"] = map[string]string{"old": oldData.City, "new": req.City}
+    }
+    // Сравниваем JSON как строки (упрощённо)
+    if string(oldData.SocialMedia) != string(req.SocialMedia) {
+        changes["social_media"] = map[string]string{"old": string(oldData.SocialMedia), "new": string(req.SocialMedia)}
+    }
+    if (oldData.Birthday == nil && req.Birthday != nil) || (oldData.Birthday != nil && req.Birthday == nil) ||
+        (oldData.Birthday != nil && req.Birthday != nil && !oldData.Birthday.Equal(*req.Birthday)) {
+        oldStr := ""
+        newStr := ""
+        if oldData.Birthday != nil {
+            oldStr = oldData.Birthday.Format("2006-01-02")
+        }
+        if req.Birthday != nil {
+            newStr = req.Birthday.Format("2006-01-02")
+        }
+        changes["birthday"] = map[string]string{"old": oldStr, "new": newStr}
+    }
+    if oldData.Notes != req.Notes {
+        changes["notes"] = map[string]string{"old": oldData.Notes, "new": req.Notes}
+    }
+
     if len(changes) > 0 {
         go addHistory(c.Request.Context(), "customer", id, "update", &userID, changes)
     }
@@ -706,6 +774,7 @@ func GetDeals(c *gin.Context) {
 
     stage := c.Query("stage")
     search := c.Query("search")
+    category := c.Query("category")
     valueMin := c.Query("value_min")
     valueMax := c.Query("value_max")
     closeFrom := c.Query("close_from")
@@ -735,6 +804,13 @@ func GetDeals(c *gin.Context) {
         }
         whereClause += " title ILIKE '%' || $" + strconv.Itoa(len(countArgs)+1) + " || '%'"
         countArgs = append(countArgs, search)
+    }
+    if category != "" {
+        if whereClause != "" {
+            whereClause += " AND"
+        }
+        whereClause += " product_category = $" + strconv.Itoa(len(countArgs)+1)
+        countArgs = append(countArgs, category)
     }
     if valueMin != "" {
         if whereClause != "" {
@@ -776,7 +852,7 @@ func GetDeals(c *gin.Context) {
         return
     }
 
-    query := `SELECT id, customer_id, title, value, stage, probability, responsible, source, comment, expected_close, created_at, closed_at
+    query := `SELECT id, customer_id, title, value, stage, probability, responsible, source, comment, expected_close, created_at, closed_at, product_category, discount, next_action_date
               FROM crm_deals`
     args := []interface{}{}
     whereData := ""
@@ -799,6 +875,13 @@ func GetDeals(c *gin.Context) {
         }
         whereData += " title ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%'"
         args = append(args, search)
+    }
+    if category != "" {
+        if whereData != "" {
+            whereData += " AND"
+        }
+        whereData += " product_category = $" + strconv.Itoa(len(args)+1)
+        args = append(args, category)
     }
     if valueMin != "" {
         if whereData != "" {
@@ -845,10 +928,15 @@ func GetDeals(c *gin.Context) {
     deals := make([]Deal, 0)
     for rows.Next() {
         var d Deal
+        var nextActionDate sql.NullTime
         err := rows.Scan(&d.ID, &d.CustomerID, &d.Title, &d.Value, &d.Stage, &d.Probability,
-            &d.Responsible, &d.Source, &d.Comment, &d.ExpectedClose, &d.CreatedAt, &d.ClosedAt)
+            &d.Responsible, &d.Source, &d.Comment, &d.ExpectedClose, &d.CreatedAt, &d.ClosedAt,
+            &d.ProductCategory, &d.Discount, &nextActionDate)
         if err != nil {
             continue
+        }
+        if nextActionDate.Valid {
+            d.NextActionDate = &nextActionDate.Time
         }
         deals = append(deals, d)
     }
@@ -876,11 +964,12 @@ func CreateDeal(c *gin.Context) {
     }
 
     err := database.Pool.QueryRow(c.Request.Context(), `
-        INSERT INTO crm_deals (customer_id, title, value, stage, probability, responsible, source, comment, expected_close, user_id, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+        INSERT INTO crm_deals (customer_id, title, value, stage, probability, responsible, source, comment, expected_close, user_id, created_at, product_category, discount, next_action_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11, $12, $13)
         RETURNING id
     `, d.CustomerID, d.Title, d.Value, d.Stage, d.Probability,
-        d.Responsible, d.Source, d.Comment, d.ExpectedClose, userID).Scan(&d.ID)
+        d.Responsible, d.Source, d.Comment, d.ExpectedClose, userID,
+        d.ProductCategory, d.Discount, d.NextActionDate).Scan(&d.ID)
 
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
@@ -930,23 +1019,30 @@ func UpdateDeal(c *gin.Context) {
     }
 
     var oldData Deal
+    var oldNextActionDate sql.NullTime
     err = database.Pool.QueryRow(c.Request.Context(), `
-        SELECT title, value, stage, probability, responsible, source, comment, expected_close, customer_id
+        SELECT title, value, stage, probability, responsible, source, comment, expected_close, customer_id, product_category, discount, next_action_date
         FROM crm_deals WHERE id = $1
     `, id).Scan(&oldData.Title, &oldData.Value, &oldData.Stage, &oldData.Probability,
-        &oldData.Responsible, &oldData.Source, &oldData.Comment, &oldData.ExpectedClose, &oldData.CustomerID)
+        &oldData.Responsible, &oldData.Source, &oldData.Comment, &oldData.ExpectedClose, &oldData.CustomerID,
+        &oldData.ProductCategory, &oldData.Discount, &oldNextActionDate)
     if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Deal not found"})
         return
+    }
+    if oldNextActionDate.Valid {
+        oldData.NextActionDate = &oldNextActionDate.Time
     }
 
     _, err = database.Pool.Exec(c.Request.Context(), `
         UPDATE crm_deals
         SET title = $1, value = $2, stage = $3, probability = $4,
-            responsible = $5, source = $6, comment = $7, expected_close = $8, updated_at = NOW()
-        WHERE id = $9
+            responsible = $5, source = $6, comment = $7, expected_close = $8, updated_at = NOW(),
+            product_category = $9, discount = $10, next_action_date = $11
+        WHERE id = $12
     `, d.Title, d.Value, d.Stage, d.Probability,
-        d.Responsible, d.Source, d.Comment, d.ExpectedClose, id)
+        d.Responsible, d.Source, d.Comment, d.ExpectedClose,
+        d.ProductCategory, d.Discount, d.NextActionDate, id)
 
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
@@ -1007,6 +1103,25 @@ func UpdateDeal(c *gin.Context) {
     }
     if oldData.CustomerID != d.CustomerID {
         changes["customer_id"] = map[string]string{"old": oldData.CustomerID, "new": d.CustomerID}
+    }
+    if oldData.ProductCategory != d.ProductCategory {
+        changes["product_category"] = map[string]string{"old": oldData.ProductCategory, "new": d.ProductCategory}
+    }
+    if oldData.Discount != d.Discount {
+        changes["discount"] = map[string]float64{"old": oldData.Discount, "new": d.Discount}
+    }
+    if (oldData.NextActionDate == nil && d.NextActionDate != nil) ||
+        (oldData.NextActionDate != nil && d.NextActionDate == nil) ||
+        (oldData.NextActionDate != nil && d.NextActionDate != nil && !oldData.NextActionDate.Equal(*d.NextActionDate)) {
+        oldStr := ""
+        newStr := ""
+        if oldData.NextActionDate != nil {
+            oldStr = oldData.NextActionDate.Format("2006-01-02")
+        }
+        if d.NextActionDate != nil {
+            newStr = d.NextActionDate.Format("2006-01-02")
+        }
+        changes["next_action_date"] = map[string]string{"old": oldStr, "new": newStr}
     }
     if len(changes) > 0 {
         go addHistory(c.Request.Context(), "deal", id, "update", &userID, changes)
@@ -1590,6 +1705,131 @@ func GetCRMAdvancedStats(c *gin.Context) {
     })
 }
 
+// ========== НОВЫЕ ФУНКЦИИ АНАЛИТИКИ ==========
+
+// getUserFilterSQL возвращает SQL-условие для фильтрации по текущему пользователю
+// и соответствующие аргументы для параметризованного запроса.
+// Используется во всех функциях аналитики для не-админов.
+func getUserFilterSQL(c *gin.Context) (string, []interface{}) {
+    userID := getUserIDFromContext(c)
+    isAdmin := isAdmin(c)
+    if isAdmin || userID == "" {
+        return "", nil
+    }
+    return " AND user_id = $" + strconv.Itoa(1), []interface{}{userID}
+}
+
+// GetSalesForecast возвращает прогноз продаж на 3 месяца
+// на основе среднемесячных значений за последние 6 месяцев и текущих сделок.
+// @Summary Прогноз продаж
+// @Tags CRM
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /api/crm/forecast [get]
+func GetSalesForecast(c *gin.Context) {
+    ctx := c.Request.Context()
+    userFilter, args := getUserFilterSQL(c)
+
+    var avgMonthly float64
+    queryAvg := `
+        SELECT COALESCE(AVG(monthly_total), 0)
+        FROM (
+            SELECT DATE_TRUNC('month', created_at) as month, SUM(value) as monthly_total
+            FROM crm_deals
+            WHERE stage = 'closed_won'` + userFilter + `
+            AND created_at >= NOW() - INTERVAL '6 months'
+            GROUP BY DATE_TRUNC('month', created_at)
+        ) t
+    `
+    err := database.Pool.QueryRow(ctx, queryAvg, args...).Scan(&avgMonthly)
+    if err != nil {
+        log.Printf("❌ GetSalesForecast avg error: %v", err)
+    }
+
+    var weightedForecast float64
+    queryWeighted := `
+        SELECT COALESCE(SUM(value * probability::float / 100), 0)
+        FROM crm_deals
+        WHERE stage NOT IN ('closed_won', 'closed_lost')` + userFilter
+    err = database.Pool.QueryRow(ctx, queryWeighted, args...).Scan(&weightedForecast)
+    if err != nil {
+        log.Printf("❌ GetSalesForecast weighted error: %v", err)
+    }
+
+    var conversion float64
+    queryConv := `
+        SELECT 
+            COALESCE(
+                SUM(CASE WHEN stage = 'closed_won' THEN 1 ELSE 0 END) * 1.0 / 
+                NULLIF(SUM(CASE WHEN stage IN ('closed_won', 'closed_lost') THEN 1 ELSE 0 END), 0),
+                0
+            ) * 100
+        FROM crm_deals
+        WHERE 1=1` + userFilter
+    err = database.Pool.QueryRow(ctx, queryConv, args...).Scan(&conversion)
+    if err != nil {
+        log.Printf("❌ GetSalesForecast conversion error: %v", err)
+    }
+
+    months := make([]map[string]interface{}, 3)
+    for i := 0; i < 3; i++ {
+        monthTime := time.Now().AddDate(0, i+1, 0)
+        monthStr := monthTime.Format("2006-01")
+        months[i] = map[string]interface{}{
+            "month": monthStr,
+            "value": avgMonthly,
+        }
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "avg_monthly_value": avgMonthly,
+        "weighted_forecast": weightedForecast,
+        "conversion":        conversion,
+        "months":            months,
+    })
+}
+
+// GetStageConversion возвращает конверсию по этапам воронки продаж.
+// @Summary Конверсия по этапам
+// @Tags CRM
+// @Produce json
+// @Success 200 {array} map[string]interface{}
+// @Router /api/crm/conversion [get]
+func GetStageConversion(c *gin.Context) {
+    ctx := c.Request.Context()
+    userFilter, args := getUserFilterSQL(c)
+
+    stages := []string{"lead", "negotiation", "proposal", "closed_won", "closed_lost"}
+    result := make([]map[string]interface{}, 0, len(stages))
+
+    var prevCount int
+    for i, stage := range stages {
+        var count int
+        query := `SELECT COUNT(*) FROM crm_deals WHERE stage = $1` + userFilter
+        queryArgs := append([]interface{}{stage}, args...)
+        err := database.Pool.QueryRow(ctx, query, queryArgs...).Scan(&count)
+        if err != nil {
+            log.Printf("❌ GetStageConversion error for stage %s: %v", stage, err)
+            count = 0
+        }
+
+        percent := 0.0
+        if i > 0 && prevCount > 0 {
+            percent = float64(count) / float64(prevCount) * 100
+        }
+
+        result = append(result, gin.H{
+            "stage":   stage,
+            "count":   count,
+            "percent": percent,
+        })
+
+        prevCount = count
+    }
+
+    c.JSON(http.StatusOK, result)
+}
+
 // ========== ВЛОЖЕНИЯ К СДЕЛКАМ ==========
 
 const uploadDir = "./uploads/crm"
@@ -1793,10 +2033,11 @@ func exportFilteredCustomers(c *gin.Context) ([]Customer, error) {
     isAdmin := isAdmin(c)
     status := c.Query("status")
     search := c.Query("search")
+    city := c.Query("city")
     createdFrom := c.Query("created_from")
     createdTo := c.Query("created_to")
 
-    query := `SELECT id, name, email, phone, company, status, responsible, source, comment, created_at, last_seen
+    query := `SELECT id, name, email, phone, company, status, responsible, source, comment, created_at, last_seen, city, social_media, birthday, notes
               FROM crm_customers`
     args := []interface{}{}
     where := ""
@@ -1816,8 +2057,15 @@ func exportFilteredCustomers(c *gin.Context) ([]Customer, error) {
         if where != "" {
             where += " AND"
         }
-        where += " (name ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%')"
+        where += " (name ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR email ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%' OR city ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%')"
         args = append(args, search)
+    }
+    if city != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " city = $" + strconv.Itoa(len(args)+1)
+        args = append(args, city)
     }
     if createdFrom != "" {
         if where != "" {
@@ -1847,10 +2095,19 @@ func exportFilteredCustomers(c *gin.Context) ([]Customer, error) {
     var customers []Customer
     for rows.Next() {
         var cst Customer
+        var socialMedia []byte
+        var birthday sql.NullTime
         err := rows.Scan(&cst.ID, &cst.Name, &cst.Email, &cst.Phone, &cst.Company, &cst.Status,
-            &cst.Responsible, &cst.Source, &cst.Comment, &cst.CreatedAt, &cst.LastSeen)
+            &cst.Responsible, &cst.Source, &cst.Comment, &cst.CreatedAt, &cst.LastSeen,
+            &cst.City, &socialMedia, &birthday, &cst.Notes)
         if err != nil {
             continue
+        }
+        if socialMedia != nil {
+            cst.SocialMedia = json.RawMessage(socialMedia)
+        }
+        if birthday.Valid {
+            cst.Birthday = &birthday.Time
         }
         customers = append(customers, cst)
     }
@@ -1868,9 +2125,13 @@ func ExportCustomersCSV(c *gin.Context) {
     writer := csv.NewWriter(buf)
     defer writer.Flush()
 
-    writer.Write([]string{"ID", "Имя", "Email", "Телефон", "Компания", "Статус", "Ответственный", "Источник", "Комментарий", "Дата создания", "Последний визит"})
+    writer.Write([]string{"ID", "Имя", "Email", "Телефон", "Компания", "Статус", "Ответственный", "Источник", "Комментарий", "Дата создания", "Последний визит", "Город", "Соцсети", "День рождения", "Заметки"})
 
     for _, cst := range customers {
+        birthday := ""
+        if cst.Birthday != nil {
+            birthday = cst.Birthday.Format("2006-01-02")
+        }
         writer.Write([]string{
             cst.ID,
             cst.Name,
@@ -1883,6 +2144,10 @@ func ExportCustomersCSV(c *gin.Context) {
             cst.Comment,
             cst.CreatedAt.Format("2006-01-02 15:04:05"),
             cst.LastSeen.Format("2006-01-02 15:04:05"),
+            cst.City,
+            string(cst.SocialMedia),
+            birthday,
+            cst.Notes,
         })
     }
 
@@ -1904,7 +2169,7 @@ func ExportCustomersExcel(c *gin.Context) {
     sheet := "Клиенты"
     f.SetSheetName("Sheet1", sheet)
 
-    headers := []string{"ID", "Имя", "Email", "Телефон", "Компания", "Статус", "Ответственный", "Источник", "Комментарий", "Дата создания", "Последний визит"}
+    headers := []string{"ID", "Имя", "Email", "Телефон", "Компания", "Статус", "Ответственный", "Источник", "Комментарий", "Дата создания", "Последний визит", "Город", "Соцсети", "День рождения", "Заметки"}
     for i, h := range headers {
         cell := fmt.Sprintf("%c%d", 'A'+i, 1)
         f.SetCellValue(sheet, cell, h)
@@ -1912,6 +2177,10 @@ func ExportCustomersExcel(c *gin.Context) {
 
     for i, cst := range customers {
         row := i + 2
+        birthday := ""
+        if cst.Birthday != nil {
+            birthday = cst.Birthday.Format("2006-01-02")
+        }
         f.SetCellValue(sheet, fmt.Sprintf("A%d", row), cst.ID)
         f.SetCellValue(sheet, fmt.Sprintf("B%d", row), cst.Name)
         f.SetCellValue(sheet, fmt.Sprintf("C%d", row), cst.Email)
@@ -1923,15 +2192,19 @@ func ExportCustomersExcel(c *gin.Context) {
         f.SetCellValue(sheet, fmt.Sprintf("I%d", row), cst.Comment)
         f.SetCellValue(sheet, fmt.Sprintf("J%d", row), cst.CreatedAt.Format("2006-01-02 15:04:05"))
         f.SetCellValue(sheet, fmt.Sprintf("K%d", row), cst.LastSeen.Format("2006-01-02 15:04:05"))
+        f.SetCellValue(sheet, fmt.Sprintf("L%d", row), cst.City)
+        f.SetCellValue(sheet, fmt.Sprintf("M%d", row), string(cst.SocialMedia))
+        f.SetCellValue(sheet, fmt.Sprintf("N%d", row), birthday)
+        f.SetCellValue(sheet, fmt.Sprintf("O%d", row), cst.Notes)
     }
 
     style, _ := f.NewStyle(&excelize.Style{
         Font: &excelize.Font{Bold: true},
         Fill: excelize.Fill{Type: "pattern", Color: []string{"#DDDDDD"}, Pattern: 1},
     })
-    f.SetCellStyle(sheet, "A1", "K1", style)
+    f.SetCellStyle(sheet, "A1", "O1", style)
 
-    for i := 1; i <= 11; i++ {
+    for i := 1; i <= 15; i++ {
         col := string(rune('A' + i - 1))
         f.SetColWidth(sheet, col, col, 20)
     }
@@ -1952,12 +2225,13 @@ func exportFilteredDeals(c *gin.Context) ([]Deal, error) {
     isAdmin := isAdmin(c)
     stage := c.Query("stage")
     search := c.Query("search")
+    category := c.Query("category")
     valueMin := c.Query("value_min")
     valueMax := c.Query("value_max")
     closeFrom := c.Query("close_from")
     closeTo := c.Query("close_to")
 
-    query := `SELECT id, customer_id, title, value, stage, probability, responsible, source, comment, expected_close, created_at, closed_at
+    query := `SELECT id, customer_id, title, value, stage, probability, responsible, source, comment, expected_close, created_at, closed_at, product_category, discount, next_action_date
               FROM crm_deals`
     args := []interface{}{}
     where := ""
@@ -1979,6 +2253,13 @@ func exportFilteredDeals(c *gin.Context) ([]Deal, error) {
         }
         where += " title ILIKE '%' || $" + strconv.Itoa(len(args)+1) + " || '%'"
         args = append(args, search)
+    }
+    if category != "" {
+        if where != "" {
+            where += " AND"
+        }
+        where += " product_category = $" + strconv.Itoa(len(args)+1)
+        args = append(args, category)
     }
     if valueMin != "" {
         if where != "" {
@@ -2022,10 +2303,15 @@ func exportFilteredDeals(c *gin.Context) ([]Deal, error) {
     var deals []Deal
     for rows.Next() {
         var d Deal
+        var nextActionDate sql.NullTime
         err := rows.Scan(&d.ID, &d.CustomerID, &d.Title, &d.Value, &d.Stage, &d.Probability,
-            &d.Responsible, &d.Source, &d.Comment, &d.ExpectedClose, &d.CreatedAt, &d.ClosedAt)
+            &d.Responsible, &d.Source, &d.Comment, &d.ExpectedClose, &d.CreatedAt, &d.ClosedAt,
+            &d.ProductCategory, &d.Discount, &nextActionDate)
         if err != nil {
             continue
+        }
+        if nextActionDate.Valid {
+            d.NextActionDate = &nextActionDate.Time
         }
         deals = append(deals, d)
     }
@@ -2043,7 +2329,7 @@ func ExportDealsCSV(c *gin.Context) {
     writer := csv.NewWriter(buf)
     defer writer.Flush()
 
-    writer.Write([]string{"ID", "Клиент ID", "Название", "Сумма", "Стадия", "Вероятность", "Ответственный", "Источник", "Комментарий", "Ожидаемая дата", "Дата создания", "Дата закрытия"})
+    writer.Write([]string{"ID", "Клиент ID", "Название", "Сумма", "Стадия", "Вероятность", "Ответственный", "Источник", "Комментарий", "Ожидаемая дата", "Дата создания", "Дата закрытия", "Категория", "Скидка", "Следующее действие"})
 
     for _, d := range deals {
         expectedClose := ""
@@ -2053,6 +2339,10 @@ func ExportDealsCSV(c *gin.Context) {
         closedAt := ""
         if d.ClosedAt != nil {
             closedAt = d.ClosedAt.Format("2006-01-02 15:04:05")
+        }
+        nextAction := ""
+        if d.NextActionDate != nil {
+            nextAction = d.NextActionDate.Format("2006-01-02")
         }
         writer.Write([]string{
             d.ID,
@@ -2067,6 +2357,9 @@ func ExportDealsCSV(c *gin.Context) {
             expectedClose,
             d.CreatedAt.Format("2006-01-02 15:04:05"),
             closedAt,
+            d.ProductCategory,
+            strconv.FormatFloat(d.Discount, 'f', 2, 64),
+            nextAction,
         })
     }
 
@@ -2088,7 +2381,7 @@ func ExportDealsExcel(c *gin.Context) {
     sheet := "Сделки"
     f.SetSheetName("Sheet1", sheet)
 
-    headers := []string{"ID", "Клиент ID", "Название", "Сумма", "Стадия", "Вероятность", "Ответственный", "Источник", "Комментарий", "Ожидаемая дата", "Дата создания", "Дата закрытия"}
+    headers := []string{"ID", "Клиент ID", "Название", "Сумма", "Стадия", "Вероятность", "Ответственный", "Источник", "Комментарий", "Ожидаемая дата", "Дата создания", "Дата закрытия", "Категория", "Скидка", "Следующее действие"}
     for i, h := range headers {
         cell := fmt.Sprintf("%c%d", 'A'+i, 1)
         f.SetCellValue(sheet, cell, h)
@@ -2104,6 +2397,10 @@ func ExportDealsExcel(c *gin.Context) {
         if d.ClosedAt != nil {
             closedAt = d.ClosedAt.Format("2006-01-02 15:04:05")
         }
+        nextAction := ""
+        if d.NextActionDate != nil {
+            nextAction = d.NextActionDate.Format("2006-01-02")
+        }
         f.SetCellValue(sheet, fmt.Sprintf("A%d", row), d.ID)
         f.SetCellValue(sheet, fmt.Sprintf("B%d", row), d.CustomerID)
         f.SetCellValue(sheet, fmt.Sprintf("C%d", row), d.Title)
@@ -2116,15 +2413,18 @@ func ExportDealsExcel(c *gin.Context) {
         f.SetCellValue(sheet, fmt.Sprintf("J%d", row), expectedClose)
         f.SetCellValue(sheet, fmt.Sprintf("K%d", row), d.CreatedAt.Format("2006-01-02 15:04:05"))
         f.SetCellValue(sheet, fmt.Sprintf("L%d", row), closedAt)
+        f.SetCellValue(sheet, fmt.Sprintf("M%d", row), d.ProductCategory)
+        f.SetCellValue(sheet, fmt.Sprintf("N%d", row), d.Discount)
+        f.SetCellValue(sheet, fmt.Sprintf("O%d", row), nextAction)
     }
 
     style, _ := f.NewStyle(&excelize.Style{
         Font: &excelize.Font{Bold: true},
         Fill: excelize.Fill{Type: "pattern", Color: []string{"#DDDDDD"}, Pattern: 1},
     })
-    f.SetCellStyle(sheet, "A1", "L1", style)
+    f.SetCellStyle(sheet, "A1", "O1", style)
 
-    for i := 1; i <= 12; i++ {
+    for i := 1; i <= 15; i++ {
         col := string(rune('A' + i - 1))
         f.SetColWidth(sheet, col, col, 20)
     }

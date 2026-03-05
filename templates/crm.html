@@ -48,7 +48,7 @@
         .editable-cell:hover {
             background-color: #f8f9fa;
         }
-        .editable-cell input, .editable-cell select {
+        .editable-cell input, .editable-cell select, .editable-cell textarea {
             width: 100%;
             padding: 0.25rem;
             border: 1px solid #007bff;
@@ -522,9 +522,14 @@
                             <span class="input-group-text">до</span>
                             <input type="date" class="form-control" id="customerCreatedTo">
                         </div>
+                        <!-- Быстрый фильтр по городу -->
+                        <select class="form-select form-select-sm" id="customerCityFilter" style="max-width: 150px;">
+                            <option value="">Все города</option>
+                            <!-- динамически заполняется -->
+                        </select>
                         <!-- Поиск -->
                         <div class="input-group search-box">
-                            <input type="text" class="form-control" id="customerSearch" placeholder="Поиск по имени или email...">
+                            <input type="text" class="form-control" id="customerSearch" placeholder="Поиск по имени, email или городу...">
                             <button class="btn btn-outline-secondary" type="button" id="customerSearchBtn"><i class="fas fa-search"></i></button>
                         </div>
                         <!-- Кнопка применения фильтров -->
@@ -568,8 +573,12 @@
                                 <th data-column="responsible">Ответственный</th>
                                 <th data-column="source">Источник</th>
                                 <th class="col-comment" data-column="comment">Комментарий</th>
-                                <!-- Новая колонка Lead Score -->
                                 <th data-column="lead_score">Lead Score</th>
+                                <!-- Новые колонки -->
+                                <th data-column="city">Город</th>
+                                <th data-column="social_media">Соцсети</th>
+                                <th data-column="birthday">День рождения</th>
+                                <th data-column="notes">Заметки</th>
                                 <th class="col-actions" data-column="actions">Действия</th>
                             </tr>
                         </thead>
@@ -584,7 +593,7 @@
                 </nav>
             </div>
 
-            <!-- Вкладка Сделки (ДОБАВЛЕН ФИЛЬТР ПО СТАДИИ) -->
+            <!-- Вкладка Сделки -->
             <div class="tab-pane fade" id="deals" role="tabpanel">
                 <!-- Панель массовых действий -->
                 <div class="batch-actions mb-2">
@@ -610,7 +619,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                     <h3>Список сделок</h3>
                     <div class="filter-group">
-                        <!-- НОВЫЙ ФИЛЬТР ПО СТАДИИ -->
+                        <!-- Фильтр по стадии -->
                         <select class="form-select form-select-sm" id="dealStageFilter" style="max-width: 150px;">
                             <option value="">Все стадии</option>
                             <option value="lead">Лид</option>
@@ -619,7 +628,11 @@
                             <option value="closed_won">Успешно</option>
                             <option value="closed_lost">Проиграно</option>
                         </select>
-
+                        <!-- Фильтр по категории товара -->
+                        <select class="form-select form-select-sm" id="dealCategoryFilter" style="max-width: 150px;">
+                            <option value="">Все категории</option>
+                            <!-- динамически заполняется -->
+                        </select>
                         <!-- Фильтры по сумме -->
                         <div class="input-group" style="max-width: 150px;">
                             <span class="input-group-text">Сумма от</span>
@@ -684,6 +697,10 @@
                                 <th data-column="responsible">Ответственный</th>
                                 <th data-column="source">Источник</th>
                                 <th class="col-comment" data-column="comment">Комментарий</th>
+                                <!-- Новые колонки -->
+                                <th data-column="product_category">Категория</th>
+                                <th data-column="discount">Скидка</th>
+                                <th data-column="next_action_date">След. действие</th>
                                 <th class="col-actions" data-column="actions">Действия</th>
                             </tr>
                         </thead>
@@ -766,6 +783,33 @@
                         </div>
                     </div>
                 </div>
+                <!-- Новые блоки: Прогноз продаж и Конверсия -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Прогноз продаж на 3 месяца</div>
+                            <div class="card-body">
+                                <canvas id="forecastChart" style="max-height: 300px;"></canvas>
+                                <div class="mt-3">
+                                    <p><strong>Среднемесячный объём:</strong> <span id="avgMonthlyValue">0</span></p>
+                                    <p><strong>Взвешенный прогноз (текущие сделки):</strong> <span id="weightedForecast">0</span></p>
+                                    <p><strong>Конверсия в выигрыш:</strong> <span id="conversionRate">0%</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Конверсия по этапам воронки</div>
+                            <div class="card-body">
+                                <canvas id="conversionChart" style="max-height: 300px;"></canvas>
+                                <div class="mt-3" id="stageConversionTable">
+                                    <!-- будет заполнено динамически -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -782,6 +826,9 @@
                     <ul class="nav nav-tabs modal-tabs mb-3" id="customerModalTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="customer-main-tab" data-bs-toggle="tab" data-bs-target="#customer-main" type="button" role="tab">Основное</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="customer-extra-tab" data-bs-toggle="tab" data-bs-target="#customer-extra" type="button" role="tab">Дополнительно</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="customer-history-tab" data-bs-toggle="tab" data-bs-target="#customer-history" type="button" role="tab">История</button>
@@ -832,6 +879,30 @@
                                 </div>
                             </form>
                         </div>
+                        <!-- Вкладка "Дополнительно" -->
+                        <div class="tab-pane fade" id="customer-extra" role="tabpanel">
+                            <form>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Город</label>
+                                        <input type="text" class="form-control" id="customerCity">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">День рождения</label>
+                                        <input type="date" class="form-control" id="customerBirthday">
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Социальные сети (JSON)</label>
+                                        <textarea class="form-control" id="customerSocialMedia" rows="3" placeholder='{"telegram": "@username", "vk": "id123"}'></textarea>
+                                        <div class="form-text">Введите валидный JSON</div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Заметки</label>
+                                        <textarea class="form-control" id="customerNotes" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                         <!-- Вкладка "История" -->
                         <div class="tab-pane fade" id="customer-history" role="tabpanel">
                             <div id="customerHistoryList">
@@ -860,6 +931,9 @@
                     <ul class="nav nav-tabs modal-tabs mb-3" id="dealModalTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="deal-main-tab" data-bs-toggle="tab" data-bs-target="#deal-main" type="button" role="tab">Основное</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="deal-extra-tab" data-bs-toggle="tab" data-bs-target="#deal-extra" type="button" role="tab">Дополнительно</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="deal-files-tab" data-bs-toggle="tab" data-bs-target="#deal-files" type="button" role="tab">Файлы</button>
@@ -917,6 +991,25 @@
                                     <div class="col-12 mb-3">
                                         <label class="form-label">Комментарий</label>
                                         <textarea class="form-control" id="dealComment" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- Вкладка "Дополнительно" -->
+                        <div class="tab-pane fade" id="deal-extra" role="tabpanel">
+                            <form>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Категория товара</label>
+                                        <input type="text" class="form-control" id="dealProductCategory">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Скидка</label>
+                                        <input type="number" step="0.01" class="form-control" id="dealDiscount" min="0" value="0">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Дата следующего действия</label>
+                                        <input type="date" class="form-control" id="dealNextActionDate">
                                     </div>
                                 </div>
                             </form>
@@ -1037,7 +1130,9 @@
         let currentDealSearch = '';
         let customerCreatedFrom = '';
         let customerCreatedTo = '';
+        let customerCityFilter = '';
         let dealStageFilter = '';
+        let dealCategoryFilter = '';
         let dealValueMin = '';
         let dealValueMax = '';
         let dealCloseFrom = '';
@@ -1059,6 +1154,17 @@
             } finally {
                 hideLoader();
             }
+        }
+
+        // Функция для безопасного экранирования HTML
+        function escapeHtml(unsafe) {
+            if (unsafe === undefined || unsafe === null) return '';
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         // ==================== НАСТРОЙКА КОЛОНОК ====================
@@ -1134,6 +1240,10 @@
                 { dataColumn: 'source', label: 'Источник' },
                 { dataColumn: 'comment', label: 'Комментарий' },
                 { dataColumn: 'lead_score', label: 'Lead Score' },
+                { dataColumn: 'city', label: 'Город' },
+                { dataColumn: 'social_media', label: 'Соцсети' },
+                { dataColumn: 'birthday', label: 'День рождения' },
+                { dataColumn: 'notes', label: 'Заметки' },
                 { dataColumn: 'actions', label: 'Действия' }
             ]);
             initColumnSelector('dealsTable', [
@@ -1146,6 +1256,9 @@
                 { dataColumn: 'responsible', label: 'Ответственный' },
                 { dataColumn: 'source', label: 'Источник' },
                 { dataColumn: 'comment', label: 'Комментарий' },
+                { dataColumn: 'product_category', label: 'Категория' },
+                { dataColumn: 'discount', label: 'Скидка' },
+                { dataColumn: 'next_action_date', label: 'След. действие' },
                 { dataColumn: 'actions', label: 'Действия' }
             ]);
 
@@ -1181,11 +1294,13 @@
             document.getElementById('applyCustomerFilters').addEventListener('click', function() {
                 customerCreatedFrom = document.getElementById('customerCreatedFrom').value;
                 customerCreatedTo = document.getElementById('customerCreatedTo').value;
+                customerCityFilter = document.getElementById('customerCityFilter').value;
                 currentCustomersPage = 1;
                 loadCustomers();
             });
             document.getElementById('applyDealFilters').addEventListener('click', function() {
                 dealStageFilter = document.getElementById('dealStageFilter').value;
+                dealCategoryFilter = document.getElementById('dealCategoryFilter').value;
                 dealValueMin = document.getElementById('dealValueMin').value;
                 dealValueMax = document.getElementById('dealValueMax').value;
                 dealCloseFrom = document.getElementById('dealCloseFrom').value;
@@ -1389,57 +1504,115 @@
         function loadCustomers(page = currentCustomersPage) {
             let url = `/api/crm/customers?page=${page}&page_size=${pageSize}`;
             if (currentCustomerSearch) url += `&search=${encodeURIComponent(currentCustomerSearch)}`;
+            if (customerCityFilter) url += `&city=${encodeURIComponent(customerCityFilter)}`;
             if (customerCreatedFrom) url += `&created_from=${encodeURIComponent(customerCreatedFrom)}`;
             if (customerCreatedTo) url += `&created_to=${encodeURIComponent(customerCreatedTo)}`;
             fetchWithLoader(url)
                 .then(response => response.json())
                 .then(resp => {
+                    console.log('Получены клиенты:', resp.data.length, 'записей. Первый клиент:', resp.data[0] ? {id: resp.data[0].id, city: resp.data[0].city} : 'нет данных');
                     renderCustomersTable(resp.data);
                     renderPagination('customers', resp.total, resp.page, resp.total_pages);
                     currentCustomersPage = resp.page;
+                    // Загружаем уникальные города для фильтра
+                    loadUniqueCities(resp.data);
+                    // Дополнительная задержка для гарантии
+                    setTimeout(() => loadUniqueCities(resp.data), 100);
                 })
                 .catch(error => console.error('Error loading customers:', error));
+        }
+
+        function loadUniqueCities(customers) {
+            // Извлекаем все непустые города
+            const cities = [...new Set(customers.map(c => c.city).filter(c => c && c.trim() !== ''))];
+            console.log('Уникальные города из данных:', cities);
+
+            const select = document.getElementById('customerCityFilter');
+            if (!select) {
+                console.error('Элемент customerCityFilter не найден!');
+                return;
+            }
+
+            // Сохраняем текущее выбранное значение
+            const currentValue = select.value;
+
+            // Очищаем и добавляем опцию "Все города"
+            select.innerHTML = '<option value="">Все города</option>';
+
+            // Добавляем опции для каждого города
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                if (city === currentValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
         }
 
         function renderCustomersTable(customers) {
             const tbody = document.querySelector('#customersTable tbody');
             tbody.innerHTML = '';
             customers.forEach(customer => {
-                const row = tbody.insertRow();
-                row.setAttribute('data-id', customer.id);
-                const checkboxCell = row.insertCell();
-                checkboxCell.innerHTML = `<input type="checkbox" value="${customer.id}">`;
-                checkboxCell.className = 'checkbox-col';
+                try {
+                    const row = tbody.insertRow();
+                    row.setAttribute('data-id', customer.id);
+                    const checkboxCell = row.insertCell();
+                    checkboxCell.innerHTML = `<input type="checkbox" value="${customer.id}">`;
+                    checkboxCell.className = 'checkbox-col';
 
-                row.insertCell().innerHTML = `<span class="editable-cell col-id" data-field="id">${customer.id}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="name" data-value="${customer.name || ''}">${customer.name || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="email" data-value="${customer.email || ''}">${customer.email || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="phone" data-value="${customer.phone || ''}">${customer.phone || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell col-company" data-field="company" data-value="${customer.company || ''}">${customer.company || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="status" data-value="${customer.status || 'lead'}">
-                    <span class="badge bg-info badge-status">${customer.status || 'lead'}</span>
-                </span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="responsible" data-value="${customer.responsible || ''}">${customer.responsible || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="source" data-value="${customer.source || ''}">${customer.source || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell col-comment" data-field="comment" data-value="${customer.comment || ''}">${customer.comment || ''}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell col-id" data-field="id">${escapeHtml(customer.id)}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="name" data-value="${escapeHtml(customer.name || '')}">${escapeHtml(customer.name || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="email" data-value="${escapeHtml(customer.email || '')}">${escapeHtml(customer.email || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="phone" data-value="${escapeHtml(customer.phone || '')}">${escapeHtml(customer.phone || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell col-company" data-field="company" data-value="${escapeHtml(customer.company || '')}">${escapeHtml(customer.company || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="status" data-value="${escapeHtml(customer.status || 'lead')}">
+                        <span class="badge bg-info badge-status">${escapeHtml(customer.status || 'lead')}</span>
+                    </span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="responsible" data-value="${escapeHtml(customer.responsible || '')}">${escapeHtml(customer.responsible || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="source" data-value="${escapeHtml(customer.source || '')}">${escapeHtml(customer.source || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell col-comment" data-field="comment" data-value="${escapeHtml(customer.comment || '')}">${escapeHtml(customer.comment || '')}</span>`;
 
-                const leadScoreCell = row.insertCell();
-                const score = customer.lead_score || 0;
-                const percent = Math.round(score * 100);
-                let bgClass = 'bg-success';
-                if (percent < 30) bgClass = 'bg-danger';
-                else if (percent < 70) bgClass = 'bg-warning';
-                leadScoreCell.innerHTML = `
-                    <div class="progress" style="height: 20px; min-width: 80px;">
-                        <div class="progress-bar ${bgClass}" role="progressbar" style="width: ${percent}%;" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">${percent}%</div>
-                    </div>
-                `;
-                const actionsCell = row.insertCell();
-                actionsCell.className = 'col-actions';
-                actionsCell.innerHTML = `
-                    <button class="btn btn-sm btn-warning btn-edit" onclick="editCustomer('${customer.id}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${customer.id}')"><i class="fas fa-trash"></i></button>
-                `;
+                    const leadScoreCell = row.insertCell();
+                    const score = customer.lead_score || 0;
+                    const percent = Math.round(score * 100);
+                    let bgClass = 'bg-success';
+                    if (percent < 30) bgClass = 'bg-danger';
+                    else if (percent < 70) bgClass = 'bg-warning';
+                    leadScoreCell.innerHTML = `
+                        <div class="progress" style="height: 20px; min-width: 80px;">
+                            <div class="progress-bar ${bgClass}" role="progressbar" style="width: ${percent}%;" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">${percent}%</div>
+                        </div>
+                    `;
+
+                    // Новые поля с обработкой ошибок
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="city" data-value="${escapeHtml(customer.city || '')}">${escapeHtml(customer.city || '')}</span>`;
+
+                    let socialMediaStr = '';
+                    if (customer.social_media) {
+                        if (typeof customer.social_media === 'object') {
+                            socialMediaStr = JSON.stringify(customer.social_media);
+                        } else {
+                            socialMediaStr = String(customer.social_media);
+                        }
+                    }
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="social_media" data-value='${escapeHtml(socialMediaStr)}'>${escapeHtml(socialMediaStr)}</span>`;
+
+                    const birthday = customer.birthday ? new Date(customer.birthday).toLocaleDateString('ru-RU') : '';
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="birthday" data-value="${escapeHtml(customer.birthday || '')}">${escapeHtml(birthday)}</span>`;
+
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="notes" data-value="${escapeHtml(customer.notes || '')}">${escapeHtml(customer.notes || '')}</span>`;
+
+                    const actionsCell = row.insertCell();
+                    actionsCell.className = 'col-actions';
+                    actionsCell.innerHTML = `
+                        <button class="btn btn-sm btn-warning btn-edit" onclick="editCustomer('${customer.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${customer.id}')"><i class="fas fa-trash"></i></button>
+                    `;
+                } catch (e) {
+                    console.error('Ошибка при рендеринге клиента:', e, customer);
+                }
             });
             attachInlineEditHandlers('customers');
             if (window['applyColumns_customersTable']) window['applyColumns_customersTable']();
@@ -1450,6 +1623,7 @@
             let url = `/api/crm/deals?page=${page}&page_size=${pageSize}`;
             if (currentDealSearch) url += `&search=${encodeURIComponent(currentDealSearch)}`;
             if (dealStageFilter) url += `&stage=${encodeURIComponent(dealStageFilter)}`;
+            if (dealCategoryFilter) url += `&category=${encodeURIComponent(dealCategoryFilter)}`;
             if (dealValueMin) url += `&value_min=${encodeURIComponent(dealValueMin)}`;
             if (dealValueMax) url += `&value_max=${encodeURIComponent(dealValueMax)}`;
             if (dealCloseFrom) url += `&close_from=${encodeURIComponent(dealCloseFrom)}`;
@@ -1460,37 +1634,64 @@
                     renderDealsTable(resp.data);
                     renderPagination('deals', resp.total, resp.page, resp.total_pages);
                     currentDealsPage = resp.page;
+                    // Загружаем уникальные категории для фильтра
+                    loadUniqueCategories(resp.data);
                 })
                 .catch(error => console.error('Error loading deals:', error));
+        }
+
+        function loadUniqueCategories(deals) {
+            const categories = [...new Set(deals.map(d => d.product_category).filter(c => c))];
+            const select = document.getElementById('dealCategoryFilter');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Все категории</option>';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                if (cat === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
         }
 
         function renderDealsTable(deals) {
             const tbody = document.querySelector('#dealsTable tbody');
             tbody.innerHTML = '';
             deals.forEach(deal => {
-                const row = tbody.insertRow();
-                row.setAttribute('data-id', deal.id);
-                const checkboxCell = row.insertCell();
-                checkboxCell.innerHTML = `<input type="checkbox" value="${deal.id}">`;
-                checkboxCell.className = 'checkbox-col';
+                try {
+                    const row = tbody.insertRow();
+                    row.setAttribute('data-id', deal.id);
+                    const checkboxCell = row.insertCell();
+                    checkboxCell.innerHTML = `<input type="checkbox" value="${deal.id}">`;
+                    checkboxCell.className = 'checkbox-col';
 
-                row.insertCell().innerHTML = `<span class="editable-cell col-id" data-field="id">${deal.id}</span>`;
-                row.insertCell().innerHTML = `<span>${deal.customer_id || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="title" data-value="${deal.title || ''}">${deal.title || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="value" data-value="${deal.value || 0}">${deal.value || 0}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="stage" data-value="${deal.stage || 'lead'}">
-                    <span class="badge bg-primary badge-status">${deal.stage || 'lead'}</span>
-                </span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell col-probability" data-field="probability" data-value="${deal.probability || 0}">${deal.probability || 0}%</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="responsible" data-value="${deal.responsible || ''}">${deal.responsible || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell" data-field="source" data-value="${deal.source || ''}">${deal.source || ''}</span>`;
-                row.insertCell().innerHTML = `<span class="editable-cell col-comment" data-field="comment" data-value="${deal.comment || ''}">${deal.comment || ''}</span>`;
-                const actionsCell = row.insertCell();
-                actionsCell.className = 'col-actions';
-                actionsCell.innerHTML = `
-                    <button class="btn btn-sm btn-warning btn-edit" onclick="editDeal('${deal.id}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteDeal('${deal.id}')"><i class="fas fa-trash"></i></button>
-                `;
+                    row.insertCell().innerHTML = `<span class="editable-cell col-id" data-field="id">${escapeHtml(deal.id)}</span>`;
+                    row.insertCell().innerHTML = `<span>${escapeHtml(deal.customer_id || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="title" data-value="${escapeHtml(deal.title || '')}">${escapeHtml(deal.title || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="value" data-value="${escapeHtml(deal.value || 0)}">${escapeHtml(deal.value || 0)}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="stage" data-value="${escapeHtml(deal.stage || 'lead')}">
+                        <span class="badge bg-primary badge-status">${escapeHtml(deal.stage || 'lead')}</span>
+                    </span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell col-probability" data-field="probability" data-value="${escapeHtml(deal.probability || 0)}">${escapeHtml(deal.probability || 0)}%</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="responsible" data-value="${escapeHtml(deal.responsible || '')}">${escapeHtml(deal.responsible || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="source" data-value="${escapeHtml(deal.source || '')}">${escapeHtml(deal.source || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell col-comment" data-field="comment" data-value="${escapeHtml(deal.comment || '')}">${escapeHtml(deal.comment || '')}</span>`;
+
+                    // Новые поля
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="product_category" data-value="${escapeHtml(deal.product_category || '')}">${escapeHtml(deal.product_category || '')}</span>`;
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="discount" data-value="${escapeHtml(deal.discount || 0)}">${escapeHtml(deal.discount || 0)}</span>`;
+                    const nextAction = deal.next_action_date ? new Date(deal.next_action_date).toLocaleDateString('ru-RU') : '';
+                    row.insertCell().innerHTML = `<span class="editable-cell" data-field="next_action_date" data-value="${escapeHtml(deal.next_action_date || '')}">${escapeHtml(nextAction)}</span>`;
+
+                    const actionsCell = row.insertCell();
+                    actionsCell.className = 'col-actions';
+                    actionsCell.innerHTML = `
+                        <button class="btn btn-sm btn-warning btn-edit" onclick="editDeal('${deal.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDeal('${deal.id}')"><i class="fas fa-trash"></i></button>
+                    `;
+                } catch (e) {
+                    console.error('Ошибка при рендеринге сделки:', e, deal);
+                }
             });
             attachInlineEditHandlers('deals');
             if (window['applyColumns_dealsTable']) window['applyColumns_dealsTable']();
@@ -1501,7 +1702,7 @@
             const selector = type === 'customers' ? '#customersTable .editable-cell' : '#dealsTable .editable-cell';
             document.querySelectorAll(selector).forEach(cell => {
                 cell.addEventListener('dblclick', function(e) {
-                    if (this.querySelector('input') || this.querySelector('select')) return;
+                    if (this.querySelector('input') || this.querySelector('select') || this.querySelector('textarea')) return;
                     const field = this.dataset.field;
                     if (field === 'id') return;
                     const currentValue = this.dataset.value || this.innerText.trim();
@@ -1519,10 +1720,18 @@
                             if (opt === currentValue) option.selected = true;
                             input.appendChild(option);
                         });
+                    } else if (field === 'birthday' || field === 'next_action_date' || field === 'expected_close') {
+                        input = document.createElement('input');
+                        input.type = 'date';
+                        input.value = currentValue;
+                    } else if (field === 'social_media' || field === 'notes' || field === 'comment') {
+                        input = document.createElement('textarea');
+                        input.className = 'form-control';
+                        input.value = currentValue;
                     } else {
                         input = document.createElement('input');
-                        input.type = (field === 'value' || field === 'probability') ? 'number' : 'text';
-                        if (field === 'value') input.step = '0.01';
+                        input.type = (field === 'value' || field === 'discount' || field === 'probability') ? 'number' : 'text';
+                        if (field === 'value' || field === 'discount') input.step = '0.01';
                         if (field === 'probability') { input.min = 0; input.max = 100; }
                         input.value = currentValue;
                     }
@@ -1544,18 +1753,19 @@
                             if (response.ok) {
                                 this.dataset.value = newValue;
                                 if (input.tagName === 'SELECT') {
-                                    this.innerHTML = `<span class="badge ${type === 'customers' ? 'bg-info' : 'bg-primary'} badge-status">${newValue}</span>`;
+                                    this.innerHTML = `<span class="badge ${type === 'customers' ? 'bg-info' : 'bg-primary'} badge-status">${escapeHtml(newValue)}</span>`;
+                                } else if (field === 'birthday' || field === 'next_action_date' || field === 'expected_close') {
+                                    this.innerText = newValue ? new Date(newValue).toLocaleDateString('ru-RU') : '';
+                                } else if (field === 'value' || field === 'discount') {
+                                    this.innerText = parseFloat(newValue).toFixed(2);
+                                } else if (field === 'probability') {
+                                    this.innerText = newValue + '%';
                                 } else {
-                                    this.innerText = field === 'value' ? parseFloat(newValue).toFixed(2) : newValue;
-                                    if (field === 'probability') this.innerText += '%';
+                                    this.innerText = escapeHtml(newValue);
                                 }
                             } else {
                                 alert('Ошибка сохранения');
-                                if (input.tagName === 'SELECT') {
-                                    this.innerHTML = `<span class="badge ${type === 'customers' ? 'bg-info' : 'bg-primary'} badge-status">${currentValue}</span>`;
-                                } else {
-                                    this.innerText = currentValue;
-                                }
+                                this.innerText = currentValue;
                             }
                         }).catch(() => {
                             alert('Ошибка сети');
@@ -1603,8 +1813,23 @@
                 status: document.getElementById('customerStatus').value,
                 responsible: document.getElementById('customerResponsible').value,
                 source: document.getElementById('customerSource').value,
-                comment: document.getElementById('customerComment').value
+                comment: document.getElementById('customerComment').value,
+                city: document.getElementById('customerCity').value,
+                birthday: document.getElementById('customerBirthday').value || null,
+                notes: document.getElementById('customerNotes').value
             };
+            // social_media – пытаемся распарсить JSON
+            const socialMedia = document.getElementById('customerSocialMedia').value;
+            if (socialMedia) {
+                try {
+                    customer.social_media = JSON.parse(socialMedia);
+                } catch (e) {
+                    alert('Неверный формат JSON для соцсетей');
+                    return;
+                }
+            } else {
+                customer.social_media = null;
+            }
 
             const url = id ? `/api/crm/customers/${id}` : '/api/crm/customers';
             const method = id ? 'PUT' : 'POST';
@@ -1657,6 +1882,8 @@
             const id = document.getElementById('dealId').value;
             const expectedCloseInput = document.getElementById('dealExpectedClose').value;
             const expectedClose = expectedCloseInput ? expectedCloseInput + 'T00:00:00Z' : null;
+            const nextActionInput = document.getElementById('dealNextActionDate').value;
+            const nextAction = nextActionInput ? nextActionInput + 'T00:00:00Z' : null;
 
             const deal = {
                 customer_id: customerId,
@@ -1667,7 +1894,10 @@
                 responsible: document.getElementById('dealResponsible').value,
                 source: document.getElementById('dealSource').value,
                 comment: document.getElementById('dealComment').value,
-                expected_close: expectedClose
+                expected_close: expectedClose,
+                product_category: document.getElementById('dealProductCategory').value,
+                discount: parseFloat(document.getElementById('dealDiscount').value) || 0,
+                next_action_date: nextAction
             };
 
             const url = id ? `/api/crm/deals/${id}` : '/api/crm/deals';
@@ -1706,8 +1936,14 @@
                         document.getElementById('customerResponsible').value = customer.responsible || '';
                         document.getElementById('customerSource').value = customer.source || '';
                         document.getElementById('customerComment').value = customer.comment || '';
+                        // Новые поля
+                        document.getElementById('customerCity').value = customer.city || '';
+                        document.getElementById('customerSocialMedia').value = customer.social_media ? JSON.stringify(customer.social_media) : '';
+                        document.getElementById('customerBirthday').value = customer.birthday ? customer.birthday.slice(0,10) : '';
+                        document.getElementById('customerNotes').value = customer.notes || '';
+
                         new bootstrap.Modal(document.getElementById('customerModal')).show();
-                        document.getElementById('customer-history-tab').click();
+                        document.getElementById('customer-main-tab').click();
                     }
                 });
         };
@@ -1729,9 +1965,15 @@
                         document.getElementById('dealSource').value = deal.source || '';
                         document.getElementById('dealComment').value = deal.comment || '';
                         document.getElementById('dealExpectedClose').value = deal.expected_close ? deal.expected_close.slice(0,10) : '';
+                        // Новые поля
+                        document.getElementById('dealProductCategory').value = deal.product_category || '';
+                        document.getElementById('dealDiscount').value = deal.discount || 0;
+                        document.getElementById('dealNextActionDate').value = deal.next_action_date ? deal.next_action_date.slice(0,10) : '';
+
                         new bootstrap.Modal(document.getElementById('dealModal')).show();
                         loadFiles(deal.id);
                         document.getElementById('dealHistoryList').innerHTML = '<p class="text-muted text-center">Загрузка истории...</p>';
+                        document.getElementById('deal-main-tab').click();
                     }
                 });
         };
@@ -1761,10 +2003,14 @@
         };
 
         // ==================== ОЧИСТКА МОДАЛОК ====================
-        document.getElementById('customerModal').addEventListener('show.bs.modal', function(event) {
-            if (!event.relatedTarget) {
-                document.getElementById('customerId').value = '';
+        document.getElementById('customerModal').addEventListener('show.bs.modal', function() {
+            // Если ID клиента пуст – значит, открываем для создания нового
+            if (!document.getElementById('customerId').value) {
                 document.getElementById('customerForm').reset();
+                document.getElementById('customerCity').value = '';
+                document.getElementById('customerSocialMedia').value = '';
+                document.getElementById('customerBirthday').value = '';
+                document.getElementById('customerNotes').value = '';
                 document.querySelectorAll('#customerForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 document.getElementById('customerHistoryList').innerHTML = '<p class="text-muted text-center">Загрузка истории...</p>';
                 document.getElementById('customer-main-tab').click();
@@ -1775,6 +2021,9 @@
             if (!event.relatedTarget) {
                 document.getElementById('dealId').value = '';
                 document.getElementById('dealForm').reset();
+                document.getElementById('dealProductCategory').value = '';
+                document.getElementById('dealDiscount').value = 0;
+                document.getElementById('dealNextActionDate').value = '';
                 document.querySelectorAll('#dealForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 document.getElementById('deal-main-tab').click();
                 document.getElementById('fileList').innerHTML = '<p class="text-muted text-center">Нет загруженных файлов</p>';
@@ -1826,7 +2075,7 @@
                             <div class="file-list-item" data-id="${file.id}">
                                 <div class="file-icon"><i class="fas fa-file"></i></div>
                                 <div class="file-info">
-                                    <div class="file-name">${file.file_name}</div>
+                                    <div class="file-name">${escapeHtml(file.file_name)}</div>
                                     <div class="file-meta">${size} • загружен ${date}</div>
                                 </div>
                                 <div class="file-actions">
@@ -1891,9 +2140,9 @@
                         const date = new Date(item.created_at).toLocaleString('ru-RU');
                         html += `
                             <div class="history-item">
-                                <div class="history-action">${item.action}</div>
-                                <div class="history-meta">${item.user_name || 'Система'} • ${date}</div>
-                                <div>${item.details || ''}</div>
+                                <div class="history-action">${escapeHtml(item.action)}</div>
+                                <div class="history-meta">${escapeHtml(item.user_name || 'Система')} • ${date}</div>
+                                <div>${escapeHtml(item.details || '')}</div>
                             </div>
                         `;
                     });
@@ -1920,9 +2169,9 @@
                         const date = new Date(item.created_at).toLocaleString('ru-RU');
                         html += `
                             <div class="history-item">
-                                <div class="history-action">${item.action}</div>
-                                <div class="history-meta">${item.user_name || 'Система'} • ${date}</div>
-                                <div>${item.details || ''}</div>
+                                <div class="history-action">${escapeHtml(item.action)}</div>
+                                <div class="history-meta">${escapeHtml(item.user_name || 'Система')} • ${date}</div>
+                                <div>${escapeHtml(item.details || '')}</div>
                             </div>
                         `;
                     });
@@ -1960,6 +2209,9 @@
                     renderResponsibleChart(data.responsible_stats);
                     renderSourceChart(data.source_stats);
                     renderMonthlyChart(data.monthly_stats);
+                    // Загружаем новые данные
+                    loadForecast();
+                    loadStageConversion();
                 })
                 .catch(error => console.error('Error loading advanced stats:', error));
         }
@@ -1973,6 +2225,8 @@
             const ctx = document.getElementById('funnelChart').getContext('2d');
             if (window.funnelChart && typeof window.funnelChart.destroy === 'function') {
                 window.funnelChart.destroy();
+            } else {
+                window.funnelChart = null;
             }
             if (!stageStats || stageStats.length === 0) {
                 stageStats = [];
@@ -1981,42 +2235,49 @@
             const counts = stageStats.map(s => s.count);
             const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
 
-            window.funnelChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: stages,
-                    datasets: [{
-                        label: 'Количество сделок',
-                        data: counts,
-                        backgroundColor: colors.slice(0, stages.length),
-                        borderColor: 'white',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            const stage = stages[index];
-                            document.getElementById('deals-tab').click();
-                            document.getElementById('dealStageFilter').value = stage;
-                            dealStageFilter = stage;
-                            currentDealsPage = 1;
-                            loadDeals();
+            try {
+                window.funnelChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: stages,
+                        datasets: [{
+                            label: 'Количество сделок',
+                            data: counts,
+                            backgroundColor: colors.slice(0, stages.length),
+                            borderColor: 'white',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const stage = stages[index];
+                                document.getElementById('deals-tab').click();
+                                document.getElementById('dealStageFilter').value = stage;
+                                dealStageFilter = stage;
+                                currentDealsPage = 1;
+                                loadDeals();
+                            }
                         }
                     }
-                }
-            });
+                });
+            } catch (e) {
+                console.error('Ошибка создания funnelChart:', e);
+                window.funnelChart = null;
+            }
         }
 
         function renderResponsibleChart(responsibleStats) {
             const ctx = document.getElementById('responsibleChart').getContext('2d');
             if (window.responsibleChart && typeof window.responsibleChart.destroy === 'function') {
                 window.responsibleChart.destroy();
+            } else {
+                window.responsibleChart = null;
             }
             if (!responsibleStats || responsibleStats.length === 0) {
                 responsibleStats = [];
@@ -2025,41 +2286,48 @@
             const counts = responsibleStats.map(r => r.deals_count);
             const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
 
-            window.responsibleChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Количество сделок',
-                        data: counts,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderColor: 'white',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            const responsible = labels[index];
-                            document.getElementById('deals-tab').click();
-                            // Используем поле поиска для фильтрации по ответственному (упрощённо)
-                            document.getElementById('dealSearch').value = responsible;
-                            document.getElementById('dealSearchBtn').click();
+            try {
+                window.responsibleChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Количество сделок',
+                            data: counts,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderColor: 'white',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const responsible = labels[index];
+                                document.getElementById('deals-tab').click();
+                                // Используем поле поиска для фильтрации по ответственному (упрощённо)
+                                document.getElementById('dealSearch').value = responsible;
+                                document.getElementById('dealSearchBtn').click();
+                            }
                         }
                     }
-                }
-            });
+                });
+            } catch (e) {
+                console.error('Ошибка создания responsibleChart:', e);
+                window.responsibleChart = null;
+            }
         }
 
         function renderSourceChart(sourceStats) {
             const ctx = document.getElementById('sourceChart').getContext('2d');
             if (window.sourceChart && typeof window.sourceChart.destroy === 'function') {
                 window.sourceChart.destroy();
+            } else {
+                window.sourceChart = null;
             }
             if (!sourceStats || sourceStats.length === 0) {
                 sourceStats = [];
@@ -2068,37 +2336,44 @@
             const counts = sourceStats.map(s => s.deals_count);
             const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6610f2'];
 
-            window.sourceChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: counts,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right' } },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            const source = labels[index];
-                            document.getElementById('deals-tab').click();
-                            document.getElementById('dealSearch').value = source;
-                            document.getElementById('dealSearchBtn').click();
+            try {
+                window.sourceChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const source = labels[index];
+                                document.getElementById('deals-tab').click();
+                                document.getElementById('dealSearch').value = source;
+                                document.getElementById('dealSearchBtn').click();
+                            }
                         }
                     }
-                }
-            });
+                });
+            } catch (e) {
+                console.error('Ошибка создания sourceChart:', e);
+                window.sourceChart = null;
+            }
         }
 
         function renderMonthlyChart(monthlyStats) {
             const ctx = document.getElementById('monthlyChart').getContext('2d');
             if (window.monthlyChart && typeof window.monthlyChart.destroy === 'function') {
                 window.monthlyChart.destroy();
+            } else {
+                window.monthlyChart = null;
             }
             if (!monthlyStats || monthlyStats.length === 0) {
                 monthlyStats = [];
@@ -2107,60 +2382,158 @@
             const dealsCount = monthlyStats.map(m => m.deals_count);
             const values = monthlyStats.map(m => m.total_value);
 
-            window.monthlyChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [
-                        {
-                            label: 'Количество сделок',
-                            data: dealsCount,
-                            borderColor: '#4e73df',
-                            backgroundColor: 'rgba(78,115,223,0.05)',
-                            yAxisID: 'y',
-                            tension: 0.1,
-                            pointRadius: 5,
-                            pointHoverRadius: 8
-                        },
-                        {
-                            label: 'Сумма сделок',
-                            data: values,
-                            borderColor: '#1cc88a',
-                            backgroundColor: 'rgba(28,200,138,0.05)',
-                            yAxisID: 'y1',
-                            tension: 0.1,
-                            pointRadius: 5,
-                            pointHoverRadius: 8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { position: 'top' } },
-                    scales: {
-                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Количество' } },
-                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Сумма' }, grid: { drawOnChartArea: false } }
+            try {
+                window.monthlyChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: 'Количество сделок',
+                                data: dealsCount,
+                                borderColor: '#4e73df',
+                                backgroundColor: 'rgba(78,115,223,0.05)',
+                                yAxisID: 'y',
+                                tension: 0.1,
+                                pointRadius: 5,
+                                pointHoverRadius: 8
+                            },
+                            {
+                                label: 'Сумма сделок',
+                                data: values,
+                                borderColor: '#1cc88a',
+                                backgroundColor: 'rgba(28,200,138,0.05)',
+                                yAxisID: 'y1',
+                                tension: 0.1,
+                                pointRadius: 5,
+                                pointHoverRadius: 8
+                            }
+                        ]
                     },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            const month = months[index];
-                            const [year, monthNum] = month.split('-');
-                            const firstDay = new Date(Date.UTC(year, monthNum - 1, 1));
-                            const lastDay = new Date(Date.UTC(year, monthNum, 0));
-                            const firstStr = firstDay.toISOString().slice(0,10);
-                            const lastStr = lastDay.toISOString().slice(0,10);
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { position: 'top' } },
+                        scales: {
+                            y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Количество' } },
+                            y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Сумма' }, grid: { drawOnChartArea: false } }
+                        },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const month = months[index];
+                                const [year, monthNum] = month.split('-');
+                                const firstDay = new Date(Date.UTC(year, monthNum - 1, 1));
+                                const lastDay = new Date(Date.UTC(year, monthNum, 0));
+                                const firstStr = firstDay.toISOString().slice(0,10);
+                                const lastStr = lastDay.toISOString().slice(0,10);
 
-                            document.getElementById('deals-tab').click();
-                            document.getElementById('dealCloseFrom').value = firstStr;
-                            document.getElementById('dealCloseTo').value = lastStr;
-                            document.getElementById('applyDealFilters').click();
+                                document.getElementById('deals-tab').click();
+                                document.getElementById('dealCloseFrom').value = firstStr;
+                                document.getElementById('dealCloseTo').value = lastStr;
+                                document.getElementById('applyDealFilters').click();
+                            }
                         }
                     }
-                }
-            });
+                });
+            } catch (e) {
+                console.error('Ошибка создания monthlyChart:', e);
+                window.monthlyChart = null;
+            }
+        }
+
+        // ==================== НОВЫЕ ФУНКЦИИ АНАЛИТИКИ ====================
+        function loadForecast() {
+            fetchWithLoader('/api/crm/forecast')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('avgMonthlyValue').innerText = formatNumber(data.avg_monthly_value);
+                    document.getElementById('weightedForecast').innerText = formatNumber(data.weighted_forecast);
+                    document.getElementById('conversionRate').innerText = data.conversion.toFixed(1) + '%';
+
+                    const ctx = document.getElementById('forecastChart').getContext('2d');
+                    // Безопасное уничтожение предыдущего графика
+                    if (window.forecastChart) {
+                        if (typeof window.forecastChart.destroy === 'function') {
+                            window.forecastChart.destroy();
+                        }
+                        window.forecastChart = null;
+                    }
+                    try {
+                        window.forecastChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.months.map(m => m.month),
+                                datasets: [{
+                                    label: 'Прогноз (средний)',
+                                    data: data.months.map(m => m.value),
+                                    borderColor: '#4e73df',
+                                    backgroundColor: 'rgba(78,115,223,0.05)',
+                                    tension: 0.1,
+                                    fill: false
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { position: 'top' } },
+                                scales: { y: { beginAtZero: true, ticks: { callback: value => formatNumber(value) } } }
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Ошибка создания forecastChart:', e);
+                        window.forecastChart = null;
+                    }
+                })
+                .catch(error => console.error('Error loading forecast:', error));
+        }
+
+        function loadStageConversion() {
+            fetchWithLoader('/api/crm/conversion')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('stageConversionTable');
+                    let html = '<table class="table table-sm"><thead><tr><th>Этап</th><th>Кол-во</th><th>Конверсия</th></tr></thead><tbody>';
+                    data.forEach(item => {
+                        html += `<tr><td>${escapeHtml(item.stage)}</td><td>${item.count}</td><td>${item.percent.toFixed(1)}%</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+
+                    const ctx = document.getElementById('conversionChart').getContext('2d');
+                    if (window.conversionChart) {
+                        if (typeof window.conversionChart.destroy === 'function') {
+                            window.conversionChart.destroy();
+                        }
+                        window.conversionChart = null;
+                    }
+                    try {
+                        window.conversionChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.map(d => d.stage),
+                                datasets: [{
+                                    label: 'Количество сделок',
+                                    data: data.map(d => d.count),
+                                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+                                    borderColor: 'white',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { y: { beginAtZero: true } }
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Ошибка создания conversionChart:', e);
+                        window.conversionChart = null;
+                    }
+                })
+                .catch(error => console.error('Error loading conversion:', error));
         }
 
         // ==================== ЭКСПОРТ ====================
@@ -2168,6 +2541,7 @@
             const params = new URLSearchParams({
                 status: document.getElementById('customerStatus')?.value || '',
                 search: currentCustomerSearch,
+                city: customerCityFilter,
                 created_from: customerCreatedFrom,
                 created_to: customerCreatedTo
             });
@@ -2178,6 +2552,7 @@
             const params = new URLSearchParams({
                 stage: dealStageFilter || '',
                 search: currentDealSearch,
+                category: dealCategoryFilter,
                 value_min: dealValueMin,
                 value_max: dealValueMax,
                 close_from: dealCloseFrom,
@@ -2316,11 +2691,11 @@
             const toastHtml = `
                 <div id="${toastId}" class="toast-notification toast show" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="toast-header ${bgClass}">
-                        <strong class="me-auto">${title}</strong>
+                        <strong class="me-auto">${escapeHtml(title)}</strong>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                     <div class="toast-body">
-                        ${message}
+                        ${escapeHtml(message)}
                     </div>
                 </div>
             `;
