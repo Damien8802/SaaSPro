@@ -49,6 +49,8 @@ type Customer struct {
     SocialMedia json.RawMessage `json:"social_media,omitempty"`
     Birthday    *time.Time      `json:"birthday,omitempty"`
     Notes       string          `json:"notes,omitempty"`
+    // ДОБАВЛЕНО: теги
+    Tags        []string        `json:"tags,omitempty"`
 }
 
 // Deal представляет сделку в CRM
@@ -70,6 +72,8 @@ type Deal struct {
     ProductCategory string     `json:"product_category,omitempty"`
     Discount        float64    `json:"discount,omitempty"`
     NextActionDate  *time.Time `json:"next_action_date,omitempty"`
+    // ДОБАВЛЕНО: теги
+    Tags            []string   `json:"tags,omitempty"`
 }
 
 // HistoryRecord представляет запись истории
@@ -81,6 +85,26 @@ type HistoryRecord struct {
     UserID     *string         `json:"user_id,omitempty"`
     Changes    json.RawMessage `json:"changes,omitempty"`
     CreatedAt  time.Time       `json:"created_at"`
+}
+
+// ДОБАВЛЕНО: Tag представляет тег
+type Tag struct {
+    ID        string    `json:"id"`
+    Name      string    `json:"name"`
+    Color     string    `json:"color"`
+    CreatedAt time.Time `json:"created_at"`
+}
+
+// ДОБАВЛЕНО: Activity представляет активность
+type Activity struct {
+    ID           string     `json:"id"`
+    EntityType   string     `json:"entity_type"`
+    EntityID     string     `json:"entity_id"`
+    ActivityType string     `json:"activity_type"`
+    Content      string     `json:"content"`
+    UserID       *string    `json:"user_id,omitempty"`
+    UserName     *string    `json:"user_name,omitempty"`
+    CreatedAt    time.Time  `json:"created_at"`
 }
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
@@ -177,16 +201,6 @@ func addHistory(ctx context.Context, entityType, entityID, action string, userID
     return err
 }
 
-// GetEntityHistory возвращает историю для конкретной сущности
-// @Summary История изменений сущности
-// @Description Возвращает историю изменений для клиента или сделки
-// @Tags CRM
-// @Produce json
-// @Param type path string true "Тип сущности (customer или deal)"
-// @Param id path string true "ID сущности"
-// @Success 200 {array} HistoryRecord
-// @Failure 400 {object} map[string]interface{}
-// @Router /api/crm/history/{type}/{id} [get]
 func GetEntityHistory(c *gin.Context) {
     entityType := c.Param("type")
     entityID := c.Param("id")
@@ -227,7 +241,7 @@ func GetEntityHistory(c *gin.Context) {
     }
     defer rows.Close()
 
-    var history []HistoryRecord
+    history := []HistoryRecord{} // ← ИСПРАВЛЕНО: теперь всегда массив
     for rows.Next() {
         var h HistoryRecord
         var userID sql.NullString
@@ -413,6 +427,9 @@ func GetCustomers(c *gin.Context) {
         if birthday.Valid {
             cst.Birthday = &birthday.Time
         }
+        // ДОБАВЛЕНО: загружаем теги для клиента
+        tags, _ := getTagsForEntity(c.Request.Context(), "customer", cst.ID)
+        cst.Tags = tags
         customers = append(customers, cst)
     }
 
@@ -468,6 +485,13 @@ func CreateCustomer(c *gin.Context) {
         log.Printf("❌ CreateCustomer insert error: %v", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
+    }
+
+    // ДОБАВЛЕНО: сохраняем теги
+    if req.Tags != nil && len(req.Tags) > 0 {
+        if err := updateEntityTags(c.Request.Context(), "customer", id, req.Tags); err != nil {
+            log.Printf("⚠️ Ошибка сохранения тегов для клиента %s: %v", id, err)
+        }
     }
 
     if err := updateLeadScore(c.Request.Context(), id); err != nil {
@@ -558,6 +582,13 @@ func UpdateCustomer(c *gin.Context) {
         log.Printf("❌ UpdateCustomer error: %v", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
+    }
+
+    // ДОБАВЛЕНО: обновляем теги
+    if req.Tags != nil {
+        if err := updateEntityTags(c.Request.Context(), "customer", id, req.Tags); err != nil {
+            log.Printf("⚠️ Ошибка обновления тегов для клиента %s: %v", id, err)
+        }
     }
 
     if err := updateLeadScore(c.Request.Context(), id); err != nil {
@@ -938,6 +969,9 @@ func GetDeals(c *gin.Context) {
         if nextActionDate.Valid {
             d.NextActionDate = &nextActionDate.Time
         }
+        // ДОБАВЛЕНО: загружаем теги для сделки
+        tags, _ := getTagsForEntity(c.Request.Context(), "deal", d.ID)
+        d.Tags = tags
         deals = append(deals, d)
     }
 
@@ -974,6 +1008,13 @@ func CreateDeal(c *gin.Context) {
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
+    }
+
+    // ДОБАВЛЕНО: сохраняем теги
+    if d.Tags != nil && len(d.Tags) > 0 {
+        if err := updateEntityTags(c.Request.Context(), "deal", d.ID, d.Tags); err != nil {
+            log.Printf("⚠️ Ошибка сохранения тегов для сделки %s: %v", d.ID, err)
+        }
     }
 
     if err := updateLeadScore(c.Request.Context(), d.CustomerID); err != nil {
@@ -1047,6 +1088,13 @@ func UpdateDeal(c *gin.Context) {
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
+    }
+
+    // ДОБАВЛЕНО: обновляем теги
+    if d.Tags != nil {
+        if err := updateEntityTags(c.Request.Context(), "deal", id, d.Tags); err != nil {
+            log.Printf("⚠️ Ошибка обновления тегов для сделки %s: %v", id, err)
+        }
     }
 
     if oldCustomerID != d.CustomerID {
@@ -1721,11 +1769,6 @@ func getUserFilterSQL(c *gin.Context) (string, []interface{}) {
 
 // GetSalesForecast возвращает прогноз продаж на 3 месяца
 // на основе среднемесячных значений за последние 6 месяцев и текущих сделок.
-// @Summary Прогноз продаж
-// @Tags CRM
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /api/crm/forecast [get]
 func GetSalesForecast(c *gin.Context) {
     ctx := c.Request.Context()
     userFilter, args := getUserFilterSQL(c)
@@ -1790,11 +1833,6 @@ func GetSalesForecast(c *gin.Context) {
 }
 
 // GetStageConversion возвращает конверсию по этапам воронки продаж.
-// @Summary Конверсия по этапам
-// @Tags CRM
-// @Produce json
-// @Success 200 {array} map[string]interface{}
-// @Router /api/crm/conversion [get]
 func GetStageConversion(c *gin.Context) {
     ctx := c.Request.Context()
     userFilter, args := getUserFilterSQL(c)
@@ -1940,7 +1978,7 @@ func GetDealAttachments(c *gin.Context) {
         UploadedAt time.Time `json:"uploaded_at"`
     }
 
-    var attachments []Attachment
+    attachments := []Attachment{} // важно: инициализируем пустым срезом, а не nil
     for rows.Next() {
         var a Attachment
         var uploadedBy sql.NullString
@@ -1954,9 +1992,8 @@ func GetDealAttachments(c *gin.Context) {
         attachments = append(attachments, a)
     }
 
-    c.JSON(http.StatusOK, attachments)
+    c.JSON(http.StatusOK, attachments) // теперь всегда массив, даже пустой
 }
-
 func DownloadDealAttachment(c *gin.Context) {
     attachmentID := c.Param("attachment_id")
     if attachmentID == "" {
@@ -2109,6 +2146,7 @@ func exportFilteredCustomers(c *gin.Context) ([]Customer, error) {
         if birthday.Valid {
             cst.Birthday = &birthday.Time
         }
+        // ДОБАВЛЕНО: теги не экспортируем в CSV/Excel (можно добавить при желании)
         customers = append(customers, cst)
     }
     return customers, nil
@@ -2313,6 +2351,7 @@ func exportFilteredDeals(c *gin.Context) ([]Deal, error) {
         if nextActionDate.Valid {
             d.NextActionDate = &nextActionDate.Time
         }
+        // ДОБАВЛЕНО: теги не экспортируем
         deals = append(deals, d)
     }
     return deals, nil
@@ -2438,4 +2477,259 @@ func ExportDealsExcel(c *gin.Context) {
     c.Header("Content-Description", "File Transfer")
     c.Header("Content-Disposition", "attachment; filename=deals.xlsx")
     c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
+}
+
+// ========== ДОБАВЛЕНО: ТЕГИ ==========
+
+// GetTags возвращает список всех тегов
+func GetTags(c *gin.Context) {
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, name, color, created_at FROM tags ORDER BY name
+    `)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+    defer rows.Close()
+
+    tags := []Tag{} // ← важно: инициализируем пустым срезом
+    for rows.Next() {
+        var t Tag
+        if err := rows.Scan(&t.ID, &t.Name, &t.Color, &t.CreatedAt); err != nil {
+            continue
+        }
+        tags = append(tags, t)
+    }
+    c.JSON(http.StatusOK, tags) // теперь вернётся [] вместо null
+}
+// CreateTag создаёт новый тег
+func CreateTag(c *gin.Context) {
+    var req Tag
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    if req.Name == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Name is required"})
+        return
+    }
+    if req.Color == "" {
+        req.Color = "#6c757d"
+    }
+
+    var id string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        INSERT INTO tags (name, color) VALUES ($1, $2) RETURNING id
+    `, req.Name, req.Color).Scan(&id)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+    c.JSON(http.StatusCreated, gin.H{"id": id})
+}
+
+// DeleteTag удаляет тег
+func DeleteTag(c *gin.Context) {
+    id := c.Param("id")
+    _, err := database.Pool.Exec(c.Request.Context(), "DELETE FROM tags WHERE id = $1", id)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// getTagsForEntity возвращает список ID тегов для сущности
+func getTagsForEntity(ctx context.Context, entityType, entityID string) ([]string, error) {
+    var table string
+    if entityType == "customer" {
+        table = "customer_tags"
+    } else if entityType == "deal" {
+        table = "deal_tags"
+    } else {
+        return nil, fmt.Errorf("invalid entity type")
+    }
+    rows, err := database.Pool.Query(ctx, fmt.Sprintf("SELECT tag_id FROM %s WHERE %s_id = $1", table, entityType), entityID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    var ids []string
+    for rows.Next() {
+        var id string
+        if err := rows.Scan(&id); err == nil {
+            ids = append(ids, id)
+        }
+    }
+    return ids, nil
+}
+
+// updateEntityTags обновляет теги сущности (заменяет старые новыми)
+func updateEntityTags(ctx context.Context, entityType, entityID string, tagIDs []string) error {
+    var table string
+    if entityType == "customer" {
+        table = "customer_tags"
+    } else if entityType == "deal" {
+        table = "deal_tags"
+    } else {
+        return fmt.Errorf("invalid entity type")
+    }
+
+    tx, err := database.Pool.Begin(ctx)
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback(ctx)
+
+    // Удаляем старые связи
+    if _, err := tx.Exec(ctx, fmt.Sprintf("DELETE FROM %s WHERE %s_id = $1", table, entityType), entityID); err != nil {
+        return err
+    }
+
+    // Вставляем новые
+    for _, tagID := range tagIDs {
+        if tagID == "" {
+            continue
+        }
+        if _, err := tx.Exec(ctx, fmt.Sprintf("INSERT INTO %s (%s_id, tag_id) VALUES ($1, $2)", table, entityType), entityID, tagID); err != nil {
+            return err
+        }
+    }
+
+    return tx.Commit(ctx)
+}
+
+// ========== ДОБАВЛЕНО: АКТИВНОСТИ ==========
+
+// AddActivity добавляет активность (комментарий, звонок и т.д.)
+func AddActivity(c *gin.Context) {
+    var req Activity
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    if req.EntityType == "" || req.EntityID == "" || req.ActivityType == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
+        return
+    }
+
+    userID := getUserIDFromContext(c)
+    var userIDPtr *string
+    if userID != "" {
+        userIDPtr = &userID
+    }
+
+    var id string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        INSERT INTO activities (entity_type, entity_id, activity_type, content, user_id)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+    `, req.EntityType, req.EntityID, req.ActivityType, req.Content, userIDPtr).Scan(&id)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    c.JSON(http.StatusCreated, gin.H{"id": id})
+}
+
+// GetActivities возвращает активности для сущности
+func GetActivities(c *gin.Context) {
+    entityType := c.Param("type")
+    entityID := c.Param("id")
+    if entityType != "customer" && entityType != "deal" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entity type"})
+        return
+    }
+
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT a.id, a.entity_type, a.entity_id, a.activity_type, a.content, a.user_id, u.name as user_name, a.created_at
+        FROM activities a
+        LEFT JOIN users u ON u.id = a.user_id
+        WHERE a.entity_type = $1 AND a.entity_id = $2
+        ORDER BY a.created_at DESC
+    `, entityType, entityID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+    defer rows.Close()
+
+    var activities []Activity
+    for rows.Next() {
+        var act Activity
+        var userID, userName sql.NullString
+        if err := rows.Scan(&act.ID, &act.EntityType, &act.EntityID, &act.ActivityType, &act.Content, &userID, &userName, &act.CreatedAt); err != nil {
+            continue
+        }
+        if userID.Valid {
+            act.UserID = &userID.String
+        }
+        if userName.Valid {
+            act.UserName = &userName.String
+        }
+        activities = append(activities, act)
+    }
+    c.JSON(http.StatusOK, activities)
+}
+// ========== ДОБАВЛЕНО: УДАЛЕНИЕ АКТИВНОСТИ ==========
+func DeleteActivity(c *gin.Context) {
+    activityID := c.Param("id")
+    if activityID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "activity_id required"})
+        return
+    }
+
+    userID := getUserIDFromContext(c)
+    isAdmin := isAdmin(c)
+    if userID == "" && !isAdmin {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+    }
+
+    var entityType, entityID string
+    var activityUserID sql.NullString
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT entity_type, entity_id, user_id FROM activities WHERE id = $1
+    `, activityID).Scan(&entityType, &entityID, &activityUserID)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            c.JSON(http.StatusNotFound, gin.H{"error": "Activity not found"})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    if !isAdmin {
+        if activityUserID.Valid && activityUserID.String == userID {
+            // автор – разрешаем
+        } else {
+            var ownerID string
+            if entityType == "deal" {
+                err = database.Pool.QueryRow(c.Request.Context(), "SELECT user_id FROM crm_deals WHERE id = $1", entityID).Scan(&ownerID)
+            } else if entityType == "customer" {
+                err = database.Pool.QueryRow(c.Request.Context(), "SELECT user_id FROM crm_customers WHERE id = $1", entityID).Scan(&ownerID)
+            } else {
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entity type"})
+                return
+            }
+            if err != nil {
+                c.JSON(http.StatusNotFound, gin.H{"error": "Entity not found"})
+                return
+            }
+            if ownerID != userID {
+                c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+                return
+            }
+        }
+    }
+
+    _, err = database.Pool.Exec(c.Request.Context(), "DELETE FROM activities WHERE id = $1", activityID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"success": true})
 }

@@ -339,6 +339,13 @@ func main() {
         api.GET("/crm/deals/export/csv", handlers.ExportDealsCSV)
         api.GET("/crm/deals/export/excel", handlers.ExportDealsExcel)
         api.GET("/crm/history/:type/:id", handlers.GetEntityHistory)
+        // ДОБАВЛЕНО: маршруты для тегов
+        api.GET("/crm/tags", handlers.GetTags)
+        api.POST("/crm/tags", handlers.CreateTag)
+        api.DELETE("/crm/tags/:id", handlers.DeleteTag)
+        // ДОБАВЛЕНО: маршруты для активностей
+        api.POST("/crm/activities", handlers.AddActivity)
+        api.GET("/crm/activities/:type/:id", handlers.GetActivities)
         api.POST("/crm/ai/ask", handlers.AIAskHandler)
 
         // Настройки уведомлений
@@ -346,6 +353,7 @@ func main() {
         api.PUT("/notifications/settings", handlers.UpdateNotificationSettings)
         api.GET("/crm/forecast", handlers.GetSalesForecast)
         api.GET("/crm/conversion", handlers.GetStageConversion)
+        api.DELETE("/crm/activities/:id", handlers.DeleteActivity)
     }
 
     // ========== ЗАЩИЩЕННЫЕ API ==========

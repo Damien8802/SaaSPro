@@ -681,6 +681,7 @@
                                 <th data-column="social_media">Соцсети</th>
                                 <th data-column="birthday">День рождения</th>
                                 <th data-column="notes">Заметки</th>
+                                <th data-column="tags">Теги</th>
                                 <th class="col-actions" data-column="actions">Действия</th>
                             </tr>
                         </thead>
@@ -803,6 +804,7 @@
                                 <th data-column="product_category">Категория</th>
                                 <th data-column="discount">Скидка</th>
                                 <th data-column="next_action_date">След. действие</th>
+                                <th data-column="tags">Теги</th>
                                 <th class="col-actions" data-column="actions">Действия</th>
                             </tr>
                         </thead>
@@ -1017,6 +1019,14 @@
                                         <label class="form-label">Заметки</label>
                                         <textarea class="form-control" id="customerNotes" rows="3"></textarea>
                                     </div>
+                                    <!-- ДОБАВЛЕНО: поле для тегов -->
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Теги</label>
+                                        <select class="form-select" id="customerTags" multiple size="3">
+                                            <!-- будут загружены из API -->
+                                        </select>
+                                        <div class="form-text">Можно выбрать несколько</div>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -1057,6 +1067,10 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="deal-history-tab" data-bs-toggle="tab" data-bs-target="#deal-history" type="button" role="tab">История</button>
+                        </li>
+                        <!-- ДОБАВЛЕНО: вкладка Активность -->
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="deal-activity-tab" data-bs-toggle="tab" data-bs-target="#deal-activity" type="button" role="tab">Активность</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="dealModalTabContent">
@@ -1128,6 +1142,14 @@
                                         <label class="form-label">Дата следующего действия</label>
                                         <input type="date" class="form-control" id="dealNextActionDate">
                                     </div>
+                                    <!-- ДОБАВЛЕНО: поле для тегов -->
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Теги</label>
+                                        <select class="form-select" id="dealTags" multiple size="3">
+                                            <!-- будут загружены из API -->
+                                        </select>
+                                        <div class="form-text">Можно выбрать несколько</div>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -1146,6 +1168,21 @@
                         <div class="tab-pane fade" id="deal-history" role="tabpanel">
                             <div id="dealHistoryList">
                                 <p class="text-muted text-center">Загрузка истории...</p>
+                            </div>
+                        </div>
+                        <!-- ДОБАВЛЕНО: содержимое вкладки Активность -->
+                        <div class="tab-pane fade" id="deal-activity" role="tabpanel">
+                            <div class="mb-3">
+                                <textarea class="form-control" id="activityContent" rows="2" placeholder="Напишите комментарий..."></textarea>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-primary" onclick="addDealActivity('comment')"><i class="fas fa-comment me-1"></i>Добавить комментарий</button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="addDealActivity('call')"><i class="fas fa-phone me-1"></i>Звонок</button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="addDealActivity('meeting')"><i class="fas fa-handshake me-1"></i>Встреча</button>
+                                </div>
+                            </div>
+                            <div id="activityList" class="mt-3">
+                                <!-- Активности будут загружены сюда -->
+                                <p class="text-muted text-center">Загрузка...</p>
                             </div>
                         </div>
                     </div>
@@ -1361,6 +1398,7 @@
                 { dataColumn: 'social_media', label: 'Соцсети' },
                 { dataColumn: 'birthday', label: 'День рождения' },
                 { dataColumn: 'notes', label: 'Заметки' },
+                { dataColumn: 'tags', label: 'Теги' },
                 { dataColumn: 'actions', label: 'Действия' }
             ]);
             initColumnSelector('dealsTable', [
@@ -1376,12 +1414,14 @@
                 { dataColumn: 'product_category', label: 'Категория' },
                 { dataColumn: 'discount', label: 'Скидка' },
                 { dataColumn: 'next_action_date', label: 'След. действие' },
+                { dataColumn: 'tags', label: 'Теги' },
                 { dataColumn: 'actions', label: 'Действия' }
             ]);
 
             loadCustomers();
             loadDeals();
             loadCustomerSelect();
+            loadTags(); // ДОБАВЛЕНО: загружаем теги
 
             document.getElementById('customerSearchBtn').addEventListener('click', function() {
                 currentCustomerSearch = document.getElementById('customerSearch').value;
@@ -1503,9 +1543,17 @@
                 const id = document.getElementById('dealId').value;
                 if (id) loadDealHistory(id);
             });
+            // ДОБАВЛЕНО: при переключении на вкладку активностей загружаем их
+            document.getElementById('deal-activity-tab')?.addEventListener('shown.bs.tab', function() {
+                const dealId = document.getElementById('dealId').value;
+                if (dealId) {
+                    loadActivities('deal', dealId);
+                }
+            });
 
             window.aiChatModal = new bootstrap.Modal(document.getElementById('aiChatModal'));
 
+            // ДОБАВЛЕНО: загружаем настройки уведомлений с сервера (заменит старую функцию)
             loadNotificationSettings();
             initVoiceRecognition();
 
@@ -1645,6 +1693,10 @@
         }
 
         function loadUniqueCities(customers) {
+            // ИСПРАВЛЕНО: добавил проверку на наличие данных
+            if (!customers || !customers.length) {
+                return;
+            }
             // Извлекаем все непустые города
             const cities = [...new Set(customers.map(c => c.city).filter(c => c && c.trim() !== ''))];
             console.log('Уникальные города из данных:', cities);
@@ -1726,6 +1778,10 @@
 
                     row.insertCell().innerHTML = `<span class="editable-cell" data-field="notes" data-value="${escapeHtml(customer.notes || '')}">${escapeHtml(customer.notes || '')}</span>`;
 
+                    // ДОБАВЛЕНО: отображаем теги
+                    const tagsCell = row.insertCell();
+                    tagsCell.innerHTML = renderTags(customer.tags || []);
+
                     const actionsCell = row.insertCell();
                     actionsCell.className = 'col-actions';
                     actionsCell.innerHTML = `
@@ -1763,6 +1819,10 @@
         }
 
         function loadUniqueCategories(deals) {
+            // ИСПРАВЛЕНО: добавил проверку на наличие данных
+            if (!deals || !deals.length) {
+                return;
+            }
             const categories = [...new Set(deals.map(d => d.product_category).filter(c => c))];
             const select = document.getElementById('dealCategoryFilter');
             const currentValue = select.value;
@@ -1804,6 +1864,10 @@
                     row.insertCell().innerHTML = `<span class="editable-cell" data-field="discount" data-value="${escapeHtml(deal.discount || 0)}">${escapeHtml(deal.discount || 0)}</span>`;
                     const nextAction = deal.next_action_date ? new Date(deal.next_action_date).toLocaleDateString('ru-RU') : '';
                     row.insertCell().innerHTML = `<span class="editable-cell" data-field="next_action_date" data-value="${escapeHtml(deal.next_action_date || '')}">${escapeHtml(nextAction)}</span>`;
+
+                    // ДОБАВЛЕНО: отображаем теги
+                    const tagsCell = row.insertCell();
+                    tagsCell.innerHTML = renderTags(deal.tags || []);
 
                     const actionsCell = row.insertCell();
                     actionsCell.className = 'col-actions';
@@ -1952,6 +2016,8 @@
             } else {
                 customer.social_media = null;
             }
+            // ДОБАВЛЕНО: добавляем теги
+            customer.tags = getSelectedTagIds('customerTags');
 
             const url = id ? `/api/crm/customers/${id}` : '/api/crm/customers';
             const method = id ? 'PUT' : 'POST';
@@ -2022,6 +2088,8 @@
                 discount: parseFloat(document.getElementById('dealDiscount').value) || 0,
                 next_action_date: nextAction
             };
+            // ДОБАВЛЕНО: добавляем теги
+            deal.tags = getSelectedTagIds('dealTags');
 
             const url = id ? `/api/crm/deals/${id}` : '/api/crm/deals';
             const method = id ? 'PUT' : 'POST';
@@ -2065,6 +2133,8 @@
                         document.getElementById('customerSocialMedia').value = customer.social_media ? JSON.stringify(customer.social_media) : '';
                         document.getElementById('customerBirthday').value = customer.birthday ? customer.birthday.slice(0,10) : '';
                         document.getElementById('customerNotes').value = customer.notes || '';
+                        // ДОБАВЛЕНО: устанавливаем теги
+                        setSelectedTags('customerTags', customer.tags || []);
 
                         new bootstrap.Modal(document.getElementById('customerModal')).show();
                         document.getElementById('customer-main-tab').click();
@@ -2093,6 +2163,8 @@
                         document.getElementById('dealProductCategory').value = deal.product_category || '';
                         document.getElementById('dealDiscount').value = deal.discount || 0;
                         document.getElementById('dealNextActionDate').value = deal.next_action_date ? deal.next_action_date.slice(0,10) : '';
+                        // ДОБАВЛЕНО: устанавливаем теги
+                        setSelectedTags('dealTags', deal.tags || []);
 
                         new bootstrap.Modal(document.getElementById('dealModal')).show();
                         loadFiles(deal.id);
@@ -2135,6 +2207,7 @@
                 document.getElementById('customerSocialMedia').value = '';
                 document.getElementById('customerBirthday').value = '';
                 document.getElementById('customerNotes').value = '';
+                setSelectedTags('customerTags', []); // ДОБАВЛЕНО: сбрасываем теги
                 document.querySelectorAll('#customerForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 document.getElementById('customerHistoryList').innerHTML = '<p class="text-muted text-center">Загрузка истории...</p>';
                 document.getElementById('customer-main-tab').click();
@@ -2148,6 +2221,7 @@
                 document.getElementById('dealProductCategory').value = '';
                 document.getElementById('dealDiscount').value = 0;
                 document.getElementById('dealNextActionDate').value = '';
+                setSelectedTags('dealTags', []); // ДОБАВЛЕНО: сбрасываем теги
                 document.querySelectorAll('#dealForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 document.getElementById('deal-main-tab').click();
                 document.getElementById('fileList').innerHTML = '<p class="text-muted text-center">Нет загруженных файлов</p>';
@@ -2180,39 +2254,47 @@
             else loadDeals(page);
         };
 
-        // ==================== ФАЙЛЫ ====================
-        function loadFiles(dealId) {
-            currentDealIdForFiles = dealId;
-            fetchWithLoader(`/api/crm/deals/${dealId}/attachments`)
-                .then(response => response.json())
-                .then(files => {
-                    const container = document.getElementById('fileList');
-                    if (files.length === 0) {
-                        container.innerHTML = '<p class="text-muted text-center">Нет загруженных файлов</p>';
-                        return;
-                    }
-                    let html = '';
-                    files.forEach(file => {
-                        const size = (file.file_size / 1024).toFixed(1) + ' КБ';
-                        const date = new Date(file.uploaded_at).toLocaleString('ru-RU');
-                        html += `
-                            <div class="file-list-item" data-id="${file.id}">
-                                <div class="file-icon"><i class="fas fa-file"></i></div>
-                                <div class="file-info">
-                                    <div class="file-name">${escapeHtml(file.file_name)}</div>
-                                    <div class="file-meta">${size} • загружен ${date}</div>
-                                </div>
-                                <div class="file-actions">
-                                    <a href="/api/crm/attachments/${file.id}/download" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-download"></i></a>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.id}')"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                })
-                .catch(error => console.error('Error loading files:', error));
-        }
+    function loadFiles(dealId) {
+    currentDealIdForFiles = dealId;
+    fetchWithLoader(`/api/crm/deals/${dealId}/attachments`)
+        .then(response => response.json())
+        .then(files => {
+            const container = document.getElementById('fileList');
+            // Проверяем, что files — массив
+            if (!Array.isArray(files)) {
+                console.error('Expected array but got:', files);
+                container.innerHTML = '<p class="text-danger text-center">Ошибка формата данных</p>';
+                return;
+            }
+            if (files.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">Нет загруженных файлов</p>';
+                return;
+            }
+            let html = '';
+            files.forEach(file => {
+                const size = (file.file_size / 1024).toFixed(1) + ' КБ';
+                const date = new Date(file.uploaded_at).toLocaleString('ru-RU');
+                html += `
+                    <div class="file-list-item" data-id="${file.id}">
+                        <div class="file-icon"><i class="fas fa-file"></i></div>
+                        <div class="file-info">
+                            <div class="file-name">${escapeHtml(file.file_name)}</div>
+                            <div class="file-meta">${size} • загружен ${date}</div>
+                        </div>
+                        <div class="file-actions">
+                            <a href="/api/crm/attachments/${file.id}/download" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-download"></i></a>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading files:', error);
+            document.getElementById('fileList').innerHTML = '<p class="text-danger text-center">Ошибка загрузки</p>';
+        });
+}
 
         function uploadFile(dealId, file) {
             const formData = new FormData();
@@ -2248,65 +2330,83 @@
                 .catch(error => alert('Ошибка сети: ' + error.message));
         };
 
-        // ==================== ИСТОРИЯ ====================
-        function loadCustomerHistory(id) {
-            const container = document.getElementById('customerHistoryList');
-            container.innerHTML = '<p class="text-muted text-center">Загрузка...</p>';
-            fetchWithLoader(`/api/crm/history/customer/${id}`)
-                .then(response => response.json())
-                .then(history => {
-                    if (history.length === 0) {
-                        container.innerHTML = '<p class="text-muted text-center">История изменений отсутствует</p>';
-                        return;
+      function loadCustomerHistory(id) {
+    const container = document.getElementById('customerHistoryList');
+    container.innerHTML = '<p class="text-muted text-center">Загрузка...</p>';
+    fetchWithLoader(`/api/crm/history/customer/${id}`)
+        .then(response => response.json())
+        .then(history => {
+            console.log('Customer history:', history); // отладка
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">История изменений отсутствует</p>';
+                return;
+            }
+            let html = '';
+            history.forEach(item => {
+                const date = new Date(item.created_at).toLocaleString('ru-RU');
+                // Преобразуем changes в читаемый вид
+                let changesText = '';
+                if (item.changes) {
+                    if (typeof item.changes === 'object') {
+                        changesText = JSON.stringify(item.changes, null, 2);
+                    } else {
+                        changesText = String(item.changes);
                     }
-                    let html = '';
-                    history.forEach(item => {
-                        const date = new Date(item.created_at).toLocaleString('ru-RU');
-                        html += `
-                            <div class="history-item">
-                                <div class="history-action">${escapeHtml(item.action)}</div>
-                                <div class="history-meta">${escapeHtml(item.user_name || 'Система')} • ${date}</div>
-                                <div>${escapeHtml(item.details || '')}</div>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                })
-                .catch(error => {
-                    console.error('Error loading customer history:', error);
-                    container.innerHTML = '<p class="text-danger text-center">Ошибка загрузки истории</p>';
-                });
-        }
+                }
+                html += `
+                    <div class="history-item">
+                        <div class="history-action">${escapeHtml(item.action)}</div>
+                        <div class="history-meta">${escapeHtml(item.user_name || 'Система')} • ${date}</div>
+                        <pre style="font-size: 0.8rem; background: #f5f5f5; padding: 5px; border-radius: 4px;">${escapeHtml(changesText)}</pre>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading customer history:', error);
+            container.innerHTML = '<p class="text-danger text-center">Ошибка загрузки истории</p>';
+        });
+}
 
-        function loadDealHistory(id) {
-            const container = document.getElementById('dealHistoryList');
-            container.innerHTML = '<p class="text-muted text-center">Загрузка...</p>';
-            fetchWithLoader(`/api/crm/history/deal/${id}`)
-                .then(response => response.json())
-                .then(history => {
-                    if (history.length === 0) {
-                        container.innerHTML = '<p class="text-muted text-center">История изменений отсутствует</p>';
-                        return;
+function loadDealHistory(id) {
+    const container = document.getElementById('dealHistoryList');
+    container.innerHTML = '<p class="text-muted text-center">Загрузка...</p>';
+    fetchWithLoader(`/api/crm/history/deal/${id}`)
+        .then(response => response.json())
+        .then(history => {
+            console.log('Deal history:', history); // <- это важно для отладки
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">История изменений отсутствует</p>';
+                return;
+            }
+            let html = '';
+            history.forEach(item => {
+                const date = new Date(item.created_at).toLocaleString('ru-RU');
+                // Поле, которое приходит с сервера, называется "changes", а не "details"
+                let changesText = '';
+                if (item.changes) {
+                    if (typeof item.changes === 'object') {
+                        changesText = JSON.stringify(item.changes, null, 2);
+                    } else {
+                        changesText = String(item.changes);
                     }
-                    let html = '';
-                    history.forEach(item => {
-                        const date = new Date(item.created_at).toLocaleString('ru-RU');
-                        html += `
-                            <div class="history-item">
-                                <div class="history-action">${escapeHtml(item.action)}</div>
-                                <div class="history-meta">${escapeHtml(item.user_name || 'Система')} • ${date}</div>
-                                <div>${escapeHtml(item.details || '')}</div>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                })
-                .catch(error => {
-                    console.error('Error loading deal history:', error);
-                    container.innerHTML = '<p class="text-danger text-center">Ошибка загрузки истории</p>';
-                });
-        }
-
+                }
+                html += `
+                    <div class="history-item">
+                        <div class="history-action">${escapeHtml(item.action)}</div>
+                        <div class="history-meta">${escapeHtml(item.user_name || 'Система')} • ${date}</div>
+                        <pre style="font-size: 0.8rem; background: #f5f5f5; padding: 5px; border-radius: 4px;">${escapeHtml(changesText)}</pre>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading deal history:', error);
+            container.innerHTML = '<p class="text-danger text-center">Ошибка загрузки истории</p>';
+        });
+}
         // ==================== АНАЛИТИКА ====================
         function loadAnalytics() {
             fetchWithLoader('/api/crm/stats')
@@ -2753,40 +2853,35 @@
             }
         }
 
-        // ==================== УВЕДОМЛЕНИЯ ====================
-        function loadNotificationSettings() {
-            const settings = JSON.parse(localStorage.getItem('notificationSettings')) || {
-                telegram: false,
-                email: false,
-                contact: '',
-                events: []
-            };
+        // ==================== ДОБАВЛЕНО: УВЕДОМЛЕНИЯ НА СЕРВЕРЕ ====================
+        async function loadNotificationSettings() {
+            try {
+                const response = await fetchWithLoader('/api/notifications/settings');
+                if (!response.ok) throw new Error('Failed to load');
+                const settings = await response.json();
+                document.getElementById('notifyTelegram').checked = settings.telegram || false;
+                document.getElementById('notifyEmail').checked = settings.email || false;
+                document.getElementById('notificationContact').value = settings.contact || '';
 
-            const notifyTelegram = document.getElementById('notifyTelegram');
-            if (notifyTelegram) notifyTelegram.checked = settings.telegram;
-
-            const notifyEmail = document.getElementById('notifyEmail');
-            if (notifyEmail) notifyEmail.checked = settings.email;
-
-            const notificationContact = document.getElementById('notificationContact');
-            if (notificationContact) notificationContact.value = settings.contact;
-
-            const eventMap = {
-                'customer_create': 'eventCustomerCreate',
-                'deal_stage': 'eventDealStage',
-                'inactive': 'eventInactive'
-            };
-
-            settings.events.forEach(event => {
-                const elementId = eventMap[event];
-                if (elementId) {
-                    const el = document.getElementById(elementId);
-                    if (el) el.checked = true;
+                // Сбрасываем все события
+                ['eventCustomerCreate', 'eventDealStage', 'eventInactive'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.checked = false;
+                });
+                // Устанавливаем пришедшие
+                if (settings.events) {
+                    settings.events.forEach(event => {
+                        const el = document.getElementById('event' + event.charAt(0).toUpperCase() + event.slice(1).replace(/_([a-z])/g, (m, p1) => p1.toUpperCase()));
+                        if (el) el.checked = true;
+                    });
                 }
-            });
+            } catch (err) {
+                console.error('Error loading notification settings:', err);
+                showToast('Не удалось загрузить настройки уведомлений', 'warning');
+            }
         }
 
-        function saveNotificationSettings() {
+        async function saveNotificationSettings() {
             const events = [];
             if (document.getElementById('eventCustomerCreate')?.checked) events.push('customer_create');
             if (document.getElementById('eventDealStage')?.checked) events.push('deal_stage');
@@ -2798,11 +2893,20 @@
                 contact: document.getElementById('notificationContact')?.value || '',
                 events: events
             };
-            localStorage.setItem('notificationSettings', JSON.stringify(settings));
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById('notificationSettingsModal'));
-            if (modal) modal.hide();
-            showToast('Настройки сохранены', 'success');
+            try {
+                const response = await fetchWithLoader('/api/notifications/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                if (!response.ok) throw new Error('Failed to save');
+                bootstrap.Modal.getInstance(document.getElementById('notificationSettingsModal')).hide();
+                showToast('Настройки сохранены', 'success');
+            } catch (err) {
+                console.error('Error saving notification settings:', err);
+                showToast('Ошибка сохранения', 'danger');
+            }
         }
 
         function showToast(message, type = 'info', title = 'Уведомление') {
@@ -2933,6 +3037,146 @@
             }
         }
 
+        // ==================== ДОБАВЛЕНО: ТЕГИ ====================
+        let allTags = [];
+
+        function loadTags() {
+            fetchWithLoader('/api/crm/tags')
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load tags');
+                    return response.json();
+                })
+                .then(tags => {
+                    allTags = tags || []; // гарантируем массив
+                    renderTagSelects();
+                })
+                .catch(err => {
+                    console.error('Error loading tags:', err);
+                    allTags = []; // на случай ошибки
+                });
+        }
+
+        function renderTagSelects() {
+            const customerSelect = document.getElementById('customerTags');
+            const dealSelect = document.getElementById('dealTags');
+            if (!customerSelect || !dealSelect) return;
+
+            let options = '<option value="">-- Выберите теги --</option>';
+            if (allTags && allTags.length) {
+                allTags.forEach(tag => {
+                    options += `<option value="${tag.id}" style="color: ${tag.color};">${escapeHtml(tag.name)}</option>`;
+                });
+            }
+            customerSelect.innerHTML = options;
+            dealSelect.innerHTML = options;
+        }
+
+        function getSelectedTagIds(selectId) {
+            const select = document.getElementById(selectId);
+            return Array.from(select.selectedOptions).map(opt => opt.value);
+        }
+
+        function setSelectedTags(selectId, tagIds) {
+            const select = document.getElementById(selectId);
+            Array.from(select.options).forEach(opt => {
+                opt.selected = tagIds.includes(opt.value);
+            });
+        }
+
+        function renderTags(tagIds) {
+            if (!tagIds || !tagIds.length) return '';
+            const tags = allTags.filter(t => tagIds.includes(t.id));
+            return tags.map(t => `<span class="badge" style="background-color: ${t.color}; color: white; margin-right: 4px;">${escapeHtml(t.name)}</span>`).join(' ');
+        }
+
+     function loadActivities(entityType, entityId) {
+    const container = document.getElementById('activityList');
+    container.innerHTML = '<p class="text-muted text-center">Загрузка...</p>';
+    fetchWithLoader(`/api/crm/activities/${entityType}/${entityId}`)
+        .then(response => response.json())
+        .then(activities => {
+            if (activities.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">Нет активностей</p>';
+                return;
+            }
+            let html = '';
+            activities.forEach(act => {
+                const user = act.user_name ? act.user_name : 'Система';
+                const date = new Date(act.created_at).toLocaleString('ru-RU');
+                let icon = 'fas fa-comment';
+                if (act.activity_type === 'call') icon = 'fas fa-phone';
+                else if (act.activity_type === 'meeting') icon = 'fas fa-handshake';
+                else if (act.activity_type === 'email') icon = 'fas fa-envelope';
+                html += `
+                    <div class="activity-item mb-2 p-2 border rounded" data-activity-id="${act.id}">
+                        <div>
+                            <i class="${icon} me-2"></i><strong>${act.activity_type}</strong>
+                            <span class="text-muted float-end">${date}</span>
+                        </div>
+                        <div class="mt-1">${escapeHtml(act.content)}</div>
+                        <div class="text-muted small d-flex justify-content-between align-items-center">
+                            <span>— ${escapeHtml(user)}</span>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteActivity('${act.id}')" title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .catch(err => {
+            console.error('Error loading activities:', err);
+            container.innerHTML = '<p class="text-danger text-center">Ошибка загрузки</p>';
+        });
+}
+
+        function addDealActivity(type) {
+            const dealId = document.getElementById('dealId').value;
+            if (!dealId) {
+                alert('Сначала сохраните сделку');
+                return;
+            }
+            const content = document.getElementById('activityContent').value.trim();
+            if (!content && type === 'comment') {
+                alert('Введите текст комментария');
+                return;
+            }
+            fetchWithLoader('/api/crm/activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    entity_type: 'deal',
+                    entity_id: dealId,
+                    activity_type: type,
+                    content: content || (type === 'call' ? 'Звонок' : (type === 'meeting' ? 'Встреча' : ''))
+                })
+            }).then(response => {
+                if (response.ok) {
+                    document.getElementById('activityContent').value = '';
+                    loadActivities('deal', dealId);
+                } else {
+                    alert('Ошибка добавления');
+                }
+            }).catch(err => alert('Ошибка сети: ' + err.message));
+        }
+function deleteActivity(activityId) {
+    if (!confirm('Удалить эту активность?')) return;
+    fetchWithLoader(`/api/crm/activities/${activityId}`, {
+        method: 'DELETE',
+    }).then(response => {
+        if (response.ok) {
+            const item = document.querySelector(`.activity-item[data-activity-id="${activityId}"]`);
+            if (item) item.remove();
+            const container = document.getElementById('activityList');
+            if (container.children.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">Нет активностей</p>';
+            }
+        } else {
+            response.text().then(text => alert('Ошибка удаления: ' + text));
+        }
+    }).catch(err => alert('Ошибка сети: ' + err.message));
+}
         // ==================== КАНБАН: добавлено ====================
         let kanbanDeals = [];
         let kanbanColumns = [
