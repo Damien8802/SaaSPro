@@ -629,6 +629,11 @@
                             <option value="">Все города</option>
                             <!-- динамически заполняется -->
                         </select>
+                        <!-- ДОБАВЛЕНО: фильтр по тегам для клиентов -->
+                        <select class="form-select form-select-sm" id="customerTagFilter" style="max-width: 150px;">
+                            <option value="">Все теги</option>
+                            <!-- будут заполнены динамически -->
+                        </select>
                         <!-- Поиск -->
                         <div class="input-group search-box">
                             <input type="text" class="form-control" id="customerSearch" placeholder="Поиск по имени, email или городу...">
@@ -735,6 +740,11 @@
                         <select class="form-select form-select-sm" id="dealCategoryFilter" style="max-width: 150px;">
                             <option value="">Все категории</option>
                             <!-- динамически заполняется -->
+                        </select>
+                        <!-- ДОБАВЛЕНО: фильтр по тегам для сделок -->
+                        <select class="form-select form-select-sm" id="dealTagFilter" style="max-width: 150px;">
+                            <option value="">Все теги</option>
+                            <!-- будут заполнены динамически -->
                         </select>
                         <!-- Фильтры по сумме -->
                         <div class="input-group" style="max-width: 150px;">
@@ -1296,6 +1306,10 @@
         let analyticsDateFrom = '';
         let analyticsDateTo = '';
 
+        // ДОБАВЛЕНО: переменные для фильтров по тегам
+        let customerTagFilter = '';
+        let dealTagFilter = '';
+
         let activeRequests = 0;
         function showLoader() { activeRequests++; document.getElementById('loader').style.display = 'flex'; }
         function hideLoader() { activeRequests--; if (activeRequests <= 0) { document.getElementById('loader').style.display = 'none'; activeRequests = 0; } }
@@ -1452,6 +1466,8 @@
                 customerCreatedFrom = document.getElementById('customerCreatedFrom').value;
                 customerCreatedTo = document.getElementById('customerCreatedTo').value;
                 customerCityFilter = document.getElementById('customerCityFilter').value;
+                // ДОБАВЛЕНО: читаем фильтр по тегам
+                customerTagFilter = document.getElementById('customerTagFilter').value;
                 currentCustomersPage = 1;
                 loadCustomers();
             });
@@ -1462,6 +1478,8 @@
                 dealValueMax = document.getElementById('dealValueMax').value;
                 dealCloseFrom = document.getElementById('dealCloseFrom').value;
                 dealCloseTo = document.getElementById('dealCloseTo').value;
+                // ДОБАВЛЕНО: читаем фильтр по тегам
+                dealTagFilter = document.getElementById('dealTagFilter').value;
                 currentDealsPage = 1;
                 loadDeals();
             });
@@ -1677,6 +1695,8 @@
             if (customerCityFilter) url += `&city=${encodeURIComponent(customerCityFilter)}`;
             if (customerCreatedFrom) url += `&created_from=${encodeURIComponent(customerCreatedFrom)}`;
             if (customerCreatedTo) url += `&created_to=${encodeURIComponent(customerCreatedTo)}`;
+            // ДОБАВЛЕНО: добавляем фильтр по тегу
+            if (customerTagFilter) url += `&tag_id=${encodeURIComponent(customerTagFilter)}`;
             fetchWithLoader(url)
                 .then(response => response.json())
                 .then(resp => {
@@ -1806,6 +1826,8 @@
             if (dealValueMax) url += `&value_max=${encodeURIComponent(dealValueMax)}`;
             if (dealCloseFrom) url += `&close_from=${encodeURIComponent(dealCloseFrom)}`;
             if (dealCloseTo) url += `&close_to=${encodeURIComponent(dealCloseTo)}`;
+            // ДОБАВЛЕНО: добавляем фильтр по тегу
+            if (dealTagFilter) url += `&tag_id=${encodeURIComponent(dealTagFilter)}`;
             fetchWithLoader(url)
                 .then(response => response.json())
                 .then(resp => {
@@ -3049,6 +3071,7 @@ function loadDealHistory(id) {
                 .then(tags => {
                     allTags = tags || []; // гарантируем массив
                     renderTagSelects();
+                    populateTagFilters(); // ДОБАВЛЕНО: заполняем фильтры тегами
                 })
                 .catch(err => {
                     console.error('Error loading tags:', err);
@@ -3069,6 +3092,22 @@ function loadDealHistory(id) {
             }
             customerSelect.innerHTML = options;
             dealSelect.innerHTML = options;
+        }
+
+        // ДОБАВЛЕНО: функция для заполнения выпадающих фильтров тегами
+        function populateTagFilters() {
+            const customerFilter = document.getElementById('customerTagFilter');
+            const dealFilter = document.getElementById('dealTagFilter');
+            if (!customerFilter || !dealFilter) return;
+
+            let options = '<option value="">Все теги</option>';
+            if (allTags && allTags.length) {
+                allTags.forEach(tag => {
+                    options += `<option value="${tag.id}">${escapeHtml(tag.name)}</option>`;
+                });
+            }
+            customerFilter.innerHTML = options;
+            dealFilter.innerHTML = options;
         }
 
         function getSelectedTagIds(selectId) {

@@ -278,9 +278,6 @@ func CRMHealthHandler(c *gin.Context) {
     })
 }
 
-// ========== КЛИЕНТЫ ==========
-
-// GetCustomers возвращает список клиентов с пагинацией, поиском, фильтрацией и учётом прав доступа
 func GetCustomers(c *gin.Context) {
     userID := getUserIDFromContext(c)
     isAdmin := isAdmin(c)
@@ -290,12 +287,14 @@ func GetCustomers(c *gin.Context) {
     city := c.Query("city")
     createdFrom := c.Query("created_from")
     createdTo := c.Query("created_to")
+    tagID := c.Query("tag_id") // ДОБАВЛЕНО
     page, pageSize := getPaginationParams(c)
     offset := (page - 1) * pageSize
 
     // ---- Подсчёт общего количества записей с учётом всех фильтров и прав ----
-    countQuery := `SELECT COUNT(*) FROM crm_customers`
+    countQuery := `SELECT COUNT(DISTINCT crm_customers.id) FROM crm_customers`
     countArgs := []interface{}{}
+    joins := ""
     whereClause := ""
 
     if !isAdmin && userID != "" {
@@ -303,6 +302,11 @@ func GetCustomers(c *gin.Context) {
         countArgs = append(countArgs, userID)
     }
 
+    if tagID != "" {
+        joins += " INNER JOIN customer_tags ON crm_customers.id = customer_tags.customer_id"
+        whereClause += " AND customer_tags.tag_id = $" + strconv.Itoa(len(countArgs)+1)
+        countArgs = append(countArgs, tagID)
+    }
     if status != "" {
         if whereClause != "" {
             whereClause += " AND"
@@ -339,28 +343,41 @@ func GetCustomers(c *gin.Context) {
         countArgs = append(countArgs, createdTo)
     }
 
+    fullCountQuery := countQuery + joins
     if whereClause != "" {
-        countQuery += " WHERE" + whereClause
+        fullCountQuery += " WHERE" + whereClause
     }
 
     var total int
-    err := database.Pool.QueryRow(c.Request.Context(), countQuery, countArgs...).Scan(&total)
+    err := database.Pool.QueryRow(c.Request.Context(), fullCountQuery, countArgs...).Scan(&total)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
     }
 
     // ---- Запрос данных с теми же фильтрами и пагинацией ----
-    query := `SELECT id, name, email, phone, company, status, responsible, source, comment, lead_score, created_at, last_seen, city, social_media, birthday, notes
+    query := `SELECT DISTINCT crm_customers.id, crm_customers.name, crm_customers.email, crm_customers.phone,
+                     crm_customers.company, crm_customers.status, crm_customers.responsible,
+                     crm_customers.source, crm_customers.comment, crm_customers.lead_score,
+                     crm_customers.created_at, crm_customers.last_seen, crm_customers.city,
+                     crm_customers.social_media, crm_customers.birthday, crm_customers.notes
               FROM crm_customers`
     args := []interface{}{}
+    joinsData := ""
     whereData := ""
 
+    if tagID != "" {
+        joinsData += " INNER JOIN customer_tags ON crm_customers.id = customer_tags.customer_id"
+        whereData += " customer_tags.tag_id = $" + strconv.Itoa(len(args)+1)
+        args = append(args, tagID)
+    }
     if !isAdmin && userID != "" {
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " user_id = $" + strconv.Itoa(len(args)+1)
         args = append(args, userID)
     }
-
     if status != "" {
         if whereData != "" {
             whereData += " AND"
@@ -397,13 +414,14 @@ func GetCustomers(c *gin.Context) {
         args = append(args, createdTo)
     }
 
+    fullDataQuery := query + joinsData
     if whereData != "" {
-        query += " WHERE" + whereData
+        fullDataQuery += " WHERE" + whereData
     }
-    query += " ORDER BY created_at DESC LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
+    fullDataQuery += " ORDER BY created_at DESC LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
     args = append(args, pageSize, offset)
 
-    rows, err := database.Pool.Query(c.Request.Context(), query, args...)
+    rows, err := database.Pool.Query(c.Request.Context(), fullDataQuery, args...)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
@@ -797,8 +815,6 @@ func BatchUpdateCustomersStatus(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"success": true, "updated": len(req.IDs)})
 }
 
-// ========== СДЕЛКИ ==========
-
 func GetDeals(c *gin.Context) {
     userID := getUserIDFromContext(c)
     isAdmin := isAdmin(c)
@@ -810,11 +826,14 @@ func GetDeals(c *gin.Context) {
     valueMax := c.Query("value_max")
     closeFrom := c.Query("close_from")
     closeTo := c.Query("close_to")
+    tagID := c.Query("tag_id") // ДОБАВЛЕНО
     page, pageSize := getPaginationParams(c)
     offset := (page - 1) * pageSize
 
-    countQuery := `SELECT COUNT(*) FROM crm_deals`
+    // ---- Подсчёт общего количества записей с учётом всех фильтров и прав ----
+    countQuery := `SELECT COUNT(DISTINCT crm_deals.id) FROM crm_deals`
     countArgs := []interface{}{}
+    joins := ""
     whereClause := ""
 
     if !isAdmin && userID != "" {
@@ -822,6 +841,11 @@ func GetDeals(c *gin.Context) {
         countArgs = append(countArgs, userID)
     }
 
+    if tagID != "" {
+        joins += " INNER JOIN deal_tags ON crm_deals.id = deal_tags.deal_id"
+        whereClause += " AND deal_tags.tag_id = $" + strconv.Itoa(len(countArgs)+1)
+        countArgs = append(countArgs, tagID)
+    }
     if stage != "" {
         if whereClause != "" {
             whereClause += " AND"
@@ -872,27 +896,40 @@ func GetDeals(c *gin.Context) {
         countArgs = append(countArgs, closeTo)
     }
 
+    fullCountQuery := countQuery + joins
     if whereClause != "" {
-        countQuery += " WHERE" + whereClause
+        fullCountQuery += " WHERE" + whereClause
     }
 
     var total int
-    err := database.Pool.QueryRow(c.Request.Context(), countQuery, countArgs...).Scan(&total)
+    err := database.Pool.QueryRow(c.Request.Context(), fullCountQuery, countArgs...).Scan(&total)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
     }
 
-    query := `SELECT id, customer_id, title, value, stage, probability, responsible, source, comment, expected_close, created_at, closed_at, product_category, discount, next_action_date
+    // ---- Запрос данных с теми же фильтрами и пагинацией ----
+    query := `SELECT DISTINCT crm_deals.id, crm_deals.customer_id, crm_deals.title, crm_deals.value,
+                     crm_deals.stage, crm_deals.probability, crm_deals.responsible, crm_deals.source,
+                     crm_deals.comment, crm_deals.expected_close, crm_deals.created_at, crm_deals.closed_at,
+                     crm_deals.product_category, crm_deals.discount, crm_deals.next_action_date
               FROM crm_deals`
     args := []interface{}{}
+    joinsData := ""
     whereData := ""
 
+    if tagID != "" {
+        joinsData += " INNER JOIN deal_tags ON crm_deals.id = deal_tags.deal_id"
+        whereData += " deal_tags.tag_id = $" + strconv.Itoa(len(args)+1)
+        args = append(args, tagID)
+    }
     if !isAdmin && userID != "" {
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " user_id = $" + strconv.Itoa(len(args)+1)
         args = append(args, userID)
     }
-
     if stage != "" {
         if whereData != "" {
             whereData += " AND"
@@ -943,13 +980,14 @@ func GetDeals(c *gin.Context) {
         args = append(args, closeTo)
     }
 
+    fullDataQuery := query + joinsData
     if whereData != "" {
-        query += " WHERE" + whereData
+        fullDataQuery += " WHERE" + whereData
     }
-    query += " ORDER BY created_at DESC LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
+    fullDataQuery += " ORDER BY created_at DESC LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
     args = append(args, pageSize, offset)
 
-    rows, err := database.Pool.Query(c.Request.Context(), query, args...)
+    rows, err := database.Pool.Query(c.Request.Context(), fullDataQuery, args...)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
