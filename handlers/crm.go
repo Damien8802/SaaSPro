@@ -827,6 +827,7 @@ func GetDeals(c *gin.Context) {
     closeFrom := c.Query("close_from")
     closeTo := c.Query("close_to")
     tagID := c.Query("tag_id") // ДОБАВЛЕНО
+    hasNextAction := c.Query("has_next_action") // ДОБАВЛЕНО для календаря
     page, pageSize := getPaginationParams(c)
     offset := (page - 1) * pageSize
 
@@ -895,6 +896,13 @@ func GetDeals(c *gin.Context) {
         whereClause += " expected_close < ($" + strconv.Itoa(len(countArgs)+1) + "::date + '1 day'::interval)"
         countArgs = append(countArgs, closeTo)
     }
+    // ДОБАВЛЕНО: фильтр по наличию даты следующего действия
+    if hasNextAction == "true" {
+        if whereClause != "" {
+            whereClause += " AND"
+        }
+        whereClause += " next_action_date IS NOT NULL"
+    }
 
     fullCountQuery := countQuery + joins
     if whereClause != "" {
@@ -918,8 +926,19 @@ func GetDeals(c *gin.Context) {
     joinsData := ""
     whereData := ""
 
+    // ДОБАВЛЕНО: фильтр по наличию даты следующего действия (ПЕРЕНЕСЁН ПОСЛЕ ОБЪЯВЛЕНИЯ whereData)
+    if hasNextAction == "true" {
+        if whereData != "" {
+            whereData += " AND"
+        }
+        whereData += " next_action_date IS NOT NULL"
+    }
+
     if tagID != "" {
         joinsData += " INNER JOIN deal_tags ON crm_deals.id = deal_tags.deal_id"
+        if whereData != "" {
+            whereData += " AND"
+        }
         whereData += " deal_tags.tag_id = $" + strconv.Itoa(len(args)+1)
         args = append(args, tagID)
     }
@@ -2796,4 +2815,11 @@ func DeleteActivity(c *gin.Context) {
     }
 
     c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// CalendarHandler отображает страницу календаря сделок
+func CalendarHandler(c *gin.Context) {
+    c.HTML(http.StatusOK, "calendar.html", gin.H{
+        "Title": "Календарь сделок - SaaSPro",
+    })
 }

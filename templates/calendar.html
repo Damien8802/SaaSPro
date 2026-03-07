@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }} - Календарь сделок</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.js"></script>
+    <!-- Moment.js (опционально, для форматирования) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <style>
+        body { background-color: #f8f9fa; }
+        #calendar {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .fc-toolbar-title { font-size: 1.5rem; }
+        .fc-event { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+        <h1 class="mb-3">Календарь сделок</h1>
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Модальное окно для просмотра/редактирования сделки (опционально) -->
+    <div class="modal fade" id="dealModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Сделка</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="dealModalBody">
+                    Загрузка...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <a href="#" class="btn btn-primary" id="dealModalLink" target="_blank">Перейти к сделке</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'ru',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today: 'Сегодня',
+                    month: 'Месяц',
+                    week: 'Неделя',
+                    day: 'День'
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    // Загружаем сделки с next_action_date через API
+                    fetch('/api/crm/deals?has_next_action=true&page=1&page_size=1000')
+                        .then(response => response.json())
+                        .then(data => {
+                            const events = data.data.map(deal => ({
+                                id: deal.id,
+                                title: deal.title,
+                                start: deal.next_action_date ? moment(deal.next_action_date).format('YYYY-MM-DD') : null,
+                                description: `Сумма: ${deal.value} ₽ | Ответственный: ${deal.responsible || 'не назначен'}`,
+                                backgroundColor: deal.stage === 'closed_won' ? '#28a745' : 
+                                                deal.stage === 'closed_lost' ? '#dc3545' : 
+                                                deal.stage === 'lead' ? '#007bff' : '#ffc107',
+                                borderColor: '#333',
+                                extendedProps: {
+                                    dealId: deal.id,
+                                    value: deal.value,
+                                    responsible: deal.responsible,
+                                    stage: deal.stage,
+                                    customerId: deal.customer_id
+                                }
+                            })).filter(e => e.start); // только с датой
+                            successCallback(events);
+                        })
+                        .catch(err => {
+                            console.error('Error loading deals for calendar:', err);
+                            failureCallback(err);
+                        });
+                },
+                eventClick: function(info) {
+                    const deal = info.event.extendedProps;
+                    document.getElementById('dealModalBody').innerHTML = `
+                        <p><strong>${info.event.title}</strong></p>
+                        <p>Сумма: ${deal.value} ₽</p>
+                        <p>Стадия: ${deal.stage}</p>
+                        <p>Ответственный: ${deal.responsible || 'не назначен'}</p>
+                        <p>Клиент ID: ${deal.customerId}</p>
+                    `;
+                    document.getElementById('dealModalLink').href = `/crm#deal-${deal.dealId}`; // предположим, что можно перейти
+                    new bootstrap.Modal(document.getElementById('dealModal')).show();
+                },
+                eventDrop: function(info) {
+                    // При перетаскивании обновляем дату
+                    const dealId = info.event.id;
+                    const newDate = moment(info.event.start).format('YYYY-MM-DD');
+                    fetch(`/api/crm/deals/${dealId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ next_action_date: newDate + 'T00:00:00Z' })
+                    }).then(response => {
+                        if (!response.ok) {
+                            alert('Ошибка при обновлении даты');
+                            info.revert();
+                        }
+                    }).catch(() => {
+                        alert('Ошибка сети');
+                        info.revert();
+                    });
+                },
+                editable: true,
+                selectable: false
+            });
+            calendar.render();
+        });
+    </script>
+</body>
+</html>

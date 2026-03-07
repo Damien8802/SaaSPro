@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- ДОБАВЛЕНО: FullCalendar и Moment.js для календаря -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <style>
         /* --- все существующие стили --- */
         .table-hover tbody tr:hover {
@@ -574,6 +578,18 @@
             border-radius: 4px;
             margin-right: 10px;
         }
+
+        /* ДОБАВЛЕНО: стили для календаря */
+        #calendar {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .fc-toolbar-title { font-size: 1.5rem; }
+        .fc-event { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -619,6 +635,12 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="kanban-tab" data-bs-toggle="tab" data-bs-target="#kanban" type="button" role="tab">
                     <i class="fas fa-columns me-2"></i>Канбан
+                </button>
+            </li>
+            <!-- ДОБАВЛЕНО: вкладка Календарь -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendarTab" type="button" role="tab">
+                    <i class="fas fa-calendar-alt me-2"></i>Календарь
                 </button>
             </li>
         </ul>
@@ -968,6 +990,14 @@
                 <div class="kanban-board" id="kanbanBoard">
                     <!-- Колонки будут сгенерированы JS -->
                 </div>
+            </div>
+
+            <!-- ДОБАВЛЕНО: вкладка Календарь -->
+            <div class="tab-pane fade" id="calendarTab" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>Календарь сделок</h3>
+                </div>
+                <div id="calendar"></div>
             </div>
         </div>
     </div>
@@ -1342,6 +1372,25 @@
         </div>
     </div>
 
+    <!-- ДОБАВЛЕНО: модальное окно для просмотра сделки из календаря -->
+    <div class="modal fade" id="dealModalCalendar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Сделка</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="dealModalBodyCalendar">
+                    Загрузка...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <a href="#" class="btn btn-primary" id="dealModalLinkCalendar" target="_blank">Перейти к сделке</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Кнопка AI-ассистента -->
     <button class="ai-fab" onclick="openAIChat()" title="AI-ассистент CRM">
         <i class="fas fa-robot"></i>
@@ -1396,6 +1445,9 @@
         // ДОБАВЛЕНО: переменные для фильтров по тегам
         let customerTagFilter = '';
         let dealTagFilter = '';
+
+        // ДОБАВЛЕНО: переменная для экземпляра календаря
+        let calendarInstance = null;
 
         let activeRequests = 0;
         function showLoader() { activeRequests++; document.getElementById('loader').style.display = 'flex'; }
@@ -1670,6 +1722,15 @@
             // ДОБАВЛЕНО: при открытии модалки управления тегами загружаем список
             document.getElementById('tagsManagementModal').addEventListener('show.bs.modal', function () {
                 loadTagsForManagement();
+            });
+
+            // ДОБАВЛЕНО: обработчик переключения на вкладку календаря
+            document.getElementById('calendar-tab').addEventListener('shown.bs.tab', function () {
+                if (!calendarInstance) {
+                    initCalendar();
+                } else {
+                    calendarInstance.refetchEvents(); // обновить события
+                }
             });
         });
 
@@ -3539,6 +3600,88 @@
 
         function refreshKanban() {
             loadKanban();
+        }
+
+        // ==================== ДОБАВЛЕНО: ФУНКЦИИ ДЛЯ КАЛЕНДАРЯ ====================
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+
+            calendarInstance = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'ru',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today: 'Сегодня',
+                    month: 'Месяц',
+                    week: 'Неделя',
+                    day: 'День'
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    fetch('/api/crm/deals?has_next_action=true&page=1&page_size=1000')
+                        .then(response => response.json())
+                        .then(data => {
+                            const events = data.data.map(deal => ({
+                                id: deal.id,
+                                title: deal.title,
+                                start: deal.next_action_date ? moment(deal.next_action_date).format('YYYY-MM-DD') : null,
+                                description: `Сумма: ${deal.value} ₽ | Ответственный: ${deal.responsible || 'не назначен'}`,
+                                backgroundColor: deal.stage === 'closed_won' ? '#28a745' : 
+                                                deal.stage === 'closed_lost' ? '#dc3545' : 
+                                                deal.stage === 'lead' ? '#007bff' : '#ffc107',
+                                borderColor: '#333',
+                                extendedProps: {
+                                    dealId: deal.id,
+                                    value: deal.value,
+                                    responsible: deal.responsible,
+                                    stage: deal.stage,
+                                    customerId: deal.customer_id
+                                }
+                            })).filter(e => e.start);
+                            successCallback(events);
+                        })
+                        .catch(err => {
+                            console.error('Error loading deals for calendar:', err);
+                            failureCallback(err);
+                        });
+                },
+                eventClick: function(info) {
+                    const deal = info.event.extendedProps;
+                    document.getElementById('dealModalBodyCalendar').innerHTML = `
+                        <p><strong>${info.event.title}</strong></p>
+                        <p>Сумма: ${deal.value} ₽</p>
+                        <p>Стадия: ${deal.stage}</p>
+                        <p>Ответственный: ${deal.responsible || 'не назначен'}</p>
+                        <p>Клиент ID: ${deal.customerId}</p>
+                    `;
+                    document.getElementById('dealModalLinkCalendar').href = `/crm#deal-${deal.dealId}`;
+                    new bootstrap.Modal(document.getElementById('dealModalCalendar')).show();
+                },
+                eventDrop: function(info) {
+                    const dealId = info.event.id;
+                    const newDate = moment(info.event.start).format('YYYY-MM-DD');
+                    fetch(`/api/crm/deals/${dealId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ next_action_date: newDate + 'T00:00:00Z' })
+                    }).then(response => {
+                        if (!response.ok) {
+                            alert('Ошибка при обновлении даты');
+                            info.revert();
+                        }
+                    }).catch(() => {
+                        alert('Ошибка сети');
+                        info.revert();
+                    });
+                },
+                editable: true,
+                selectable: false
+            });
+            calendarInstance.render();
         }
     </script>
 </body>

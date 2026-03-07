@@ -209,6 +209,7 @@ func main() {
         protected.GET("/integrations", handlers.IntegrationsHandler)
         protected.GET("/monetization", handlers.MonetizationHandler)
         protected.GET("/profile", handlers.ProfilePageHandler)
+        protected.GET("/calendar", handlers.CalendarHandler)
     }
 
     // ========== АДМИН СТРАНИЦЫ ==========
