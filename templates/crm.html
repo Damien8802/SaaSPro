@@ -11,9 +11,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- ДОБАВЛЕНО: FullCalendar и Moment.js для календаря -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+       <!-- Локальный FullCalendar 5.11.3 -->
+    <link href="/static/fullcalendar/fullcalendar.min.css" rel="stylesheet">
+    <script src="/static/fullcalendar/fullcalendar.min.js"></script>
     <style>
         /* --- все существующие стили --- */
         .table-hover tbody tr:hover {
@@ -3628,7 +3628,7 @@
                             const events = data.data.map(deal => ({
                                 id: deal.id,
                                 title: deal.title,
-                                start: deal.next_action_date ? moment(deal.next_action_date).format('YYYY-MM-DD') : null,
+                               start: deal.next_action_date ? deal.next_action_date.split('T')[0] : null,
                                 description: `Сумма: ${deal.value} ₽ | Ответственный: ${deal.responsible || 'не назначен'}`,
                                 backgroundColor: deal.stage === 'closed_won' ? '#28a745' : 
                                                 deal.stage === 'closed_lost' ? '#dc3545' : 
@@ -3663,7 +3663,7 @@
                 },
                 eventDrop: function(info) {
                     const dealId = info.event.id;
-                    const newDate = moment(info.event.start).format('YYYY-MM-DD');
+                   const newDate = info.event.start.toISOString().split('T')[0];
                     fetch(`/api/crm/deals/${dealId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
