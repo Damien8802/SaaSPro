@@ -85,11 +85,12 @@ func main() {
     handlers.InitAuthHandler(cfg)
     handlers.InitNotifier(cfg)
 
-   // ========== ИНИЦИАЛИЗАЦИЯ ИИ-АГЕНТОВ ==========
-   openRouterService := services.NewOpenRouterService(cfg)
-   aiAgentService := services.NewAIAgentService(openRouterService)
+      // ========== ИНИЦИАЛИЗАЦИЯ ИИ-АГЕНТОВ ==========
+   // Используем YandexGPT вместо OpenRouter
+   yandexService := services.NewYandexService(cfg)
+   aiAgentService := services.NewAIAgentService(yandexService)
    aiAgentService.StartAgentScheduler()
-   log.Println("🤖 Сервис ИИ-агентов запущен")
+   log.Println("🤖 Сервис ИИ-агентов запущен с YandexGPT")
 
     if cfg.Env == "release" {
         gin.SetMode(gin.ReleaseMode)
