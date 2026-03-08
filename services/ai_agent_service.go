@@ -1,6 +1,7 @@
 package services
 
 import (
+<<<<<<< HEAD
 	"context"
 	"log"
 	"time"
@@ -9,12 +10,22 @@ import (
 )
 
 // OpenRouterServiceInterface - интерфейс для AI сервисов
+=======
+	"log"
+	"time"
+
+	"subscription-system/models"
+)
+
+// OpenRouterServiceInterface - интерфейс для OpenRouter
+>>>>>>> f02de4e2a0fee671ab6fc78dcca9683279e82bc1
 type OpenRouterServiceInterface interface {
 	Ask(prompt string, model string, temperature float64) (string, error)
 }
 
 // AIAgentService - сервис для работы с ИИ-агентами
 type AIAgentService struct {
+<<<<<<< HEAD
 	AI      OpenRouterServiceInterface
 }
 
@@ -22,6 +33,15 @@ type AIAgentService struct {
 func NewAIAgentService(ai OpenRouterServiceInterface) *AIAgentService {
 	return &AIAgentService{
 		AI: ai,
+=======
+	OpenRouter OpenRouterServiceInterface
+}
+
+// NewAIAgentService - конструктор
+func NewAIAgentService(openRouter OpenRouterServiceInterface) *AIAgentService {
+	return &AIAgentService{
+		OpenRouter: openRouter,
+>>>>>>> f02de4e2a0fee671ab6fc78dcca9683279e82bc1
 	}
 }
 
@@ -32,11 +52,17 @@ func (s *AIAgentService) StartAgentScheduler() {
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
 		for range ticker.C {
+<<<<<<< HEAD
 			s.ProcessPendingTasks()
+=======
+			log.Println("🔄 ИИ-агенты: проверка задач...")
+			s.ProcessAllAgents()
+>>>>>>> f02de4e2a0fee671ab6fc78dcca9683279e82bc1
 		}
 	}()
 }
 
+<<<<<<< HEAD
 // ProcessPendingTasks - обработка ожидающих задач
 func (s *AIAgentService) ProcessPendingTasks() {
 	ctx := context.Background()
@@ -75,4 +101,19 @@ func (s *AIAgentService) ProcessPendingTasks() {
 		
 		log.Printf("✅ Задача %s выполнена", id)
 	}
+=======
+// ProcessAllAgents - обработка всех агентов
+func (s *AIAgentService) ProcessAllAgents() {
+	// TODO: реализовать
+}
+
+// ProcessAgent - обработка одного агента
+func (s *AIAgentService) ProcessAgent(agent models.AIAgent, actions []models.AIAgentAction) {
+	// TODO: реализовать
+}
+
+// ExecuteAction - выполнение действия
+func (s *AIAgentService) ExecuteAction(agent models.AIAgent, action models.AIAgentAction, customer map[string]interface{}) {
+	// TODO: реализовать
+>>>>>>> f02de4e2a0fee671ab6fc78dcca9683279e82bc1
 }
