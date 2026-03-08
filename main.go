@@ -319,6 +319,7 @@ func main() {
         deliveryAPI.GET("/track/:trackingNumber", handlers.TrackAPIHandler)
     }
 
+
     // ========== API (JSON) С ЗАЩИТОЙ ==========
     api := r.Group("/api")
     api.Use(func(c *gin.Context) {
@@ -334,6 +335,7 @@ func main() {
     })
     api.Use(middleware.AuthMiddleware(cfg))
     {
+        // Основные роуты
         api.GET("/health", handlers.HealthHandler)
         api.GET("/crm/health", handlers.CRMHealthHandler)
         api.GET("/system/stats", handlers.SystemStatsHandler)
@@ -369,6 +371,8 @@ func main() {
         api.POST("/2fa/verify-backup", handlers.VerifyWithBackupCode)
         api.POST("/2fa/trust-device", handlers.TrustDevice)
         api.GET("/2fa/check-trust", handlers.CheckTrustedDevice)
+        
+        // CRM роуты
         api.GET("/crm/customers", handlers.GetCustomers)
         api.POST("/crm/customers", handlers.CreateCustomer)
         api.PUT("/crm/customers/:id", handlers.UpdateCustomer)
@@ -394,25 +398,30 @@ func main() {
         api.GET("/crm/deals/export/csv", handlers.ExportDealsCSV)
         api.GET("/crm/deals/export/excel", handlers.ExportDealsExcel)
         api.GET("/crm/history/:type/:id", handlers.GetEntityHistory)
-        // ДОБАВЛЕНО: маршруты для тегов
         api.GET("/crm/tags", handlers.GetTags)
         api.POST("/crm/tags", handlers.CreateTag)
         api.DELETE("/crm/tags/:id", handlers.DeleteTag)
-        // ДОБАВЛЕНО: маршруты для активностей
         api.POST("/crm/activities", handlers.AddActivity)
         api.GET("/crm/activities/:type/:id", handlers.GetActivities)
-        api.POST("/crm/ai/ask", handlers.AIAskHandler)
-
+        api.DELETE("/crm/activities/:id", handlers.DeleteActivity)
+        api.PUT("/crm/tags/:id", handlers.UpdateTag)
+        api.GET("/crm/forecast", handlers.GetSalesForecast)
+        api.GET("/crm/conversion", handlers.GetStageConversion)
+        
         // Настройки уведомлений
         api.GET("/notifications/settings", handlers.GetNotificationSettings)
         api.PUT("/notifications/settings", handlers.UpdateNotificationSettings)
-        api.GET("/crm/forecast", handlers.GetSalesForecast)
-        api.GET("/crm/conversion", handlers.GetStageConversion)
-        api.DELETE("/crm/activities/:id", handlers.DeleteActivity)
-        api.PUT("/crm/tags/:id", handlers.UpdateTag)
+        
+        // AI роуты (уникальные)
         api.POST("/ai/consultant", handlers.AIConsultantHandler)
-
-       // ИИ-агенты
+        
+        // ========== АНАЛИТИКА ==========
+        api.GET("/analytics/dashboard", handlers.GetDashboardAnalytics)
+        api.GET("/analytics/rfm", handlers.GetRFMAnalysis)
+        api.GET("/analytics/churn", handlers.GetChurnPrediction)
+        api.GET("/analytics/cohorts", handlers.GetCohortAnalysis)
+        
+        // ========== ИИ-АГЕНТЫ ==========
         api.GET("/ai/agents", handlers.GetAgents)
         api.POST("/ai/agents", handlers.CreateAgent)
         api.PUT("/ai/agents/:id", handlers.UpdateAgent)
@@ -475,6 +484,11 @@ func main() {
             "Version": "3.0",
         })
     })
+
+    // ========== ИНИЦИАЛИЗАЦИЯ АНАЛИТИКИ (ПОСЛЕ ВСЕХ РОУТОВ) ==========
+    analyticsService := services.NewAnalyticsService()
+    analyticsService.StartAnalyticsScheduler()
+    log.Println("📊 Сервис аналитики запущен")
 
     port := ":" + cfg.Port
     baseURL := "http://localhost:" + cfg.Port
