@@ -20,6 +20,7 @@ import (
     "subscription-system/database"
     "subscription-system/handlers"
     "subscription-system/middleware"
+    "subscription-system/services"
     _ "subscription-system/docs"
 )
 
@@ -81,6 +82,14 @@ func main() {
 
     handlers.InitAuthHandler(cfg)
     handlers.InitNotifier(cfg)
+    handlers.InitAuthHandler(cfg)
+    handlers.InitNotifier(cfg)
+
+   // ========== ИНИЦИАЛИЗАЦИЯ ИИ-АГЕНТОВ ==========
+   openRouterService := services.NewOpenRouterService(cfg)
+   aiAgentService := services.NewAIAgentService(openRouterService)
+   aiAgentService.StartAgentScheduler()
+   log.Println("🤖 Сервис ИИ-агентов запущен")
 
     if cfg.Env == "release" {
         gin.SetMode(gin.ReleaseMode)
@@ -173,6 +182,7 @@ func main() {
     r.GET("/security", handlers.SecurityPageHandler)
     r.GET("/referral", handlers.ReferralPageHandler)
     r.GET("/ai-settings", handlers.AISettingsPageHandler)
+    r.GET("/ai-agents", handlers.AIAgentsPage)
 
     // ========== ПУБЛИЧНЫЕ СТРАНИЦЫ ==========
     public := r.Group("/")
@@ -183,6 +193,7 @@ func main() {
         public.GET("/info", handlers.InfoHandler)
         public.GET("/pricing", handlers.PricingPageHandler)
         public.GET("/partner", handlers.PartnerHandler)
+        
     }
 
     // ---------- ДОБАВЛЕНО: публичное API для заявок ----------
@@ -252,6 +263,7 @@ func main() {
         protected.GET("/monetization", handlers.MonetizationHandler)
         protected.GET("/profile", handlers.ProfilePageHandler)
         protected.GET("/calendar", handlers.CalendarHandler)
+       
     }
 
     // ========== АДМИН СТРАНИЦЫ ==========
@@ -399,6 +411,15 @@ func main() {
         api.DELETE("/crm/activities/:id", handlers.DeleteActivity)
         api.PUT("/crm/tags/:id", handlers.UpdateTag)
         api.POST("/ai/consultant", handlers.AIConsultantHandler)
+
+       // ИИ-агенты
+        api.GET("/ai/agents", handlers.GetAgents)
+        api.POST("/ai/agents", handlers.CreateAgent)
+        api.PUT("/ai/agents/:id", handlers.UpdateAgent)
+        api.DELETE("/ai/agents/:id", handlers.DeleteAgent)
+        api.POST("/ai/agents/:id/actions", handlers.AddAgentAction)
+        api.GET("/ai/agents/logs", handlers.GetAgentLogs)
+        api.GET("/ai/agents/stats", handlers.GetAgentStats)
     }
 
     // ========== ЗАЩИЩЕННЫЕ API ==========

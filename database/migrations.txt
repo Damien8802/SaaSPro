@@ -1,0 +1,43 @@
+-- Таблица для ИИ-агентов
+CREATE TABLE IF NOT EXISTS ai_agents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_id UUID REFERENCES accounts(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    instructions TEXT,
+    model VARCHAR(100) DEFAULT 'openrouter/auto',
+    temperature FLOAT DEFAULT 0.7,
+    schedule VARCHAR(50) DEFAULT '24/7',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Действия агентов
+CREATE TABLE IF NOT EXISTS ai_agent_actions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id UUID REFERENCES ai_agents(id) ON DELETE CASCADE,
+    action VARCHAR(100) NOT NULL,
+    condition TEXT,
+    config JSONB DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Логи действий
+CREATE TABLE IF NOT EXISTS ai_agent_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id UUID REFERENCES ai_agents(id) ON DELETE CASCADE,
+    action VARCHAR(100),
+    customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+    deal_id UUID REFERENCES deals(id) ON DELETE SET NULL,
+    result TEXT,
+    status VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Индексы
+CREATE INDEX idx_ai_agents_account ON ai_agents(account_id);
+CREATE INDEX idx_ai_agents_role ON ai_agents(role);
+CREATE INDEX idx_ai_agent_logs_agent ON ai_agent_logs(agent_id);
+CREATE INDEX idx_ai_agent_logs_customer ON ai_agent_logs(customer_id);
