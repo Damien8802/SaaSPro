@@ -1,0 +1,50 @@
+package database
+
+import (
+    "database/sql"
+    "fmt"
+    "log"
+    "os"
+
+    _ "github.com/lib/pq"
+)
+
+var Pool *sql.DB
+
+func InitDB() error {
+    dbHost := os.Getenv("DB_HOST")
+    dbPort := os.Getenv("DB_PORT")
+    dbUser := os.Getenv("DB_USER")
+    dbPassword := os.Getenv("DB_PASSWORD")
+    dbName := os.Getenv("DB_NAME")
+    
+    if dbHost == "" {
+        dbHost = "localhost"
+    }
+    if dbPort == "" {
+        dbPort = "5432"
+    }
+    if dbUser == "" {
+        dbUser = "postgres"
+    }
+    if dbName == "" {
+        dbName = "subscription_db"
+    }
+
+    connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+        dbHost, dbPort, dbUser, dbPassword, dbName)
+
+    var err error
+    Pool, err = sql.Open("postgres", connStr)
+    if err != nil {
+        return err
+    }
+
+    err = Pool.Ping()
+    if err != nil {
+        return err
+    }
+
+    log.Println("✅ Подключение к PostgreSQL установлено")
+    return nil
+}

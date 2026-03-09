@@ -496,12 +496,12 @@
             <form id="agent-form">
                 <div class="form-group">
                     <label>Имя агента</label>
-                    <input type="text" id="agent-name" required placeholder="Например: Продажник Алиса">
+                    <input type="text" id="agent-name" name="name" required placeholder="Например: Продажник Алиса">
                 </div>
                 
                 <div class="form-group">
                     <label>Роль</label>
-                    <select id="agent-role" required>
+                    <select id="agent-role" name="role" required>
                         <option value="sales">Продажник</option>
                         <option value="support">Саппорт</option>
                         <option value="manager">Менеджер</option>
@@ -510,12 +510,12 @@
                 
                 <div class="form-group">
                     <label>Инструкции (скрипт работы)</label>
-                    <textarea id="agent-instructions" required placeholder="Опишите, как должен работать агент...">Ты - дружелюбный помощник. Твоя задача - поддерживать связь с клиентами, напоминать о себе и помогать с вопросами.</textarea>
+                    <textarea id="agent-instructions" name="instructions" required placeholder="Опишите, как должен работать агент...">Ты - дружелюбный помощник. Твоя задача - поддерживать связь с клиентами, напоминать о себе и помогать с вопросами.</textarea>
                 </div>
                 
                 <div class="form-group">
                     <label>Модель</label>
-                    <select id="agent-model">
+                    <select id="agent-model" name="model">
                         <option value="openrouter/auto">Auto (рекомендуется)</option>
                         <option value="openrouter/gpt-4">GPT-4</option>
                         <option value="openrouter/claude-v2">Claude 2</option>
@@ -525,12 +525,12 @@
                 
                 <div class="form-group">
                     <label>Температура (креативность)</label>
-                    <input type="range" id="agent-temperature" min="0" max="1" step="0.1" value="0.7">
+                    <input type="range" id="agent-temperature" name="temperature" min="0" max="1" step="0.1" value="0.7">
                 </div>
                 
                 <div class="form-group">
                     <label>График работы</label>
-                    <select id="agent-schedule">
+                    <select id="agent-schedule" name="schedule">
                         <option value="24/7">24/7</option>
                         <option value="office">Офисные часы (9:00-18:00)</option>
                         <option value="night">Ночные часы (18:00-9:00)</option>
@@ -556,6 +556,7 @@
         </div>
     </div>
     
+    <!-- ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ СКРИПТ -->
     <script>
         // Переключение вкладок
         function switchTab(tab) {
@@ -565,6 +566,7 @@
             if (tab === 'agents') {
                 document.querySelectorAll('.tab')[0].classList.add('active');
                 document.getElementById('agents-tab').classList.add('active');
+                loadAgents();
             } else if (tab === 'logs') {
                 document.querySelectorAll('.tab')[1].classList.add('active');
                 document.getElementById('logs-tab').classList.add('active');
@@ -576,6 +578,19 @@
             }
         }
         
+        // Показать модальное окно
+        function showCreateModal() {
+            console.log('Открытие модального окна');
+            document.getElementById('modal-title').textContent = '🤖 Создать агента';
+            document.getElementById('agent-form').reset();
+            document.getElementById('agent-modal').classList.add('active');
+        }
+        
+        // Закрыть модальное окно
+        function closeModal() {
+            document.getElementById('agent-modal').classList.remove('active');
+        }
+        
         // Загрузка агентов
         async function loadAgents() {
             try {
@@ -583,7 +598,7 @@
                 const data = await response.json();
                 renderAgents(data.agents || []);
             } catch (err) {
-                console.error('Error loading agents:', err);
+                console.error('Ошибка загрузки агентов:', err);
             }
         }
         
@@ -594,7 +609,7 @@
                 const data = await response.json();
                 renderLogs(data.logs || []);
             } catch (err) {
-                console.error('Error loading logs:', err);
+                console.error('Ошибка загрузки логов:', err);
             }
         }
         
@@ -605,13 +620,15 @@
                 const data = await response.json();
                 renderStats(data);
             } catch (err) {
-                console.error('Error loading stats:', err);
+                console.error('Ошибка загрузки статистики:', err);
             }
         }
         
         // Отрисовка агентов
         function renderAgents(agents) {
             const grid = document.getElementById('agents-grid');
+            if (!grid) return;
+            
             if (agents.length === 0) {
                 grid.innerHTML = `
                     <div class="empty-state" style="grid-column: 1/-1;">
@@ -626,7 +643,7 @@
             grid.innerHTML = agents.map(agent => `
                 <div class="agent-card ${agent.is_active ? 'active' : ''}">
                     <div class="agent-role role-${agent.role}">${getRoleName(agent.role)}</div>
-                    <div class="agent-name">${agent.name}</div>
+                    <div class="agent-name">${agent.name || 'Без имени'}</div>
                     <div class="agent-instructions">${agent.instructions || 'Нет инструкций'}</div>
                     
                     <div class="agent-meta">
@@ -644,21 +661,6 @@
                         </div>
                     </div>
                     
-                    <div class="actions-list">
-                        ${renderActions(agent.actions || [])}
-                    </div>
-                    
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-value">${agent.actions_count || 0}</div>
-                            <div class="stat-label">Действий</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">${agent.customers_count || 0}</div>
-                            <div class="stat-label">Клиентов</div>
-                        </div>
-                    </div>
-                    
                     <div class="agent-footer">
                         <div class="status-badge ${agent.is_active ? 'status-active' : 'status-inactive'}">
                             ${agent.is_active ? '🟢 Активен' : '⚪ Неактивен'}
@@ -672,6 +674,7 @@
             `).join('');
         }
         
+        // Получение названия роли
         function getRoleName(role) {
             const roles = {
                 'sales': '💼 Продажник',
@@ -681,42 +684,11 @@
             return roles[role] || role;
         }
         
-        function renderActions(actions) {
-            if (!actions || actions.length === 0) {
-                return '<div class="action-item">Нет запланированных действий</div>';
-            }
-            
-            return actions.map(a => `
-                <div class="action-item action-${a.action}">
-                    <div class="action-icon">${getActionIcon(a.action)}</div>
-                    <div>${getActionName(a.action)}</div>
-                </div>
-            `).join('');
-        }
-        
-        function getActionIcon(action) {
-            const icons = {
-                'send_message': '📨',
-                'create_deal': '💼',
-                'tag_customer': '🏷️',
-                'remind_manager': '⏰'
-            };
-            return icons[action] || '⚡';
-        }
-        
-        function getActionName(action) {
-            const names = {
-                'send_message': 'Отправка сообщений',
-                'create_deal': 'Создание сделок',
-                'tag_customer': 'Тегирование клиентов',
-                'remind_manager': 'Напоминания менеджерам'
-            };
-            return names[action] || action;
-        }
-        
         // Отрисовка логов
         function renderLogs(logs) {
             const tbody = document.getElementById('logs-body');
+            if (!tbody) return;
+            
             if (logs.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -731,11 +703,11 @@
             tbody.innerHTML = logs.map(log => `
                 <tr>
                     <td>${new Date(log.created_at).toLocaleString()}</td>
-                    <td>${log.agent_name || log.agent_id}</td>
-                    <td>${getActionName(log.action)}</td>
+                    <td>${log.agent_name || log.agent_id || '-'}</td>
+                    <td>${log.action || '-'}</td>
                     <td>${log.customer_name || log.customer_id || '-'}</td>
                     <td>${log.result || '-'}</td>
-                    <td><span class="${log.status === 'success' ? 'success-badge' : 'error-badge'}">${log.status}</span></td>
+                    <td><span class="${log.status === 'success' ? 'success-badge' : 'error-badge'}">${log.status || '-'}</span></td>
                 </tr>
             `).join('');
         }
@@ -748,59 +720,14 @@
             document.getElementById('deals-created').textContent = stats.deals_created || 0;
         }
         
-        // Модальное окно
-        function showCreateModal() {
-            document.getElementById('modal-title').textContent = '🤖 Создать агента';
-            document.getElementById('agent-form').reset();
-            document.getElementById('agent-modal').classList.add('active');
+        // Редактирование агента
+        async function editAgent(id) {
+            alert('Редактирование пока в разработке');
         }
-        
-        function closeModal() {
-            document.getElementById('agent-modal').classList.remove('active');
-        }
-        
-        // Создание агента
-        document.getElementById('agent-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const actions = [];
-            document.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
-                actions.push({
-                    action: cb.value,
-                    condition: '',
-                    config: {}
-                });
-            });
-            
-            const agentData = {
-                name: document.getElementById('agent-name').value,
-                role: document.getElementById('agent-role').value,
-                instructions: document.getElementById('agent-instructions').value,
-                model: document.getElementById('agent-model').value,
-                temperature: parseFloat(document.getElementById('agent-temperature').value),
-                schedule: document.getElementById('agent-schedule').value,
-                is_active: true
-            };
-            
-            try {
-                const response = await fetch('/api/ai/agents', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(agentData)
-                });
-                
-                if (response.ok) {
-                    closeModal();
-                    loadAgents();
-                }
-            } catch (err) {
-                console.error('Error creating agent:', err);
-            }
-        });
         
         // Удаление агента
         async function deleteAgent(id) {
-            if (!confirm('Удалить агента?')) return;
+            if (!confirm('Удалить этого агента?')) return;
             
             try {
                 const response = await fetch(`/api/ai/agents/${id}`, {
@@ -809,25 +736,53 @@
                 
                 if (response.ok) {
                     loadAgents();
+                } else {
+                    alert('Ошибка при удалении');
                 }
             } catch (err) {
-                console.error('Error deleting agent:', err);
+                console.error('Ошибка удаления:', err);
+                alert('Ошибка сети');
             }
         }
         
-        // Загружаем агентов при старте
-        loadAgents();
+        // Обработка отправки формы
+        document.getElementById('agent-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const agentData = {
+                name: formData.get('name'),
+                role: formData.get('role'),
+                instructions: formData.get('instructions'),
+                model: formData.get('model') || 'openrouter/auto',
+                temperature: parseFloat(formData.get('temperature')) || 0.7,
+                schedule: formData.get('schedule') || '24/7',
+                is_active: true
+            };
+
+            console.log('Отправка данных:', agentData);
+
+            try {
+                const response = await fetch('/api/ai/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(agentData)
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    await loadAgents();
+                } else {
+                    const error = await response.text();
+                    alert('Ошибка: ' + error);
+                }
+            } catch (err) {
+                alert('Ошибка сети: ' + err.message);
+            }
+        });
         
-        // Обновляем каждые 30 секунд
-        setInterval(() => {
-            loadAgents();
-            if (document.getElementById('logs-tab').classList.contains('active')) {
-                loadLogs();
-            }
-            if (document.getElementById('stats-tab').classList.contains('active')) {
-                loadStats();
-            }
-        }, 30000);
+        // Загружаем агентов при старте
+        document.addEventListener('DOMContentLoaded', loadAgents);
     </script>
 </body>
 </html>
