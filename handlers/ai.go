@@ -63,6 +63,33 @@ const (
     AIRequestAnalytics AIRequestType = "analytics"
 )
 
+// Системный промпт для неавторизованных пользователей (режим "Консультант")
+const consultantPrompt = `Ты AI-консультант CRM системы SaaSPro. Твоя задача - рассказывать о возможностях системы, помогать с выбором тарифа и отвечать на общие вопросы.
+
+📌 **О CRM системе:**
+• Управление клиентами и сделками
+• Аналитика и воронка продаж
+• Канбан-доска для визуализации процессов
+• Календарь для планирования
+• AI-ассистент для рекомендаций
+• Интеграции с Telegram, email
+• API для разработчиков
+
+💰 **Тарифы:**
+• Бесплатный - до 10 клиентов, базовые функции
+• Базовый - до 100 клиентов, расширенная аналитика
+• Профессиональный - неограниченно, все функции + API
+• Корпоративный - индивидуальные условия
+
+❓ **Частые вопросы:**
+• Как начать работу?
+• Какие есть интеграции?
+• Как подключить Telegram бота?
+• Как экспортировать данные?
+• Как настроить уведомления?
+
+Отвечай дружелюбно, структурированно, с эмодзи. Если вопрос касается личных данных - предложи авторизоваться.`
+
 // Функция для определения типа запроса
 func detectAIRequestType(question string, userID string, c *gin.Context) (AIRequestType, map[string]interface{}) {
     question = strings.ToLower(question)
@@ -102,7 +129,7 @@ func detectAIRequestType(question string, userID string, c *gin.Context) (AIRequ
     return AIRequestCRM, result
 }
 
-// Функция для получения данных CRM в зависимости от типа запроса
+// Функция для получения данных CRM авторизованного пользователя
 func getCRMDataForAI(ctx context.Context, userID string, requestType AIRequestType, params map[string]interface{}) (string, error) {
     var sb strings.Builder
     
@@ -230,7 +257,7 @@ func getCRMDataForAI(ctx context.Context, userID string, requestType AIRequestTy
     return sb.String(), nil
 }
 
-// Функция для получения системного промпта
+// Функция для получения системного промпта авторизованного пользователя
 func getSystemPrompt(requestType AIRequestType, crmData string, userID string) string {
     basePrompt := `Ты AI-ассистент CRM системы. Отвечай ТОЛЬКО на русском языке, структурированно и по делу. Не придумывай то, чего нет в данных.`
     
@@ -238,7 +265,7 @@ func getSystemPrompt(requestType AIRequestType, crmData string, userID string) s
     case AIRequestAnalytics:
         return basePrompt + ` 
         
-Ты помогаешь с аналитикой CRM. Вот актуальные данные системы:
+Ты помогаешь с аналитикой CRM. Вот актуальные данные пользователя:
 ` + crmData + `
 
 📊 **ФОРМАТ ОТВЕТА ДЛЯ АНАЛИТИКИ:**
@@ -268,7 +295,7 @@ func getSystemPrompt(requestType AIRequestType, crmData string, userID string) s
     case AIRequestDeal:
         return basePrompt + ` 
         
-Ты даешь рекомендации по сделкам. Вот данные CRM:
+Ты даешь рекомендации по сделкам. Вот данные пользователя:
 ` + crmData + `
 
 🤝 **ФОРМАТ ОТВЕТА ДЛЯ СДЕЛОК:**
@@ -293,7 +320,7 @@ func getSystemPrompt(requestType AIRequestType, crmData string, userID string) s
     default: // CRM
         return basePrompt + ` 
         
-Ты отвечаешь по данным CRM. Вот актуальная информация:
+Ты отвечаешь по данным пользователя. Вот актуальная информация:
 ` + crmData + `
 
 📋 **ФОРМАТ ОТВЕТА:**
@@ -377,18 +404,45 @@ func getInactiveHighValueClients(ctx context.Context, userID string) ([]string, 
     return recommendations, nil
 }
 
-// AIAskHandler - основной обработчик AI запросов
+// AIAskHandler - основной обработчик AI запросов (ДВУХРЕЖИМНАЯ ВЕРСИЯ)
 func AIAskHandler(c *gin.Context) {
     log.Println("=== AIAskHandler START ===")
     
-    // Получаем userID из контекста (если есть)
+    // Получаем userID из контекста (проверяем авторизацию)
     userID, exists := c.Get("userID")
-    log.Printf("userID from context: %v, exists: %v", userID, exists)
     
-    // Если пользователь не авторизован, используем тестовый ID для публичных запросов
+    var systemPrompt string
+    var userIDStr string
+    
     if !exists {
-        userID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
-        log.Printf("[AI] Публичный запрос, используем тестового пользователя: %v", userID)
+        // РЕЖИМ 1: Неавторизованный пользователь - режим консультанта
+        log.Println("[AI] Неавторизованный пользователь, режим консультанта")
+        systemPrompt = consultantPrompt
+        userIDStr = "guest"
+    } else {
+        // РЕЖИМ 2: Авторизованный пользователь - полный доступ к данным
+        log.Printf("[AI] Авторизованный пользователь: %v", userID)
+        userIDStr = userID.(string)
+        
+        var req AskRequest
+        if err := c.ShouldBindJSON(&req); err != nil {
+            log.Printf("ERROR binding JSON: %v", err)
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        
+        // Определяем тип запроса
+        requestType, params := detectAIRequestType(req.Question, userIDStr, c)
+        
+        // Получаем данные CRM
+        crmData, err := getCRMDataForAI(c.Request.Context(), userIDStr, requestType, params)
+        if err != nil {
+            log.Printf("ERROR getting CRM data: %v", err)
+            crmData = "Данные временно недоступны"
+        }
+        
+        // Получаем системный промпт с данными пользователя
+        systemPrompt = getSystemPrompt(requestType, crmData, userIDStr)
     }
 
     var req AskRequest
@@ -397,26 +451,6 @@ func AIAskHandler(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
-    log.Printf("Request: question=%s, recommend=%v", req.Question, req.Recommend)
-
-    ctx := c.Request.Context()
-    
-    // Определяем тип запроса
-    requestType, params := detectAIRequestType(req.Question, userID.(string), c)
-    log.Printf("Detected request type: %s", requestType)
-    
-    // Получаем данные CRM в зависимости от типа запроса
-    crmData, err := getCRMDataForAI(ctx, userID.(string), requestType, params)
-    if err != nil {
-        log.Printf("ERROR getting CRM data: %v", err)
-        crmData = "Данные CRM временно недоступны"
-    } else {
-        log.Printf("CRM data length: %d bytes", len(crmData))
-    }
-
-    // Получаем системный промпт
-    systemPrompt := getSystemPrompt(requestType, crmData, userID.(string))
-    log.Printf("System prompt length: %d bytes", len(systemPrompt))
 
     // Получаем ключ API
     apiKey := os.Getenv("YANDEX_API_KEY")
@@ -461,8 +495,7 @@ func AIAskHandler(c *gin.Context) {
         return
     }
 
-    // ========== ИСПРАВЛЕННЫЙ БЛОК ОТПРАВКИ ЗАПРОСА ==========
-    // Создаем HTTP клиент и запрос с правильными заголовками
+    // Отправляем запрос к YandexGPT
     log.Println("Sending request to YandexGPT...")
     
     client := &http.Client{}
@@ -473,11 +506,9 @@ func AIAskHandler(c *gin.Context) {
         return
     }
     
-    // Добавляем обязательные заголовки
     reqYandex.Header.Set("Content-Type", "application/json")
     reqYandex.Header.Set("Authorization", "Api-Key "+apiKey)
     
-    // Отправляем запрос
     resp, err := client.Do(reqYandex)
     if err != nil {
         log.Printf("ERROR calling YandexGPT: %v", err)
@@ -514,24 +545,29 @@ func AIAskHandler(c *gin.Context) {
     }
 
     answer := gptResp.Result.Alternatives[0].Message.Text
-    log.Printf("AI answer length: %d bytes", len(answer))
-    
-    // Добавляем рекомендации если запрошены
-    if req.Recommend {
-        recommendations, err := getStuckDeals(ctx, userID.(string))
+
+    // Для авторизованных пользователей добавляем рекомендации если запрошены
+    if exists && req.Recommend {
+        recommendations, err := getStuckDeals(c.Request.Context(), userIDStr)
         if err == nil && len(recommendations) > 0 {
             answer += "\n\n📋 **Активные рекомендации:**\n" + strings.Join(recommendations, "\n")
         }
         
-        inactiveRecommendations, err := getInactiveHighValueClients(ctx, userID.(string))
+        inactiveRecommendations, err := getInactiveHighValueClients(c.Request.Context(), userIDStr)
         if err == nil && len(inactiveRecommendations) > 0 {
             answer += "\n\n🔔 **Неактивные клиенты:**\n" + strings.Join(inactiveRecommendations, "\n")
         }
     }
 
+    // Добавляем призыв к авторизации для неавторизованных
+    if !exists {
+        answer += "\n\n---\n💡 **Хотите больше?** Авторизуйтесь или [зарегистрируйтесь](/register), чтобы получить полный доступ к AI-ассистенту с вашими личными данными и рекомендациями по сделкам!"
+    }
+
     log.Println("=== AIAskHandler END ===")
     c.JSON(http.StatusOK, gin.H{
         "answer": answer,
-        "type":   requestType,
+        "type":   "consultant",
+        "authorized": exists,
     })
 }
