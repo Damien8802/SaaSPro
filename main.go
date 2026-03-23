@@ -246,6 +246,18 @@ func main() {
     r.GET("/transcriptions", handlers.TranscriptionsPage)
     r.GET("/ai-agents", handlers.AIAgentsPage)
     r.GET("/advanced-analytics", handlers.AdvancedAnalyticsPage)
+
+// QR код авторизация
+r.GET("/qr-login", handlers.QRLoginPageHandler)
+r.POST("/api/qr/generate", handlers.GenerateQRCode)
+r.GET("/api/qr/status", handlers.QRStatusWebSocket)
+r.POST("/api/qr/scan", handlers.ScanQRCode)
+r.POST("/api/qr/approve", handlers.ApproveQRLogin)
+
+// Push уведомления
+r.POST("/api/push/register", handlers.RegisterPushDevice)
+r.GET("/api/push/devices", handlers.GetUserDevices)
+r.DELETE("/api/push/devices/:id", handlers.RemovePushDevice)
     
 r.GET("/api-sales", handlers.APISalesPageHandler)           
 r.GET("/api/user/plan", handlers.GetUserPlan)                
