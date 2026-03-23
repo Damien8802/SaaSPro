@@ -281,6 +281,14 @@ r.POST("/api/inventory/orders", handlers.CreateOrder)
 r.GET("/api/inventory/orders/:id", handlers.GetOrderDetails)
 r.GET("/api/inventory/stats", handlers.GetInventoryStats)
 
+// Задачи и проекты
+r.GET("/projects", handlers.ProjectsPageHandler)
+r.GET("/api/projects", handlers.GetProjects)
+r.POST("/api/projects", handlers.CreateProject)
+r.GET("/api/tasks", handlers.GetTasks)
+r.POST("/api/tasks", handlers.CreateTask)
+r.PUT("/api/tasks/:id", handlers.UpdateTask)
+
 // OAuth2 / OpenID Connect маршруты
 r.GET("/.well-known/openid-configuration", handlers.OIDCConfigurationHandler)
 r.GET("/oauth/jwks", handlers.JWKSHander)

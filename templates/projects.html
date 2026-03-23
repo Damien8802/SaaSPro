@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проекты и задачи | SaaSPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 24px 24px 0 0;
+            padding: 20px 25px;
+            font-weight: 600;
+        }
+        .project-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+        }
+        .project-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+        }
+        .task-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .priority-high {
+            border-left-color: #dc3545;
+        }
+        .priority-medium {
+            border-left-color: #ffc107;
+        }
+        .priority-low {
+            border-left-color: #28a745;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-new { background: #e3f2fd; color: #1976d2; }
+        .status-progress { background: #fff3e0; color: #f57c00; }
+        .status-completed { background: #e8f5e9; color: #388e3c; }
+        .btn-sm-custom {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок и кнопки -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="text-white mb-2"><i class="bi bi-kanban"></i> Bitrix24</h1>
+                <p class="text-white-50">Управляйте проектами, ставьте задачи, отслеживайте прогресс</p>
+            </div>
+            <div>
+                <button class="btn btn-light me-2" onclick="location.href='/dashboard-improved'">
+                    <i class="bi bi-arrow-left"></i> Назад
+                </button>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                    <i class="bi bi-plus-circle"></i> Новый проект
+                </button>
+            </div>
+        </div>
+
+        <!-- Список проектов -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-folder"></i> Bitrix24 - Управление бизнесом
+            </div>
+            <div class="card-body" id="projectsList">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно создания проекта -->
+    <div class="modal fade" id="createProjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-folder-plus"></i> Новый проект</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название проекта *</label>
+                        <input type="text" id="projectName" class="form-control" placeholder="Например: Сайт компании">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea id="projectDescription" class="form-control" rows="3" placeholder="Что нужно сделать?"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Дата начала</label>
+                            <input type="date" id="projectStartDate" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Дата окончания</label>
+                            <input type="date" id="projectEndDate" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="createProject()">Создать проект</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно создания задачи -->
+    <div class="modal fade" id="createTaskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Новая задача</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="taskProjectId">
+                    <div class="mb-3">
+                        <label class="form-label">Название задачи *</label>
+                        <input type="text" id="taskTitle" class="form-control" placeholder="Например: Сверстать главную страницу">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea id="taskDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Приоритет</label>
+                            <select id="taskPriority" class="form-select">
+                                <option value="low">Низкий</option>
+                                <option value="medium" selected>Средний</option>
+                                <option value="high">Высокий</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Срок выполнения</label>
+                            <input type="date" id="taskDueDate" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="createTask()">Создать задачу</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let projects = [];
+        
+        // Загрузка проектов
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects');
+                const data = await response.json();
+                projects = data.projects || [];
+                renderProjects();
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                document.getElementById('projectsList').innerHTML = `
+                    <div class="alert alert-danger">Ошибка загрузки проектов</div>
+                `;
+            }
+        }
+        
+        // Отображение проектов
+        function renderProjects() {
+            const container = document.getElementById('projectsList');
+            
+            if (!projects || projects.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-folder2-open" style="font-size: 48px; color: #ccc;"></i>
+                        <p class="text-muted mt-3">У вас пока нет проектов</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                            <i class="bi bi-plus-circle"></i> Создать первый проект
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = projects.map(project => `
+                <div class="project-card" onclick="showProjectTasks('${project.id}', '${project.name}')">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h4 class="mb-1">${escapeHtml(project.name)}</h4>
+                            <p class="text-muted small mb-2">${escapeHtml(project.description || 'Нет описания')}</p>
+                            ${project.start_date ? `<small class="text-muted"><i class="bi bi-calendar"></i> ${project.start_date} - ${project.end_date || '...'}</small>` : ''}
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">${project.task_count || 0} задач</span>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: ${project.progress || 0}%"></div>
+                        </div>
+                        <small class="text-muted">Выполнено ${Math.round(project.progress || 0)}% (${project.completed_count || 0}/${project.task_count || 0})</small>
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); openCreateTaskModal('${project.id}')">
+                            <i class="bi bi-plus"></i> Добавить задачу
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Показать задачи проекта
+        async function showProjectTasks(projectId, projectName) {
+            try {
+                const response = await fetch(`/api/tasks?project_id=${projectId}`);
+                const data = await response.json();
+                const tasks = data.tasks || [];
+                
+                const tasksHtml = tasks.map(task => `
+                    <div class="task-card priority-${task.priority}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <strong>${escapeHtml(task.title)}</strong>
+                                    <span class="status-badge status-${task.status === 'completed' ? 'completed' : task.status === 'in_progress' ? 'progress' : 'new'}">
+                                        ${task.status === 'new' ? 'Новая' : task.status === 'in_progress' ? 'В работе' : 'Выполнена'}
+                                    </span>
+                                    ${task.priority === 'high' ? '<span class="badge bg-danger">Высокий</span>' : task.priority === 'medium' ? '<span class="badge bg-warning">Средний</span>' : '<span class="badge bg-info">Низкий</span>'}
+                                </div>
+                                <p class="text-muted small mb-2">${escapeHtml(task.description || 'Нет описания')}</p>
+                                ${task.due_date ? `<small class="text-muted"><i class="bi bi-calendar"></i> Срок: ${task.due_date}</small>` : ''}
+                            </div>
+                            <div>
+                                ${task.status !== 'completed' ? 
+                                    `<button class="btn btn-sm btn-success me-1" onclick="updateTaskStatus('${task.id}', 'completed')">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>` : 
+                                    `<button class="btn btn-sm btn-secondary me-1" onclick="updateTaskStatus('${task.id}', 'new')">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </button>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                const modalHtml = `
+                    <div class="modal fade show" id="tasksModal" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5)">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title"><i class="bi bi-kanban"></i> ${escapeHtml(projectName)} - Задачи</h5>
+                                    <button type="button" class="btn-close" onclick="closeTasksModal()"></button>
+                                </div>
+                                <div class="modal-body">
+                                    ${tasksHtml || '<p class="text-muted text-center">Нет задач в этом проекте</p>'}
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-primary" onclick="openCreateTaskModal('${projectId}')">
+                                        <i class="bi bi-plus"></i> Добавить задачу
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="closeTasksModal()">Закрыть</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Удаляем старый модал если есть
+                const oldModal = document.getElementById('tasksModal');
+                if (oldModal) oldModal.remove();
+                
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                alert('Ошибка загрузки задач');
+            }
+        }
+        
+        function closeTasksModal() {
+            const modal = document.getElementById('tasksModal');
+            if (modal) modal.remove();
+        }
+        
+        function openCreateTaskModal(projectId) {
+            document.getElementById('taskProjectId').value = projectId;
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskPriority').value = 'medium';
+            document.getElementById('taskDueDate').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
+            modal.show();
+        }
+        
+        async function createProject() {
+            const name = document.getElementById('projectName').value.trim();
+            if (!name) {
+                alert('Введите название проекта');
+                return;
+            }
+            
+            const data = {
+                name: name,
+                description: document.getElementById('projectDescription').value,
+                start_date: document.getElementById('projectStartDate').value,
+                end_date: document.getElementById('projectEndDate').value
+            };
+            
+            try {
+                const response = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('createProjectModal')).hide();
+                    loadProjects();
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+        
+        async function createTask() {
+            const projectId = document.getElementById('taskProjectId').value;
+            const title = document.getElementById('taskTitle').value.trim();
+            
+            if (!title) {
+                alert('Введите название задачи');
+                return;
+            }
+            
+            const data = {
+                project_id: projectId,
+                title: title,
+                description: document.getElementById('taskDescription').value,
+                priority: document.getElementById('taskPriority').value,
+                due_date: document.getElementById('taskDueDate').value
+            };
+            
+            try {
+                const response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
+                    loadProjects();
+                    closeTasksModal();
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + (error.error || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+        
+        async function updateTaskStatus(taskId, status) {
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: status })
+                });
+                
+                if (response.ok) {
+                    loadProjects();
+                    closeTasksModal();
+                } else {
+                    alert('Ошибка обновления статуса');
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Загрузка при старте
+        loadProjects();
+    </script>
+</body>
+</html>
