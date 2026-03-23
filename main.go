@@ -270,6 +270,17 @@ r.POST("/api/upgrade-key", handlers.UpgradeAPIKey)
 // r.GET("/api/v1/search", handlers.PublicSearchAPI)  // ЭТО ОСТАВЛЯЕМ ЗАКОММЕНТИРОВАННЫМ
 r.GET("/api/user/usage", handlers.GetAPIUsage)  
 
+// Инвентаризация
+r.GET("/inventory", handlers.InventoryPageHandler)
+r.GET("/api/inventory/products", handlers.GetProducts)
+r.POST("/api/inventory/products", handlers.CreateProduct)
+r.PUT("/api/inventory/products/:id", handlers.UpdateProduct)
+r.DELETE("/api/inventory/products/:id", handlers.DeleteProduct)
+r.GET("/api/inventory/orders", handlers.GetOrders)
+r.POST("/api/inventory/orders", handlers.CreateOrder)
+r.GET("/api/inventory/orders/:id", handlers.GetOrderDetails)
+r.GET("/api/inventory/stats", handlers.GetInventoryStats)
+
 // OAuth2 / OpenID Connect маршруты
 r.GET("/.well-known/openid-configuration", handlers.OIDCConfigurationHandler)
 r.GET("/oauth/jwks", handlers.JWKSHander)
