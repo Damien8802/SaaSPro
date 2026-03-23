@@ -253,6 +253,23 @@ r.POST("/api/create-key", handlers.CreateAPIKey)
 r.POST("/api/upgrade-key", handlers.UpgradeAPIKey)           
 // r.GET("/api/v1/search", handlers.PublicSearchAPI)  // ЭТО ОСТАВЛЯЕМ ЗАКОММЕНТИРОВАННЫМ
 r.GET("/api/user/usage", handlers.GetAPIUsage)  
+
+// OAuth2 / OpenID Connect маршруты
+r.GET("/.well-known/openid-configuration", handlers.OIDCConfigurationHandler)
+r.GET("/oauth/jwks", handlers.JWKSHander)
+r.GET("/oauth/authorize", handlers.OAuthAuthorizeHandler)
+r.POST("/oauth/token", handlers.OAuthTokenHandler)
+r.GET("/oauth/userinfo", handlers.OAuthUserInfoHandler)
+// Страница Identity Hub
+r.GET("/identity-hub", handlers.IdentityHubPageHandler)
+
+// Админские маршруты для управления OAuth клиентами
+adminOAuth := r.Group("/admin/oauth")
+adminOAuth.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
+{
+    adminOAuth.GET("/clients", handlers.OAuthClientsPageHandler)
+    adminOAuth.POST("/clients", handlers.CreateOAuthClient)
+}
     
     // VPN маршруты
     r.GET("/vpn", handlers.VPNSalesPageHandler)

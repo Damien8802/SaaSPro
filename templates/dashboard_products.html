@@ -1,0 +1,120 @@
+<!-- Блок с продуктами для дашборда -->
+<div class="dashboard-products">
+    <h3>🚀 Доступные сервисы</h3>
+    
+    <div class="products-dashboard-grid">
+        <!-- API продукт -->
+        <div class="product-dashboard-card">
+            <div class="product-dashboard-icon">📦</div>
+            <div class="product-dashboard-info">
+                <h4>API для поиска цен</h4>
+                <p>Получайте актуальные цены и советы из интернета через API</p>
+                <div class="product-dashboard-stats">
+                    <span>🔑 Бесплатно: 10 запросов/день</span>
+                    <span>💰 От 500 ₽/мес</span>
+                </div>
+                <button class="btn-small" onclick="location.href='/api-sales'">Управлять API →</button>
+            </div>
+        </div>
+        
+        <!-- VPN продукт -->
+        <div class="product-dashboard-card">
+            <div class="product-dashboard-icon">🔒</div>
+            <div class="product-dashboard-info">
+                <h4>VPN Сервис</h4>
+                <p>Безопасный доступ из любой точки мира. WireGuard протокол</p>
+                <div class="product-dashboard-stats">
+                    <span>🎁 3 дня бесплатно</span>
+                    <span>💰 От 299 ₽/мес</span>
+                </div>
+                <button class="btn-small" onclick="location.href='/vpn'">Управлять VPN →</button>
+            </div>
+        </div>
+        
+        <!-- AI продукт -->
+        <div class="product-dashboard-card">
+            <div class="product-dashboard-icon">🤖</div>
+            <div class="product-dashboard-info">
+                <h4>AI Чат</h4>
+                <p>Интеллектуальный помощник на основе YandexGPT</p>
+                <div class="product-dashboard-stats">
+                    <span>🎯 Отвечает на вопросы</span>
+                    <span>🔍 Ищет информацию в интернете</span>
+                </div>
+                <button class="btn-small" onclick="location.href='/ai'">Попробовать →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-products {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.dashboard-products h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #333;
+}
+.products-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+.product-dashboard-card {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    transition: transform 0.2s;
+}
+.product-dashboard-card:hover {
+    transform: translateY(-3px);
+}
+.product-dashboard-icon {
+    font-size: 48px;
+}
+.product-dashboard-info {
+    flex: 1;
+}
+.product-dashboard-info h4 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #667eea;
+}
+.product-dashboard-info p {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+}
+.product-dashboard-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: #888;
+}
+.product-dashboard-stats span {
+    background: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+.btn-small {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: transform 0.2s;
+}
+.btn-small:hover {
+    transform: scale(1.05);
+}
+</style>

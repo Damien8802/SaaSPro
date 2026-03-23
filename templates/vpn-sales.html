@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPN Сервис - Безопасный и быстрый доступ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .header { text-align: center; color: white; margin-bottom: 60px; }
+        .header h1 { font-size: 48px; margin-bottom: 20px; }
+        .header p { font-size: 20px; opacity: 0.9; }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+        .feature {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        .feature h3 { margin-bottom: 10px; font-size: 24px; }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        .plan-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        .plan-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .popular {
+            border: 2px solid #f59e0b;
+            transform: scale(1.05);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: #f59e0b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .plan-name { font-size: 28px; font-weight: bold; margin-bottom: 20px; }
+        .plan-price { font-size: 48px; font-weight: bold; color: #2a5298; margin-bottom: 20px; }
+        .plan-price small { font-size: 16px; color: #666; }
+        .plan-features { list-style: none; margin: 20px 0; }
+        .plan-features li { padding: 8px 0; color: #666; border-bottom: 1px solid #eee; }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.3s;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .stats {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            text-align: center;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        .stat-value { font-size: 32px; font-weight: bold; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .config-code {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .close { float: right; font-size: 28px; cursor: pointer; color: #999; }
+        .close:hover { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 VPN Сервис</h1>
+            <p>Безопасный, быстрый и анонимный доступ к интернету</p>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>⚡ Высокая скорость</h3>
+                <p>До 1 Gbps на премиум тарифах</p>
+            </div>
+            <div class="feature">
+                <h3>🔐 Шифрование</h3>
+                <p>WireGuard протокол - самый безопасный</p>
+            </div>
+            <div class="feature">
+                <h3>🌍 3 страны</h3>
+                <p>Россия, США, Германия</p>
+            </div>
+            <div class="feature">
+                <h3>📱 Все устройства</h3>
+                <p>Windows, Mac, Linux, Android, iOS</p>
+            </div>
+        </div>
+        
+        <div class="pricing-grid" id="pricingGrid"></div>
+        
+        <div class="stats">
+            <h2>📊 Статистика сервиса</h2>
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>🔑 Ваш VPN ключ</h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        const plans = [
+            { id: 1, name: "Пробный", price: 0, days: 3, speed: "10 Mbps", devices: 1, features: ["3 дня", "1 устройство", "10 Mbps", "Россия"] },
+            { id: 2, name: "Старт", price: 299, days: 30, speed: "50 Mbps", devices: 2, features: ["30 дней", "2 устройства", "50 Mbps", "3 страны"] },
+            { id: 3, name: "Про", price: 999, days: 90, speed: "100 Mbps", devices: 5, features: ["90 дней", "5 устройств", "100 Mbps", "3 страны"], popular: true },
+            { id: 4, name: "Премиум", price: 2999, days: 365, speed: "1 Gbps", devices: 10, features: ["365 дней", "10 устройств", "1 Gbps", "3 страны"] }
+        ];
+        
+        const grid = document.getElementById('pricingGrid');
+        grid.innerHTML = plans.map(plan => `
+            <div class="plan-card ${plan.popular ? 'popular' : ''}" onclick="selectPlan(${plan.id})">
+                ${plan.popular ? '<div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>' : ''}
+                <div class="plan-name">${plan.name}</div>
+                <div class="plan-price">${plan.price === 0 ? 'Бесплатно' : plan.price + ' ₽'}<small>${plan.price > 0 ? '/мес' : ''}</small></div>
+                <ul class="plan-features">
+                    ${plan.features.map(f => `<li>✓ ${f}</li>`).join('')}
+                </ul>
+                <button class="btn">${plan.price === 0 ? '🔑 Получить пробный доступ' : '💳 Купить'}</button>
+            </div>
+        `).join('');
+        
+        async function selectPlan(planId) {
+            try {
+                const response = await fetch('/api/vpn/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan_id: planId })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('modalContent').innerHTML = `
+                        <p><strong>✅ ${data.message}</strong></p>
+                        <p><strong>Тариф:</strong> ${data.plan.name}</p>
+                        <p><strong>Срок:</strong> ${data.expires_in}</p>
+                        <h3>📝 Конфигурация:</h3>
+                        <div class="config-code">${data.config.replace(/\n/g, '<br>')}</div>
+                        <h3>📖 Инструкции:</h3>
+                        <ul>
+                            <li><strong>Windows/Mac:</strong> ${data.instructions.windows}</li>
+                            <li><strong>Linux:</strong> ${data.instructions.linux}</li>
+                            <li><strong>Android/iOS:</strong> ${data.instructions.android}</li>
+                        </ul>
+                        <button class="btn" onclick="copyConfig()">📋 Скопировать конфиг</button>
+                    `;
+                    window.currentConfig = data.config;
+                    document.getElementById('modal').style.display = 'flex';
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+        
+        function copyConfig() {
+            if (window.currentConfig) {
+                navigator.clipboard.writeText(window.currentConfig);
+                alert('✅ Конфигурация скопирована!');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        // Загружаем статистику
+        fetch('/api/vpn/stats')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${data.total_clients}+</div>
+                        <div>Активных клиентов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.servers.length}</div>
+                        <div>Серверов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">24/7</div>
+                        <div>Поддержка</div>
+                    </div>
+                `;
+            });
+        
+        // Закрытие модального окна по клику вне
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

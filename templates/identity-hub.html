@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Hub | SaaSPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        /* НАВИГАЦИЯ */
+        .navbar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 40px;
+        }
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: 700;
+            color: white !important;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            transition: all 0.3s;
+        }
+        .nav-link:hover {
+            color: white !important;
+            transform: translateY(-2px);
+        }
+        .btn-login {
+            background: rgba(255,255,255,0.2);
+            border-radius: 50px;
+            padding: 8px 25px !important;
+        }
+        .btn-register {
+            background: white;
+            color: #667eea !important;
+            border-radius: 50px;
+            padding: 8px 25px !important;
+            font-weight: 600;
+        }
+        
+        /* ГЕРОЙ */
+        .hero {
+            text-align: center;
+            padding: 80px 20px 60px;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #ffd89b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 20px;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* КОНТЕНТ */
+        .content-wrapper {
+            background: white;
+            border-radius: 40px 40px 0 0;
+            padding: 60px 0 80px;
+        }
+        
+        /* ФИЧИ */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto 80px;
+            padding: 0 20px;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .features-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 50px;
+            font-size: 18px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 24px;
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        /* ТАРИФЫ */
+        .pricing {
+            max-width: 1200px;
+            margin: 0 auto 80px;
+            padding: 0 20px;
+        }
+        .pricing h2 {
+            text-align: center;
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .pricing-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 50px;
+            font-size: 18px;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        .pricing-card {
+            background: white;
+            border-radius: 24px;
+            padding: 35px 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            border: 1px solid #eee;
+        }
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .pricing-card.popular {
+            border: 2px solid #667eea;
+            transform: scale(1.02);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .plan-price {
+            font-size: 48px;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .plan-price small {
+            font-size: 16px;
+            color: #999;
+        }
+        .plan-period {
+            color: #999;
+            margin-bottom: 25px;
+        }
+        .plan-features {
+            list-style: none;
+            margin: 25px 0;
+            text-align: left;
+        }
+        .plan-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #555;
+        }
+        .plan-features li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: 600;
+        }
+        .btn-plan {
+            display: block;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-plan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.4);
+        }
+        .btn-plan.free {
+            background: #6c757d;
+        }
+        
+        /* ДОКУМЕНТАЦИЯ */
+        .docs {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .docs h2 {
+            text-align: center;
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .docs-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        .doc-card {
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 25px;
+            color: #eee;
+        }
+        .doc-card h4 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        .endpoint {
+            background: #0f0f1a;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+        .endpoint-code {
+            color: #4caf50;
+        }
+        
+        /* ФУТЕР */
+        .footer {
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .pricing-card.popular { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- НАВИГАЦИЯ -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">🚀 SaaSPro</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Главная</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard-improved">Дашборд</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/vpn">VPN</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/identity-hub">Identity Hub</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/ai">AI Чат</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/crm">CRM</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/pricing">Тарифы</a></li>
+                    <li class="nav-item"><a class="nav-link btn-login" href="/login">Вход</a></li>
+                    <li class="nav-item"><a class="nav-link btn-register" href="/register">Регистрация</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ГЕРОЙ -->
+    <div class="hero">
+        <h1>🔐 Identity Hub</h1>
+        <p>Первый в России Identity Provider, работающий по модели SaaS</p>
+        <p style="font-size: 16px; margin-top: 20px;">Без необходимости разворачивать on‑premises решения. Без долгих установок.</p>
+    </div>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <div class="content-wrapper">
+        <!-- ВОЗМОЖНОСТИ -->
+        <div class="features">
+            <h2>⚡ Что умеет Identity Hub</h2>
+            <p class="features-subtitle">Полноценный IdP сервис для вашего бизнеса</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔑</div>
+                    <h3>Single Sign-On (SSO)</h3>
+                    <p>Один аккаунт для всех ваших сервисов. Пользователи входят один раз — доступны все приложения</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>OAuth2 / OpenID Connect</h3>
+                    <p>Поддержка всех современных протоколов авторизации. Легко подключайте любые приложения</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>2FA и MFA</h3>
+                    <p>Двухфакторная аутентификация, резервные коды, доверенные устройства — максимальная безопасность</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Управление пользователями</h3>
+                    <p>Создание, блокировка, роли, группы. Полный контроль над доступом к приложениям</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Аналитика и логи</h3>
+                    <p>Детальные логи авторизаций, статистика использования, аудит безопасности</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3>API интеграции</h3>
+                    <p>REST API для управления пользователями, проверки токенов, создания клиентов</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ТАРИФЫ -->
+        <div class="pricing">
+            <h2>💰 Тарифы Identity Hub</h2>
+            <p class="pricing-subtitle">Выберите план под ваш бизнес</p>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="plan-name">Бесплатный</div>
+                    <div class="plan-price">0 ₽<small>/мес</small></div>
+                    <div class="plan-period">Для тестирования</div>
+                    <ul class="plan-features">
+                        <li>До 100 пользователей</li>
+                        <li>1 OAuth клиент</li>
+                        <li>SSO для 1 приложения</li>
+                        <li>Базовая поддержка</li>
+                        <li>Email уведомления</li>
+                    </ul>
+                    <a href="/register" class="btn-plan free">Начать бесплатно</a>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>
+                    <div class="plan-name">Бизнес</div>
+                    <div class="plan-price">₽4 990<small>/мес</small></div>
+                    <div class="plan-period">Для растущего бизнеса</div>
+                    <ul class="plan-features">
+                        <li>До 1 000 пользователей</li>
+                        <li>До 10 OAuth клиентов</li>
+                        <li>SSO для всех приложений</li>
+                        <li>2FA и MFA</li>
+                        <li>Приоритетная поддержка 24/7</li>
+                        <li>Расширенная аналитика</li>
+                        <li>API управление пользователями</li>
+                    </ul>
+                    <a href="/payment?plan=business&price=4990" class="btn-plan">Выбрать тариф</a>
+                </div>
+                <div class="pricing-card">
+                    <div class="plan-name">Корпоративный</div>
+                    <div class="plan-price">₽14 990<small>/мес</small></div>
+                    <div class="plan-period">Для крупного бизнеса</div>
+                    <ul class="plan-features">
+                        <li>Неограниченно пользователей</li>
+                        <li>Неограниченно OAuth клиентов</li>
+                        <li>White-label решение</li>
+                        <li>SLA 99.9%</li>
+                        <li>Персональный менеджер</li>
+                        <li>Аудит безопасности</li>
+                        <li>On-premise развертывание</li>
+                    </ul>
+                    <a href="/contact" class="btn-plan">Связаться с нами</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ДОКУМЕНТАЦИЯ -->
+        <div class="docs">
+            <h2>📚 Документация для разработчиков</h2>
+            <p class="docs-subtitle">Быстрая интеграция с вашими приложениями</p>
+            <div class="docs-grid">
+                <div class="doc-card">
+                    <h4>🔑 OpenID Connect эндпоинты</h4>
+                    <div class="endpoint">GET <span class="endpoint-code">/.well-known/openid-configuration</span></div>
+                    <div class="endpoint">GET <span class="endpoint-code">/oauth/authorize</span></div>
+                    <div class="endpoint">POST <span class="endpoint-code">/oauth/token</span></div>
+                    <div class="endpoint">GET <span class="endpoint-code">/oauth/userinfo</span></div>
+                    <div class="endpoint">GET <span class="endpoint-code">/oauth/jwks</span></div>
+                </div>
+                <div class="doc-card">
+                    <h4>📝 Пример авторизации</h4>
+                    <div class="endpoint" style="font-size: 11px;">
+                        /oauth/authorize?response_type=code<br>
+                        &client_id=YOUR_CLIENT_ID<br>
+                        &redirect_uri=https://app.com/callback<br>
+                        &scope=openid%20profile%20email<br>
+                        &state=random_string
+                    </div>
+                    <h4 class="mt-3">🔑 Получение токена</h4>
+                    <div class="endpoint" style="font-size: 11px;">
+                        POST /oauth/token<br>
+                        grant_type=authorization_code<br>
+                        &code=AUTH_CODE<br>
+                        &client_id=YOUR_CLIENT_ID<br>
+                        &client_secret=YOUR_SECRET
+                    </div>
+                </div>
+                <div class="doc-card">
+                    <h4>💡 Пример кода (JavaScript)</h4>
+                    <div class="endpoint" style="font-size: 11px;">
+                        const params = new URLSearchParams({<br>
+                        &nbsp;&nbsp;response_type: 'code',<br>
+                        &nbsp;&nbsp;client_id: 'YOUR_CLIENT_ID',<br>
+                        &nbsp;&nbsp;redirect_uri: window.location.origin + '/callback',<br>
+                        &nbsp;&nbsp;scope: 'openid profile email'<br>
+                        });<br>
+                        window.location.href = `/oauth/authorize?${params}`;
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ФУТЕР -->
+    <div class="footer">
+        <div class="container">
+            <p>© 2024 SaaSPro Identity Hub. Первый российский IdP сервис.</p>
+            <p class="mt-2">
+                <a href="/docs" class="text-white text-decoration-none me-3">Документация</a>
+                <a href="/support" class="text-white text-decoration-none me-3">Поддержка</a>
+                <a href="/privacy" class="text-white text-decoration-none">Политика конфиденциальности</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
