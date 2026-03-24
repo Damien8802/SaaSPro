@@ -318,7 +318,14 @@ r.GET("/finance", func(c *gin.Context) {
     c.HTML(http.StatusOK, "finance.html", gin.H{
         "title": "Финансовый учет | SaaSPro",
     })
-})//Bitrix24
+})
+// Журнал проводок
+r.GET("/api/journal-entries", handlers.GetJournalEntries)
+r.GET("/api/journal-entries/:id", handlers.GetJournalEntry)
+r.POST("/api/journal-entries", handlers.CreateJournalEntry)
+r.POST("/api/journal-entries/:id/post", handlers.PostJournalEntry)
+r.DELETE("/api/journal-entries/:id", handlers.DeleteJournalEntry)
+//Bitrix24
 r.GET("/projects", handlers.ProjectsPageHandler)
 r.GET("/api/projects", handlers.GetProjects)
 r.POST("/api/projects", handlers.CreateProject)
