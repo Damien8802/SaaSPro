@@ -10,18 +10,19 @@ import (
     
     "subscription-system/database"
 )
+
 // BalanceItem структура строки ОСВ
 type BalanceItem struct {
-    AccountID   uuid.UUID `json:"account_id"`
-    AccountCode string    `json:"account_code"`
-    AccountName string    `json:"account_name"`
-    AccountType string    `json:"account_type"`
-    OpeningDebit  float64 `json:"opening_debit"`
-    OpeningCredit float64 `json:"opening_credit"`
-    PeriodDebit   float64 `json:"period_debit"`
-    PeriodCredit  float64 `json:"period_credit"`
-    ClosingDebit  float64 `json:"closing_debit"`
-    ClosingCredit float64 `json:"closing_credit"`
+    AccountID     uuid.UUID `json:"account_id"`
+    AccountCode   string    `json:"account_code"`
+    AccountName   string    `json:"account_name"`
+    AccountType   string    `json:"account_type"`
+    OpeningDebit  float64   `json:"opening_debit"`
+    OpeningCredit float64   `json:"opening_credit"`
+    PeriodDebit   float64   `json:"period_debit"`
+    PeriodCredit  float64   `json:"period_credit"`
+    ClosingDebit  float64   `json:"closing_debit"`
+    ClosingCredit float64   `json:"closing_credit"`
 }
 
 // GetTurnoverBalanceSheet - Оборотно-сальдовая ведомость (ОСВ)
@@ -38,21 +39,18 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
         endDate = time.Now().Format("2006-01-02")
     }
     
-    // Получаем все счета
     accounts, err := getAccounts(userID)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
     
-    // Получаем проводки за период
     postings, err := getPostingsByPeriod(userID, startDate, endDate)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
     
-    // Формируем ОСВ
     var osv []BalanceItem
     for _, acc := range accounts {
         item := BalanceItem{
@@ -62,7 +60,6 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
             AccountType: acc.AccountType,
         }
         
-        // Собираем обороты по счету
         for _, p := range postings {
             if p.AccountID == acc.ID {
                 item.PeriodDebit += p.DebitAmount
@@ -70,8 +67,6 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
             }
         }
         
-        // Рассчитываем начальное сальдо (для упрощения берем 0)
-        // В реальной системе нужно брать из предыдущего периода
         if acc.AccountType == "active" || acc.AccountType == "active_passive" {
             item.ClosingDebit = item.OpeningDebit + item.PeriodDebit - item.PeriodCredit
         } else {
@@ -83,7 +78,6 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
         }
     }
     
-    // Подсчет итогов
     totals := struct {
         OpeningDebit  float64 `json:"opening_debit"`
         OpeningCredit float64 `json:"opening_credit"`
@@ -125,7 +119,6 @@ func GetProfitAndLoss(c *gin.Context) {
         endDate = time.Now().Format("2006-01-02")
     }
     
-    // Доходы (счета 90, 91)
     var revenue float64
     err := database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(credit_amount), 0)
@@ -144,7 +137,6 @@ func GetProfitAndLoss(c *gin.Context) {
         return
     }
     
-    // Расходы (счета 20, 26, 44, 91)
     var expenses float64
     err = database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(debit_amount), 0)
@@ -179,7 +171,6 @@ func GetProfitAndLoss(c *gin.Context) {
 func GetDashboardStats(c *gin.Context) {
     userID := getUserID(c)
     
-    // Общая выручка за месяц
     var revenue float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(credit_amount), 0)
@@ -191,7 +182,6 @@ func GetDashboardStats(c *gin.Context) {
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '90')
     `, userID).Scan(&revenue)
     
-    // Общие расходы за месяц
     var expenses float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(debit_amount), 0)
@@ -203,14 +193,12 @@ func GetDashboardStats(c *gin.Context) {
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('20', '26', '44'))
     `, userID).Scan(&expenses)
     
-    // Количество проводок
     var entriesCount int
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COUNT(*) FROM journal_entries 
         WHERE user_id = $1 AND entry_status = 'posted'
     `, userID).Scan(&entriesCount)
     
-    // Остаток на расчетном счете
     var bankBalance float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(debit_amount - credit_amount), 0)
@@ -235,7 +223,7 @@ func GetDashboardStats(c *gin.Context) {
 func GetSalesChart(c *gin.Context) {
     userID := getUserID(c)
     
-    period := c.DefaultQuery("period", "month") // month, quarter, year
+    period := c.DefaultQuery("period", "month")
     
     var interval string
     switch period {
@@ -283,6 +271,195 @@ func GetSalesChart(c *gin.Context) {
         "period":  period,
         "labels":  dates,
         "data":    values,
+    })
+}
+
+// GetSalesByProduct - Анализ продаж по товарам
+func GetSalesByProduct(c *gin.Context) {
+    userID := getUserID(c)
+    
+    startDate := c.Query("start_date")
+    endDate := c.Query("end_date")
+    
+    if startDate == "" {
+        startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
+    }
+    if endDate == "" {
+        endDate = time.Now().Format("2006-01-02")
+    }
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT 
+            p.name as product_name,
+            COALESCE(p.sku, '') as sku,
+            SUM(oi.quantity) as quantity_sold,
+            SUM(oi.total) as total_amount
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        JOIN products p ON oi.product_id = p.id
+        WHERE o.user_id = $1 
+        AND o.created_at BETWEEN $2 AND $3
+        AND o.status != 'cancelled'
+        GROUP BY p.id, p.name, p.sku
+        ORDER BY total_amount DESC
+        LIMIT 50
+    `, userID, startDate, endDate)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var products []map[string]interface{}
+    var totalSold int
+    var totalRevenue float64
+    
+    for rows.Next() {
+        var name, sku string
+        var quantity int
+        var amount float64
+        rows.Scan(&name, &sku, &quantity, &amount)
+        products = append(products, map[string]interface{}{
+            "name":     name,
+            "sku":      sku,
+            "quantity": quantity,
+            "amount":   amount,
+        })
+        totalSold += quantity
+        totalRevenue += amount
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success":       true,
+        "start_date":    startDate,
+        "end_date":      endDate,
+        "products":      products,
+        "total_sold":    totalSold,
+        "total_revenue": totalRevenue,
+    })
+}
+
+// GetFinancialRatios - Финансовые коэффициенты
+func GetFinancialRatios(c *gin.Context) {
+    userID := getUserID(c)
+    
+    var revenue float64
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(p.credit_amount), 0)
+        FROM journal_postings p
+        JOIN journal_entries e ON p.entry_id = e.id
+        WHERE e.user_id = $1 AND e.entry_status = 'posted'
+        AND e.entry_date >= DATE_TRUNC('month', NOW())
+        AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '90')
+    `, userID).Scan(&revenue)
+    
+    var cost float64
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(p.debit_amount), 0)
+        FROM journal_postings p
+        JOIN journal_entries e ON p.entry_id = e.id
+        WHERE e.user_id = $1 AND e.entry_status = 'posted'
+        AND e.entry_date >= DATE_TRUNC('month', NOW())
+        AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '20')
+    `, userID).Scan(&cost)
+    
+    var expenses float64
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(p.debit_amount), 0)
+        FROM journal_postings p
+        JOIN journal_entries e ON p.entry_id = e.id
+        WHERE e.user_id = $1 AND e.entry_status = 'posted'
+        AND e.entry_date >= DATE_TRUNC('month', NOW())
+        AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('26', '44'))
+    `, userID).Scan(&expenses)
+    
+    var assets float64
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(CASE WHEN a.code IN ('50', '51') THEN 
+            p.debit_amount - p.credit_amount ELSE 0 END), 0)
+        FROM journal_postings p
+        JOIN journal_entries e ON p.entry_id = e.id
+        JOIN chart_of_accounts a ON p.account_id = a.id
+        WHERE e.user_id = $1 AND e.entry_status = 'posted'
+        AND a.code IN ('50', '51')
+    `, userID).Scan(&assets)
+    
+    var liabilities float64
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(p.credit_amount - p.debit_amount), 0)
+        FROM journal_postings p
+        JOIN journal_entries e ON p.entry_id = e.id
+        JOIN chart_of_accounts a ON p.account_id = a.id
+        WHERE e.user_id = $1 AND e.entry_status = 'posted'
+        AND a.code = '60'
+    `, userID).Scan(&liabilities)
+    
+    profit := revenue - cost - expenses
+    
+    safeDiv := func(a, b float64) float64 {
+        if b == 0 {
+            return 0
+        }
+        return a / b
+    }
+    
+    ratios := map[string]interface{}{
+        "profit_margin":   safeDiv(profit, revenue) * 100,
+        "gross_margin":    safeDiv(revenue-cost, revenue) * 100,
+        "roe":             safeDiv(profit, assets) * 100,
+        "current_ratio":   safeDiv(assets, liabilities),
+        "revenue_growth":  0,
+        "profit_growth":   0,
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success":      true,
+        "period":       "month",
+        "revenue":      revenue,
+        "cost":         cost,
+        "expenses":     expenses,
+        "profit":       profit,
+        "assets":       assets,
+        "liabilities":  liabilities,
+        "ratios":       ratios,
+    })
+}
+
+// GetInventoryTurnover - Оборачиваемость товаров
+func GetInventoryTurnover(c *gin.Context) {
+    userID := getUserID(c)
+    
+    var sales float64
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(total_amount), 0)
+        FROM orders
+        WHERE user_id = $1 AND created_at >= DATE_TRUNC('month', NOW())
+        AND status != 'cancelled'
+    `, userID).Scan(&sales)
+    
+    var avgStock float64
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(AVG(quantity), 0)
+        FROM products
+        WHERE user_id = $1 AND active = true
+    `, userID).Scan(&avgStock)
+    
+    safeDiv := func(a, b float64) float64 {
+        if b == 0 {
+            return 0
+        }
+        return a / b
+    }
+    
+    turnover := safeDiv(sales, avgStock)
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success":        true,
+        "sales":          sales,
+        "avg_stock":      avgStock,
+        "turnover":       turnover,
+        "turnover_days":  safeDiv(30, turnover),
     })
 }
 
