@@ -282,6 +282,26 @@ r.GET("/api/inventory/orders/:id", handlers.GetOrderDetails)
 r.GET("/api/inventory/stats", handlers.GetInventoryStats)
 r.GET("/api/inventory/products/export/csv", handlers.ExportProductsCSV)
 
+// Поставщики
+r.GET("/api/suppliers", handlers.GetSuppliers)
+r.GET("/api/suppliers/:id", handlers.GetSupplier)
+r.POST("/api/suppliers", handlers.CreateSupplier)
+r.PUT("/api/suppliers/:id", handlers.UpdateSupplier)
+r.DELETE("/api/suppliers/:id", handlers.DeleteSupplier)
+
+// Заказы поставщикам
+r.GET("/api/purchase-orders", handlers.GetPurchaseOrders)
+r.GET("/api/purchase-orders/:id", handlers.GetPurchaseOrder)
+r.POST("/api/purchase-orders", handlers.CreatePurchaseOrder)
+r.PUT("/api/purchase-orders/:id/status", handlers.UpdatePurchaseOrderStatus)
+r.DELETE("/api/purchase-orders/:id", handlers.DeletePurchaseOrder)
+
+// Страница поставщиков
+r.GET("/suppliers", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "suppliers.html", gin.H{
+        "title": "Поставщики | SaaSPro",
+    })
+})
 //Bitrix24
 r.GET("/projects", handlers.ProjectsPageHandler)
 r.GET("/api/projects", handlers.GetProjects)
