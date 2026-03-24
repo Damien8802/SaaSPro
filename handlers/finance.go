@@ -523,3 +523,299 @@ func DeleteJournalEntry(c *gin.Context) {
         "message": "Проводка удалена",
     })
 }
+
+// ==================== ПЛАТЕЖИ ====================
+
+// Payment структура платежа
+type Payment struct {
+    ID               uuid.UUID  `json:"id"`
+    PaymentNumber    string     `json:"payment_number"`
+    PaymentDate      time.Time  `json:"payment_date"`
+    PaymentType      string     `json:"payment_type"`
+    Amount           float64    `json:"amount"`
+    Currency         string     `json:"currency"`
+    PaymentMethod    string     `json:"payment_method"`
+    CounterpartyID   *uuid.UUID `json:"counterparty_id"`
+    CounterpartyType string     `json:"counterparty_type"`
+    CounterpartyName string     `json:"counterparty_name"`
+    Purpose          string     `json:"purpose"`
+    Status           string     `json:"status"`
+    DocumentNumber   string     `json:"document_number"`
+    EntryID          *uuid.UUID `json:"entry_id"`
+    CreatedAt        time.Time  `json:"created_at"`
+}
+
+// GetFinancePayments - получить список платежей
+func GetFinancePayments(c *gin.Context) {
+    userID := getUserID(c)
+    
+    paymentType := c.Query("type")
+    status := c.Query("status")
+    
+    query := `
+        SELECT id, payment_number, payment_date, payment_type, amount, currency,
+               payment_method, counterparty_id, counterparty_type, counterparty_name,
+               purpose, payment_status, document_number, entry_id, created_at
+        FROM payments
+        WHERE user_id = $1
+    `
+    args := []interface{}{userID}
+    argIndex := 2
+    
+    if paymentType != "" {
+        query += fmt.Sprintf(" AND payment_type = $%d", argIndex)
+        args = append(args, paymentType)
+        argIndex++
+    }
+    if status != "" {
+        query += fmt.Sprintf(" AND payment_status = $%d", argIndex)
+        args = append(args, status)
+        argIndex++
+    }
+    
+    query += " ORDER BY payment_date DESC"
+    
+    rows, err := database.Pool.Query(c.Request.Context(), query, args...)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var payments []Payment
+    for rows.Next() {
+        var p Payment
+        var counterpartyID sql.NullString
+        var entryID sql.NullString
+        
+        err := rows.Scan(
+            &p.ID, &p.PaymentNumber, &p.PaymentDate, &p.PaymentType,
+            &p.Amount, &p.Currency, &p.PaymentMethod, &counterpartyID,
+            &p.CounterpartyType, &p.CounterpartyName, &p.Purpose,
+            &p.Status, &p.DocumentNumber, &entryID, &p.CreatedAt,
+        )
+        if err != nil {
+            continue
+        }
+        if counterpartyID.Valid {
+            id, _ := uuid.Parse(counterpartyID.String)
+            p.CounterpartyID = &id
+        }
+        if entryID.Valid {
+            id, _ := uuid.Parse(entryID.String)
+            p.EntryID = &id
+        }
+        payments = append(payments, p)
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success":  true,
+        "payments": payments,
+    })
+}
+
+// CreateFinancePayment - создать платеж
+func CreateFinancePayment(c *gin.Context) {
+    userID := getUserID(c)
+    
+    var req struct {
+        PaymentDate      string  `json:"payment_date"`
+        PaymentType      string  `json:"payment_type" binding:"required"`
+        Amount           float64 `json:"amount" binding:"required"`
+        Currency         string  `json:"currency"`
+        PaymentMethod    string  `json:"payment_method"`
+        CounterpartyID   string  `json:"counterparty_id"`
+        CounterpartyType string  `json:"counterparty_type"`
+        CounterpartyName string  `json:"counterparty_name"`
+        Purpose          string  `json:"purpose"`
+        DocumentNumber   string  `json:"document_number"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    if req.Currency == "" {
+        req.Currency = "RUB"
+    }
+    
+    paymentNumber := fmt.Sprintf("ПЛ-%d", time.Now().UnixNano()%1000000)
+    paymentDate := time.Now()
+    if req.PaymentDate != "" {
+        pd, _ := time.Parse("2006-01-02", req.PaymentDate)
+        paymentDate = pd
+    }
+    
+    var counterpartyID *uuid.UUID
+    if req.CounterpartyID != "" {
+        id, _ := uuid.Parse(req.CounterpartyID)
+        counterpartyID = &id
+    }
+    
+    var id uuid.UUID
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        INSERT INTO payments (
+            user_id, payment_number, payment_date, payment_type, amount, currency,
+            payment_method, counterparty_id, counterparty_type, counterparty_name,
+            purpose, payment_status, document_number, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, NOW(), NOW())
+        RETURNING id
+    `, userID, paymentNumber, paymentDate, req.PaymentType, req.Amount, req.Currency,
+        req.PaymentMethod, counterpartyID, req.CounterpartyType, req.CounterpartyName,
+        req.Purpose, req.DocumentNumber).Scan(&id)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать платеж"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success":        true,
+        "id":             id,
+        "payment_number": paymentNumber,
+        "message":        "Платеж создан",
+    })
+}
+
+// UpdateFinancePaymentStatus - обновить статус платежа
+func UpdateFinancePaymentStatus(c *gin.Context) {
+    userID := getUserID(c)
+    paymentID := c.Param("id")
+    
+    var req struct {
+        Status string `json:"status" binding:"required"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    result, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE payments 
+        SET payment_status = $1, updated_at = NOW()
+        WHERE id = $2 AND user_id = $3
+    `, req.Status, paymentID, userID)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить статус"})
+        return
+    }
+    
+    if result.RowsAffected() == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Платеж не найден"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Статус платежа обновлен",
+    })
+}
+
+// ==================== КАССОВЫЕ ОПЕРАЦИИ ====================
+
+// CashOperation структура кассовой операции
+type CashOperation struct {
+    ID               uuid.UUID `json:"id"`
+    OperationDate    time.Time `json:"operation_date"`
+    OperationType    string    `json:"operation_type"`
+    Amount           float64   `json:"amount"`
+    Currency         string    `json:"currency"`
+    CounterpartyName string    `json:"counterparty_name"`
+    Purpose          string    `json:"purpose"`
+    CashierName      string    `json:"cashier_name"`
+    DocumentNumber   string    `json:"document_number"`
+    CreatedAt        time.Time `json:"created_at"`
+}
+
+// GetCashOperations - получить кассовые операции
+func GetCashOperations(c *gin.Context) {
+    userID := getUserID(c)
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, operation_date, operation_type, amount, currency,
+               counterparty_name, purpose, cashier_name, document_number, created_at
+        FROM cash_operations
+        WHERE user_id = $1
+        ORDER BY operation_date DESC
+    `, userID)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var operations []CashOperation
+    for rows.Next() {
+        var o CashOperation
+        err := rows.Scan(
+            &o.ID, &o.OperationDate, &o.OperationType, &o.Amount,
+            &o.Currency, &o.CounterpartyName, &o.Purpose,
+            &o.CashierName, &o.DocumentNumber, &o.CreatedAt,
+        )
+        if err != nil {
+            continue
+        }
+        operations = append(operations, o)
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success":    true,
+        "operations": operations,
+    })
+}
+
+// CreateCashOperation - создать кассовую операцию
+func CreateCashOperation(c *gin.Context) {
+    userID := getUserID(c)
+    
+    var req struct {
+        OperationDate    string  `json:"operation_date"`
+        OperationType    string  `json:"operation_type" binding:"required"`
+        Amount           float64 `json:"amount" binding:"required"`
+        Currency         string  `json:"currency"`
+        CounterpartyName string `json:"counterparty_name"`
+        Purpose          string  `json:"purpose"`
+        CashierName      string  `json:"cashier_name"`
+        DocumentNumber   string  `json:"document_number"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    if req.Currency == "" {
+        req.Currency = "RUB"
+    }
+    
+    operationDate := time.Now()
+    if req.OperationDate != "" {
+        od, _ := time.Parse("2006-01-02", req.OperationDate)
+        operationDate = od
+    }
+    
+    var id uuid.UUID
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        INSERT INTO cash_operations (
+            user_id, operation_date, operation_type, amount, currency,
+            counterparty_name, purpose, cashier_name, document_number, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        RETURNING id
+    `, userID, operationDate, req.OperationType, req.Amount, req.Currency,
+        req.CounterpartyName, req.Purpose, req.CashierName, req.DocumentNumber).Scan(&id)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать операцию"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "id":      id,
+        "message": "Кассовая операция создана",
+    })
+}

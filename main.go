@@ -319,6 +319,15 @@ r.GET("/finance", func(c *gin.Context) {
         "title": "Финансовый учет | SaaSPro",
     })
 })
+
+// Платежи
+r.GET("/api/payments", handlers.GetFinancePayments)
+r.POST("/api/payments", handlers.CreateFinancePayment)
+r.PUT("/api/payments/:id/status", handlers.UpdateFinancePaymentStatus)
+
+// Кассовые операции
+r.GET("/api/cash-operations", handlers.GetCashOperations)
+r.POST("/api/cash-operations", handlers.CreateCashOperation)
 // Журнал проводок
 r.GET("/api/journal-entries", handlers.GetJournalEntries)
 r.GET("/api/journal-entries/:id", handlers.GetJournalEntry)
@@ -609,7 +618,7 @@ adminOAuth.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
         api.GET("/analytics/insights", handlers.GetInsights)
         api.GET("/analytics/segments", handlers.GetSegmentSummary)
         api.GET("/analytics/cohorts/run", handlers.RunCohortAnalysis)
-        api.GET("/payments", handlers.GetPayments)
+        //api.GET("/payments", handlers.GetPayments)
     }
 
     secureAPI := r.Group("/api")

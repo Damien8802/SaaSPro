@@ -82,7 +82,7 @@ func CloseDB() {
     }
 }
 
-// ========== СУЩЕСТВУЮЩИЕ ФУНКЦИИ (КОТОРЫЕ БЫЛИ У ПОЛЬЗОВАТЕЛЯ) ==========
+// ========== СУЩЕСТВУЮЩИЕ ФУНКЦИИ ==========
 
 func createUsersTable() error {
     // pgcrypto для gen_random_uuid()
@@ -138,7 +138,6 @@ func createUsersTable() error {
     return nil
 }
 
-// createSubscriptionsTables создаёт таблицы планов и подписок
 func createSubscriptionsTables() error {
     // Таблица планов подписки
     _, err := Pool.Exec(context.Background(), `
@@ -231,23 +230,22 @@ func createSubscriptionsTables() error {
     if count == 0 {
         // Добавляем AI-возможности в тарифы
         _, err = Pool.Exec(context.Background(), `
-            INSERT INTO subscription_plans (name, code, description, price_monthly, price_yearly, features, ai_capabilities, max_users, sort_order) VALUES
-            ('Базовый', 'basic', 'Для небольших команд и стартапов', 299, 2990, '["1 пользователь", "5 проектов", "Базовая поддержка"]', '{"max_requests": 10, "models": ["basic"]}', 1, 1),
-            ('Профессиональный', 'pro', 'Для растущего бизнеса', 999, 9990, '["5 пользователей", "Неограниченно проектов", "Приоритетная поддержка", "API доступ"]', '{"max_requests": 100, "models": ["basic", "advanced"]}', 5, 2),
-            ('Корпоративный', 'enterprise', 'Для крупных компаний', 2999, 29990, '["Неограниченно пользователей", "Персональный менеджер", "SLA 99.9%", "Интеграции"]', '{"max_requests": 1000, "models": ["basic", "advanced", "expert"]}', 999, 3),
-            ('Семейный', 'family', 'Для всей семьи', 1499, 14990, '["До 5 участников", "Общая библиотека", "Детский режим"]', '{"max_requests": 50, "models": ["basic"]}', 5, 4);
+            INSERT INTO subscription_plans (name, code, description, price_monthly, price_yearly, features, max_users, sort_order) VALUES
+            ('Базовый', 'basic', 'Для небольших команд и стартапов', 299, 2990, '["1 пользователь", "5 проектов", "Базовая поддержка"]', 1, 1),
+            ('Профессиональный', 'pro', 'Для растущего бизнеса', 999, 9990, '["5 пользователей", "Неограниченно проектов", "Приоритетная поддержка", "API доступ"]', 5, 2),
+            ('Корпоративный', 'enterprise', 'Для крупных компаний', 2999, 29990, '["Неограниченно пользователей", "Персональный менеджер", "SLA 99.9%", "Интеграции"]', 999, 3),
+            ('Семейный', 'family', 'Для всей семьи', 1499, 14990, '["До 5 участников", "Общая библиотека", "Детский режим"]', 5, 4);
         `)
         if err != nil {
             return err
         }
-        log.Println("✅ Базовые тарифы с AI-возможностями добавлены")
+        log.Println("✅ Базовые тарифы добавлены")
     }
 
     log.Println("✅ Таблицы подписок готовы")
     return nil
 }
 
-// createAPIKeysTable создаёт таблицу для API ключей
 func createAPIKeysTable() error {
     _, err := Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS api_keys (
@@ -266,7 +264,6 @@ func createAPIKeysTable() error {
         return err
     }
 
-    // Индексы для быстрого поиска
     _, err = Pool.Exec(context.Background(), `
         CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
         CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON api_keys(key_hash);
@@ -279,7 +276,6 @@ func createAPIKeysTable() error {
     return nil
 }
 
-// createReferralsTable создаёт таблицу для рефералов
 func createReferralsTable() error {
     _, err := Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS referrals (
@@ -297,7 +293,6 @@ func createReferralsTable() error {
         return err
     }
 
-    // Индексы для быстрого поиска
     _, err = Pool.Exec(context.Background(), `
         CREATE INDEX IF NOT EXISTS idx_referrals_user_id ON referrals(user_id);
         CREATE INDEX IF NOT EXISTS idx_referrals_referred_id ON referrals(referred_id);
@@ -310,23 +305,22 @@ func createReferralsTable() error {
     return nil
 }
 
-// createTwoFATable создаёт таблицу для 2FA с поддержкой резервных кодов и доверенных устройств
 func createTwoFATable() error {
-    // Обновляем таблицу twofa, добавляем поле для резервных кодов
+    // Создаём таблицу twofa
     _, err := Pool.Exec(context.Background(), `
-        -- Добавляем поле для резервных кодов, если его нет
-        DO $$ 
-        BEGIN 
-            BEGIN
-                ALTER TABLE twofa ADD COLUMN backup_codes TEXT[] DEFAULT '{}';
-            EXCEPTION
-                WHEN duplicate_column THEN 
-                    NULL;
-            END;
-        END $$;
+        CREATE TABLE IF NOT EXISTS twofa (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            secret VARCHAR(255) NOT NULL,
+            enabled BOOLEAN DEFAULT false,
+            backup_codes TEXT[] DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(user_id)
+        );
     `)
     if err != nil {
-        log.Printf("⚠️ Не удалось добавить backup_codes: %v", err)
+        return err
     }
 
     // Создаём таблицу доверенных устройств
@@ -348,7 +342,6 @@ func createTwoFATable() error {
         return err
     }
 
-    // Индексы для быстрой работы
     _, err = Pool.Exec(context.Background(), `
         CREATE INDEX IF NOT EXISTS idx_trusted_devices_user_id ON trusted_devices(user_id);
         CREATE INDEX IF NOT EXISTS idx_trusted_devices_expires ON trusted_devices(expires_at);
@@ -361,9 +354,7 @@ func createTwoFATable() error {
     return nil
 }
 
-// createReferralProgramTables создаёт таблицы для партнёрской программы (Telegram Stars)
 func createReferralProgramTables() error {
-    // Таблица партнёрских программ
     _, err := Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS referral_programs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -380,7 +371,6 @@ func createReferralProgramTables() error {
         return err
     }
 
-    // Таблица комиссий
     _, err = Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS referral_commissions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -396,7 +386,6 @@ func createReferralProgramTables() error {
         return err
     }
 
-    // Индексы для быстрого поиска
     _, err = Pool.Exec(context.Background(), `
         CREATE INDEX IF NOT EXISTS idx_referral_programs_user ON referral_programs(user_id);
         CREATE INDEX IF NOT EXISTS idx_referral_commissions_referrer ON referral_commissions(referrer_id);
@@ -410,7 +399,6 @@ func createReferralProgramTables() error {
     return nil
 }
 
-// createVerificationTables создаёт таблицы для верификации
 func createVerificationTables() error {
     _, err := Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS verification_codes (
@@ -433,7 +421,6 @@ func createVerificationTables() error {
     return nil
 }
 
-// createUserTokensTable создаёт таблицу для хранения refresh токенов
 func createUserTokensTable() error {
     _, err := Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS user_tokens (
@@ -456,31 +443,54 @@ func createUserTokensTable() error {
 
 // createAdminTables создаёт таблицы для админ-панели
 func createAdminTables() error {
-    // Таблица заблокированных пользователей
+    // Таблица администраторов
     _, err := Pool.Exec(context.Background(), `
-        CREATE TABLE IF NOT EXISTS blocked_users (
-            user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-            blocked_at TIMESTAMP DEFAULT NOW(),
-            reason TEXT
-        );
+        CREATE TABLE IF NOT EXISTS admin_users (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            role VARCHAR(50) DEFAULT 'admin',
+            permissions JSONB,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
     `)
     if err != nil {
-        return err
+        return fmt.Errorf("failed to create admin_users: %w", err)
     }
 
-    // Таблица заблокированных IP
+    // Таблица логов админов
     _, err = Pool.Exec(context.Background(), `
-        CREATE TABLE IF NOT EXISTS blocked_ips (
-            ip VARCHAR(45) PRIMARY KEY,
-            reason TEXT,
-            blocked_at TIMESTAMP DEFAULT NOW(),
-            expires_at TIMESTAMP
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_blocked_ips_expires ON blocked_ips(expires_at);
+        CREATE TABLE IF NOT EXISTS admin_logs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            admin_id UUID REFERENCES admin_users(id) ON DELETE SET NULL,
+            action VARCHAR(255) NOT NULL,
+            entity_type VARCHAR(100),
+            entity_id UUID,
+            old_data JSONB,
+            new_data JSONB,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
     `)
     if err != nil {
-        return err
+        return fmt.Errorf("failed to create admin_logs: %w", err)
+    }
+
+    // Таблица настроек админки
+    _, err = Pool.Exec(context.Background(), `
+        CREATE TABLE IF NOT EXISTS admin_settings (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            setting_key VARCHAR(255) UNIQUE NOT NULL,
+            setting_value TEXT,
+            setting_type VARCHAR(50) DEFAULT 'string',
+            description TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    `)
+    if err != nil {
+        return fmt.Errorf("failed to create admin_settings: %w", err)
     }
 
     // Таблица для платежей
@@ -527,7 +537,6 @@ func createAdminTables() error {
     return nil
 }
 
-// createCRMTables создаёт таблицы для CRM, включая историю и lead_score
 func createCRMTables() error {
     // Таблица клиентов CRM
     _, err := Pool.Exec(context.Background(), `
@@ -643,9 +652,9 @@ func createCRMTables() error {
     _, err = Pool.Exec(context.Background(), `
         CREATE TABLE IF NOT EXISTS crm_history (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            entity_type VARCHAR(20) NOT NULL, -- 'customer' или 'deal'
+            entity_type VARCHAR(20) NOT NULL,
             entity_id UUID NOT NULL,
-            action VARCHAR(20) NOT NULL, -- 'create', 'update', 'delete'
+            action VARCHAR(20) NOT NULL,
             user_id UUID REFERENCES users(id) ON DELETE SET NULL,
             changes JSONB,
             created_at TIMESTAMP DEFAULT NOW()
@@ -677,7 +686,6 @@ func createCRMTables() error {
     return nil
 }
 
-// createTestUser создаёт тестового пользователя, если таблица пуста
 func createTestUser() error {
     var count int
     err := Pool.QueryRow(context.Background(), `SELECT COUNT(*) FROM users`).Scan(&count)
@@ -685,7 +693,6 @@ func createTestUser() error {
         return err
     }
     if count == 0 {
-        // Заранее сгенерированный bcrypt-хеш для пароля "admin123"
         hash := "$2a$10$VHt4xKq.2qZVzZ3YQ9qR3eNQjQjQjQjQjQjQjQjQjQjQjQjQjQ"
         _, err = Pool.Exec(context.Background(), `
             INSERT INTO users (email, password_hash, name, role) 
