@@ -705,12 +705,30 @@ func syncOrdersTo1C(userID uuid.UUID) {
 
 // AddWebhookHandler - обработчик webhook от 1С
 func AddWebhookHandler(c *gin.Context) {
-    userID := getUserID(c)
+    // Получаем user_id из параметров запроса
+    userIDStr := c.Query("user_id")
+    if userIDStr == "" {
+        userIDStr = c.GetHeader("X-User-ID")
+    }
+    
+    var userID uuid.UUID
+    var err error
+    
+    if userIDStr != "" {
+        userID, err = uuid.Parse(userIDStr)
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id format"})
+            return
+        }
+    } else {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
+        return
+    }
     
     var req struct {
-        Action   string                 `json:"action"`
-        Data     map[string]interface{} `json:"data"`
-        Timestamp int64                 `json:"timestamp"`
+        Action    string                 `json:"action"`
+        Data      map[string]interface{} `json:"data"`
+        Timestamp int64                  `json:"timestamp"`
     }
     
     if err := c.BindJSON(&req); err != nil {
