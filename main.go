@@ -76,7 +76,6 @@ func main() {
     // ========== СОЗДАНИЕ ТАБЛИЦ VPN ==========
     ctx := context.Background()
     
-    // Создаем таблицу планов
     _, err := database.Pool.Exec(ctx, `
         CREATE TABLE IF NOT EXISTS vpn_plans (
             id SERIAL PRIMARY KEY,
@@ -94,7 +93,6 @@ func main() {
         log.Println("✅ Таблица vpn_plans готова")
     }
     
-    // Создаем таблицу ключей
     _, err = database.Pool.Exec(ctx, `
         CREATE TABLE IF NOT EXISTS vpn_keys (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,7 +112,6 @@ func main() {
         log.Println("✅ Таблица vpn_keys готова")
     }
     
-    // Вставляем тарифы
     _, err = database.Pool.Exec(ctx, `
         INSERT INTO vpn_plans (name, price, days, speed, devices) 
         VALUES ($1, $2, $3, $4, $5),
@@ -134,19 +131,15 @@ func main() {
         log.Println("✅ VPN тарифы загружены")
     }
     
-    // Инициализация VPN с БД
     handlers.InitVPNWithDB(database.Pool)
-    // ========== КОНЕЦ СОЗДАНИЯ ТАБЛИЦ VPN ==========
 
     handlers.InitAuthHandler(cfg)
     handlers.InitNotifier(cfg)
 
-    // ========== ОБЪЯВЛЯЕМ ПЕРЕМЕННЫЕ ==========
     var yandexService *services.YandexAdapter
     var aiAgentService *services.AIAgentService
     var speechKitService *services.SpeechKitService
 
-    // ========== ИНИЦИАЛИЗАЦИЯ YANDEXGPT И SPEECHKIT ==========
     yandexService = services.NewYandexService(cfg)
     aiAgentService = services.NewAIAgentService(yandexService)
     aiAgentService.StartAgentScheduler()
@@ -247,208 +240,187 @@ func main() {
     r.GET("/ai-agents", handlers.AIAgentsPage)
     r.GET("/advanced-analytics", handlers.AdvancedAnalyticsPage)
 
-// QR код авторизация
-r.GET("/qr-login", handlers.QRLoginPageHandler)
-r.POST("/api/qr/generate", handlers.GenerateQRCode)
-r.GET("/api/qr/status", handlers.QRStatusWebSocket)
-r.POST("/api/qr/scan", handlers.ScanQRCode)
-r.POST("/api/qr/approve", handlers.ApproveQRLogin)
+    // QR код авторизация
+    r.GET("/qr-login", handlers.QRLoginPageHandler)
+    r.POST("/api/qr/generate", handlers.GenerateQRCode)
+    r.GET("/api/qr/status", handlers.QRStatusWebSocket)
+    r.POST("/api/qr/scan", handlers.ScanQRCode)
+    r.POST("/api/qr/approve", handlers.ApproveQRLogin)
 
-// Телефонная авторизация
-r.POST("/api/auth/send-code", handlers.SendPhoneCode)
-r.POST("/api/auth/verify-code", handlers.VerifyPhoneCode)
+    // Телефонная авторизация
+    r.POST("/api/auth/send-code", handlers.SendPhoneCode)
+    r.POST("/api/auth/verify-code", handlers.VerifyPhoneCode)
 
-// Push уведомления
-r.POST("/api/push/register", handlers.RegisterPushDevice)
-r.GET("/api/push/devices", handlers.GetUserDevices)
-r.DELETE("/api/push/devices/:id", handlers.RemovePushDevice)
+    // Push уведомления
+    r.POST("/api/push/register", handlers.RegisterPushDevice)
+    r.GET("/api/push/devices", handlers.GetUserDevices)
+    r.DELETE("/api/push/devices/:id", handlers.RemovePushDevice)
     
-r.GET("/api-sales", handlers.APISalesPageHandler)           
-r.GET("/api/user/plan", handlers.GetUserPlan)                
-r.POST("/api/create-key", handlers.CreateAPIKey)             
-r.POST("/api/upgrade-key", handlers.UpgradeAPIKey)           
-// r.GET("/api/v1/search", handlers.PublicSearchAPI)  // ЭТО ОСТАВЛЯЕМ ЗАКОММЕНТИРОВАННЫМ
-r.GET("/api/user/usage", handlers.GetAPIUsage)  
+    r.GET("/api-sales", handlers.APISalesPageHandler)           
+    r.GET("/api/user/plan", handlers.GetUserPlan)                
+    r.POST("/api/create-key", handlers.CreateAPIKey)             
+    r.POST("/api/upgrade-key", handlers.UpgradeAPIKey)           
+    r.GET("/api/user/usage", handlers.GetAPIUsage)  
 
-// Инвентаризация
-r.GET("/inventory", handlers.InventoryPageHandler)
-r.GET("/api/inventory/products", handlers.GetProducts)
-r.POST("/api/inventory/products", handlers.CreateProduct)
-r.PUT("/api/inventory/products/:id", handlers.UpdateProduct)
-r.DELETE("/api/inventory/products/:id", handlers.DeleteProduct)
-r.GET("/api/inventory/orders", handlers.GetOrders)
-r.POST("/api/inventory/orders", handlers.CreateOrder)
-r.GET("/api/inventory/orders/:id", handlers.GetOrderDetails)
-r.GET("/api/inventory/stats", handlers.GetInventoryStats)
-r.GET("/api/inventory/products/export/csv", handlers.ExportProductsCSV)
+    // Инвентаризация
+    r.GET("/inventory", handlers.InventoryPageHandler)
+    r.GET("/api/inventory/products", handlers.GetProducts)
+    r.POST("/api/inventory/products", handlers.CreateProduct)
+    r.PUT("/api/inventory/products/:id", handlers.UpdateProduct)
+    r.DELETE("/api/inventory/products/:id", handlers.DeleteProduct)
+    r.GET("/api/inventory/orders", handlers.GetOrders)
+    r.POST("/api/inventory/orders", handlers.CreateOrder)
+    r.GET("/api/inventory/orders/:id", handlers.GetOrderDetails)
+    r.GET("/api/inventory/stats", handlers.GetInventoryStats)
+    r.GET("/api/inventory/products/export/csv", handlers.ExportProductsCSV)
 
-// Поставщики
-r.GET("/api/suppliers", handlers.GetSuppliers)
-r.GET("/api/suppliers/:id", handlers.GetSupplier)
-r.POST("/api/suppliers", handlers.CreateSupplier)
-r.PUT("/api/suppliers/:id", handlers.UpdateSupplier)
-r.DELETE("/api/suppliers/:id", handlers.DeleteSupplier)
+    // Поставщики
+    r.GET("/api/suppliers", handlers.GetSuppliers)
+    r.GET("/api/suppliers/:id", handlers.GetSupplier)
+    r.POST("/api/suppliers", handlers.CreateSupplier)
+    r.PUT("/api/suppliers/:id", handlers.UpdateSupplier)
+    r.DELETE("/api/suppliers/:id", handlers.DeleteSupplier)
 
-// Заказы поставщикам
-r.GET("/api/purchase-orders", handlers.GetPurchaseOrders)
-r.GET("/api/purchase-orders/:id", handlers.GetPurchaseOrder)
-r.POST("/api/purchase-orders", handlers.CreatePurchaseOrder)
-r.PUT("/api/purchase-orders/:id/status", handlers.UpdatePurchaseOrderStatus)
-r.DELETE("/api/purchase-orders/:id", handlers.DeletePurchaseOrder)
+    // Заказы поставщикам
+    r.GET("/api/purchase-orders", handlers.GetPurchaseOrders)
+    r.GET("/api/purchase-orders/:id", handlers.GetPurchaseOrder)
+    r.POST("/api/purchase-orders", handlers.CreatePurchaseOrder)
+    r.PUT("/api/purchase-orders/:id/status", handlers.UpdatePurchaseOrderStatus)
+    r.DELETE("/api/purchase-orders/:id", handlers.DeletePurchaseOrder)
 
+    // Страница приемки товаров
+    r.GET("/goods-receipts", handlers.GoodsReceiptsPageHandler)
+    r.GET("/api/goods-receipts", handlers.GetGoodsReceipts)
+    r.GET("/api/goods-receipts/:id", handlers.GetGoodsReceipt)
+    r.POST("/api/goods-receipts", handlers.CreateGoodsReceipt)
 
+    // ========== ФИНАНСОВЫЙ УЧЕТ ==========
+    r.GET("/api/chart-of-accounts", handlers.GetChartOfAccounts)
+    r.POST("/api/chart-of-accounts", handlers.CreateChartOfAccount)
+    r.PUT("/api/chart-of-accounts/:id", handlers.UpdateChartOfAccount)
+    r.DELETE("/api/chart-of-accounts/:id", handlers.DeleteChartOfAccount)
 
-// Страница приемки товаров
-r.GET("/goods-receipts", handlers.GoodsReceiptsPageHandler)
-// Приемка товаров API
-r.GET("/api/goods-receipts", handlers.GetGoodsReceipts)
-r.GET("/api/goods-receipts/:id", handlers.GetGoodsReceipt)
-r.POST("/api/goods-receipts", handlers.CreateGoodsReceipt)
-
-// ========== ФИНАНСОВЫЙ УЧЕТ ==========
-
-// План счетов
-r.GET("/api/chart-of-accounts", handlers.GetChartOfAccounts)
-r.POST("/api/chart-of-accounts", handlers.CreateChartOfAccount)
-r.PUT("/api/chart-of-accounts/:id", handlers.UpdateChartOfAccount)
-r.DELETE("/api/chart-of-accounts/:id", handlers.DeleteChartOfAccount)
-
-// Страница финансов
-r.GET("/finance", func(c *gin.Context) {
-    c.HTML(http.StatusOK, "finance.html", gin.H{
-        "title": "Финансовый учет | SaaSPro",
+    r.GET("/finance", func(c *gin.Context) {
+        c.HTML(http.StatusOK, "finance.html", gin.H{
+            "title": "Финансовый учет | SaaSPro",
+        })
     })
-})
 
-// Платежи
-r.GET("/api/payments", handlers.GetFinancePayments)
-r.POST("/api/payments", handlers.CreateFinancePayment)
-r.PUT("/api/payments/:id/status", handlers.UpdateFinancePaymentStatus)
+    r.GET("/api/payments", handlers.GetFinancePayments)
+    r.POST("/api/payments", handlers.CreateFinancePayment)
+    r.PUT("/api/payments/:id/status", handlers.UpdateFinancePaymentStatus)
 
-// Кассовые операции
-r.GET("/api/cash-operations", handlers.GetCashOperations)
-r.POST("/api/cash-operations", handlers.CreateCashOperation)
-// Журнал проводок
-r.GET("/api/journal-entries", handlers.GetJournalEntries)
-r.GET("/api/journal-entries/:id", handlers.GetJournalEntry)
-r.POST("/api/journal-entries", handlers.CreateJournalEntry)
-r.POST("/api/journal-entries/:id/post", handlers.PostJournalEntry)
-r.DELETE("/api/journal-entries/:id", handlers.DeleteJournalEntry)
+    r.GET("/api/cash-operations", handlers.GetCashOperations)
+    r.POST("/api/cash-operations", handlers.CreateCashOperation)
+    r.GET("/api/journal-entries", handlers.GetJournalEntries)
+    r.GET("/api/journal-entries/:id", handlers.GetJournalEntry)
+    r.POST("/api/journal-entries", handlers.CreateJournalEntry)
+    r.POST("/api/journal-entries/:id/post", handlers.PostJournalEntry)
+    r.DELETE("/api/journal-entries/:id", handlers.DeleteJournalEntry)
 
-// Страница поставщиков
-r.GET("/suppliers", func(c *gin.Context) {
-    c.HTML(http.StatusOK, "suppliers.html", gin.H{
-        "title": "Поставщики | SaaSPro",
+    // Страница поставщиков
+    r.GET("/suppliers", func(c *gin.Context) {
+        c.HTML(http.StatusOK, "suppliers.html", gin.H{
+            "title": "Поставщики | SaaSPro",
+        })
     })
-})
 
-//Bitrix24
-// Перенаправление со старых проектов на Bitrix24
-r.GET("/projects", func(c *gin.Context) {
-    c.Redirect(http.StatusMovedPermanently, "/integration/bitrix")
-})
-r.GET("/api/projects", handlers.GetProjects)
-r.POST("/api/projects", handlers.CreateProject)
-r.GET("/api/tasks", handlers.GetTasks)
-r.POST("/api/tasks", handlers.CreateTask)
-r.PUT("/api/tasks/:id", handlers.UpdateTask)
-
-// Уведомления
-r.GET("/api/notifications", handlers.GetNotifications)
-r.PUT("/api/notifications/:id/read", handlers.MarkNotificationRead)
-r.GET("/api/notifications/unread", handlers.GetUnreadCount)
-
-// Экспорт отчетов
-r.GET("/api/reports/export/osv", handlers.ExportOSVToExcel)
-r.GET("/api/reports/export/profit-loss", handlers.ExportProfitLossToHTML)
-
-// Гант-диаграмма
-r.GET("/api/gantt", handlers.GetGanttData)
-
-// Обновление статуса заказа
-r.PUT("/api/inventory/orders/:id/status", handlers.UpdateOrderStatus)
-
-// Отчеты
-r.GET("/api/inventory/reports/sales", handlers.GetSalesReport)
-r.GET("/api/inventory/reports/top-products", handlers.GetTopProducts)
-
-// OAuth2 / OpenID Connect маршруты
-r.GET("/.well-known/openid-configuration", handlers.OIDCConfigurationHandler)
-r.GET("/oauth/jwks", handlers.JWKSHander)
-r.GET("/oauth/authorize", handlers.OAuthAuthorizeHandler)
-r.POST("/oauth/token", handlers.OAuthTokenHandler)
-r.GET("/oauth/userinfo", handlers.OAuthUserInfoHandler)
-// Страница Identity Hub
-r.GET("/identity-hub", handlers.IdentityHubPageHandler)
-
-// ========== ОТЧЕТЫ И АНАЛИТИКА ==========
-
-// Оборотно-сальдовая ведомость
-r.GET("/api/reports/turnover-balance", handlers.GetTurnoverBalanceSheet)
-
-// Отчет о прибылях и убытках
-r.GET("/api/reports/profit-loss", handlers.GetProfitAndLoss)
-
-// Статистика для дашборда
-r.GET("/api/reports/dashboard-stats", handlers.GetDashboardStats)
-
-// График продаж
-r.GET("/api/reports/sales-chart", handlers.GetSalesChart)
-
-// Страница отчетов
-r.GET("/reports", func(c *gin.Context) {
-    c.HTML(http.StatusOK, "reports.html", gin.H{
-        "title": "Отчеты и аналитика | SaaSPro",
+    // Страница закупок
+    r.GET("/purchases", func(c *gin.Context) {
+        c.Header("Cache-Control", "no-cache, no-store, must-revalidate, private")
+        c.Header("Pragma", "no-cache")
+        c.Header("Expires", "0")
+        c.Header("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
+        c.Header("ETag", "")
+        c.HTML(http.StatusOK, "purchases.html", gin.H{
+            "title": "Закупки | SaaSPro",
+            "cacheBuster": time.Now().UnixNano(),
+        })
     })
-})
 
-// ========== ИНТЕГРАЦИЯ С 1С ==========
+    // Уведомления
+    r.GET("/api/notifications", handlers.GetNotifications)
+    r.PUT("/api/notifications/:id/read", handlers.MarkNotificationRead)
+    r.GET("/api/notifications/unread", handlers.GetUnreadCount)
 
-// Экспорт
-r.GET("/api/1c/export/products", handlers.ExportProductsTo1C)
-r.GET("/api/1c/export/orders", handlers.ExportOrdersTo1C)
+    // Экспорт отчетов
+    r.GET("/api/reports/export/osv", handlers.ExportOSVToExcel)
+    r.GET("/api/reports/export/profit-loss", handlers.ExportProfitLossToHTML)
 
-// Импорт
-r.POST("/api/1c/import/products", handlers.ImportProductsFrom1C)
+    // Гант-диаграмма
+    r.GET("/api/gantt", handlers.GetGanttData)
 
-// Журналы
-r.GET("/api/1c/logs", handlers.GetSyncLogs)
+    // Обновление статуса заказа
+    r.PUT("/api/inventory/orders/:id/status", handlers.UpdateOrderStatus)
 
-// Настройки
-r.GET("/api/1c/settings", handlers.GetSyncSettings)
-r.POST("/api/1c/settings", handlers.UpdateSyncSettings)
+    // Отчеты
+    r.GET("/api/inventory/reports/sales", handlers.GetSalesReport)
+    r.GET("/api/inventory/reports/top-products", handlers.GetTopProducts)
 
-// Страница интеграции
-r.GET("/integration/1c", func(c *gin.Context) {
-    c.HTML(http.StatusOK, "integration_1c.html", gin.H{
-        "title": "Интеграция с 1С | SaaSPro",
+    // OAuth2 / OpenID Connect маршруты
+    r.GET("/.well-known/openid-configuration", handlers.OIDCConfigurationHandler)
+    r.GET("/oauth/jwks", handlers.JWKSHander)
+    r.GET("/oauth/authorize", handlers.OAuthAuthorizeHandler)
+    r.POST("/oauth/token", handlers.OAuthTokenHandler)
+    r.GET("/oauth/userinfo", handlers.OAuthUserInfoHandler)
+    r.GET("/identity-hub", handlers.IdentityHubPageHandler)
+
+    // ========== ОТЧЕТЫ И АНАЛИТИКА ==========
+    r.GET("/api/reports/turnover-balance", handlers.GetTurnoverBalanceSheet)
+    r.GET("/api/reports/profit-loss", handlers.GetProfitAndLoss)
+    r.GET("/api/reports/dashboard-stats", handlers.GetDashboardStats)
+    r.GET("/api/reports/sales-chart", handlers.GetSalesChart)
+
+    r.GET("/reports", func(c *gin.Context) {
+        c.HTML(http.StatusOK, "reports.html", gin.H{
+            "title": "Отчеты и аналитика | SaaSPro",
+        })
     })
-})
 
-// Webhook для 1С
-r.POST("/api/1c/webhook", handlers.AddWebhookHandler)
+    // ========== ИНТЕГРАЦИЯ С 1С ==========
+    r.GET("/api/1c/export/products", handlers.ExportProductsTo1C)
+    r.GET("/api/1c/export/orders", handlers.ExportOrdersTo1C)
+    r.POST("/api/1c/import/products", handlers.ImportProductsFrom1C)
+    r.GET("/api/1c/logs", handlers.GetSyncLogs)
+    r.GET("/api/1c/settings", handlers.GetSyncSettings)
+    r.POST("/api/1c/settings", handlers.UpdateSyncSettings)
+    r.GET("/integration/1c", func(c *gin.Context) {
+        c.HTML(http.StatusOK, "integration_1c.html", gin.H{
+            "title": "Интеграция с 1С | SaaSPro",
+        })
+    })
+    r.POST("/api/1c/webhook", handlers.AddWebhookHandler)
 
+    // ========== BITRIX24 ==========
+    r.GET("/api/bitrix/settings", handlers.GetBitrixSettings)
+    r.POST("/api/bitrix/settings", handlers.SaveBitrixSettings)
+    r.POST("/api/bitrix/export/lead", handlers.ExportLeadToBitrix)
+    r.GET("/api/bitrix/import/leads", handlers.ImportLeadsFromBitrix)
+    r.POST("/api/bitrix/sync/contacts", handlers.SyncBitrixContacts)
+    r.GET("/api/bitrix/logs", handlers.GetBitrixSyncLogs)
+    r.GET("/integration/bitrix", func(c *gin.Context) {
+        c.HTML(http.StatusOK, "integration_bitrix.html", gin.H{
+            "title": "Интеграция с Bitrix24 | SaaSPro",
+        })
+    })
+    r.POST("/api/bitrix/task", handlers.SyncTasksToBitrix)
+    r.GET("/api/bitrix/tasks", handlers.GetBitrixTasks)
+    r.POST("/api/bitrix/webhook", handlers.BitrixWebhookHandler)
 
+    // ========== PWA И PUSH УВЕДОМЛЕНИЯ ==========
+    r.GET("/service-worker.js", func(c *gin.Context) { c.File("./static/service-worker.js") })
+    r.GET("/manifest.json", func(c *gin.Context) { c.File("./static/manifest.json") })
+    r.GET("/api/pwa/info", handlers.GetPWAInfo)
+    r.POST("/api/push/subscribe", handlers.SavePushSubscription)
+    r.GET("/api/push/subscriptions", handlers.GetPushSubscriptions)
 
-// ========== PWA И PUSH УВЕДОМЛЕНИЯ ==========
-
-// PWA
-//r.GET("/manifest.json", func(c *gin.Context) { c.File("./static/manifest.json") })
-r.GET("/service-worker.js", func(c *gin.Context) { c.File("./static/service-worker.js") })
-r.GET("/manifest.json", func(c *gin.Context) { c.File("./static/manifest.json") })
-r.GET("/api/pwa/info", handlers.GetPWAInfo)
-
-// Push уведомления
-r.POST("/api/push/subscribe", handlers.SavePushSubscription)
-r.GET("/api/push/subscriptions", handlers.GetPushSubscriptions)
-
-// Админские маршруты для управления OAuth клиентами
-adminOAuth := r.Group("/admin/oauth")
-adminOAuth.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
-{
-    adminOAuth.GET("/clients", handlers.OAuthClientsPageHandler)
-    adminOAuth.POST("/clients", handlers.CreateOAuthClient)
-}
+    // Админские маршруты для управления OAuth клиентами
+    adminOAuth := r.Group("/admin/oauth")
+    adminOAuth.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
+    {
+        adminOAuth.GET("/clients", handlers.OAuthClientsPageHandler)
+        adminOAuth.POST("/clients", handlers.CreateOAuthClient)
+    }
     
     // VPN маршруты
     r.GET("/vpn", handlers.VPNSalesPageHandler)
@@ -458,27 +430,6 @@ adminOAuth.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
     r.GET("/api/vpn/stats", handlers.GetVPNStats)
     r.POST("/api/vpn/renew/:client", handlers.RenewVPNKey)
 
-// ========== ИНТЕГРАЦИЯ С BITRIX24 ==========
-
-// Настройки
-r.GET("/api/bitrix/settings", handlers.GetBitrixSettings)
-r.POST("/api/bitrix/settings", handlers.SaveBitrixSettings)
-
-// Экспорт/Импорт
-r.POST("/api/bitrix/export/lead", handlers.ExportLeadToBitrix)
-r.GET("/api/bitrix/import/leads", handlers.ImportLeadsFromBitrix)
-r.POST("/api/bitrix/sync/contacts", handlers.SyncBitrixContacts)
-
-// Логи
-r.GET("/api/bitrix/logs", handlers.GetBitrixSyncLogs)
-
-// Страница интеграции
-r.GET("/integration/bitrix", func(c *gin.Context) {
-    c.HTML(http.StatusOK, "integration_bitrix.html", gin.H{
-        "title": "Интеграция с Bitrix24 | SaaSPro",
-    })
-})
-
     // Админ маршруты для VPN
     adminVPN := r.Group("/admin/vpn")
     adminVPN.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
@@ -487,6 +438,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         adminVPN.GET("/stats", handlers.AdminVPNHandler)
     }
 
+    // Публичные маршруты
     public := r.Group("/")
     {
         public.GET("/", handlers.HomeHandler)
@@ -499,6 +451,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
 
     r.POST("/api/service-order", serviceOrderHandler)
 
+    // Страницы авторизации
     authPages := r.Group("/")
     {
         authPages.GET("/login", handlers.LoginPageHandler)
@@ -506,6 +459,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         authPages.GET("/forgot-password", handlers.ForgotPasswordHandler)
     }
 
+    // API авторизации
     authAPI := r.Group("/api/auth")
     authAPI.Use(func(c *gin.Context) {
         ip := c.ClientIP()
@@ -528,6 +482,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         authAPI.GET("/trusted-devices/list", handlers.GetTrustedDevices)
     }
 
+    // Реферальная программа
     referralAPI := r.Group("/api/referral")
     referralAPI.Use(middleware.AuthMiddleware(cfg))
     {
@@ -538,6 +493,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
     }
     r.GET("/ref", handlers.ProcessReferral)
 
+    // Верификация
     verificationAPI := r.Group("/api/verification")
     {
         verificationAPI.POST("/send-email", handlers.SendVerificationEmail)
@@ -546,6 +502,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         verificationAPI.GET("/status", handlers.CheckVerificationStatus)
     }
 
+    // Защищенные маршруты
     protected := r.Group("/")
     protected.Use(middleware.AuthMiddleware(cfg))
     {
@@ -560,6 +517,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         protected.GET("/calendar", handlers.CalendarHandler)
     }
 
+    // Админские маршруты
     admin := r.Group("/")
     admin.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
     {
@@ -576,6 +534,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         admin.GET("/admin/api-keys", handlers.AdminAPIKeysHandler)
     }
 
+    // Дашборды
     dashboards := r.Group("/")
     dashboards.Use(middleware.AuthMiddleware(cfg))
     {
@@ -587,6 +546,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         dashboards.GET("/dashboard-stats", handlers.DashboardStatsHandler)
     }
 
+    // Платежи
     payments := r.Group("/")
     payments.Use(middleware.AuthMiddleware(cfg))
     {
@@ -597,6 +557,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         payments.GET("/rub-payment", handlers.RUBPaymentHandler)
     }
 
+    // Логистика
     logistics := r.Group("/")
     logistics.Use(middleware.AuthMiddleware(cfg))
     {
@@ -609,6 +570,7 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         deliveryAPI.GET("/track/:trackingNumber", handlers.TrackAPIHandler)
     }
 
+    // Основное API
     api := r.Group("/api")
     api.Use(func(c *gin.Context) {
         ip := c.ClientIP()
@@ -715,7 +677,6 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         api.GET("/analytics/insights", handlers.GetInsights)
         api.GET("/analytics/segments", handlers.GetSegmentSummary)
         api.GET("/analytics/cohorts/run", handlers.RunCohortAnalysis)
-        //api.GET("/payments", handlers.GetPayments)
     }
 
     secureAPI := r.Group("/api")
@@ -762,27 +723,15 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         adminAPI.POST("/users/delete", handlers.AdminDeleteUser)
     }
 
+    r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-// Страница закупок
-r.GET("/purchases", func(c *gin.Context) {
-    c.Header("Cache-Control", "no-cache, no-store, must-revalidate, private")
-    c.Header("Pragma", "no-cache")
-    c.Header("Expires", "0")
-    c.Header("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
-      c.Header("ETag", "")
-    c.HTML(http.StatusOK, "purchases.html", gin.H{
-        "title": "Закупки | SaaSPro",
-        "cacheBuster": time.Now().UnixNano(),
-    })
-})
-
-r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
     r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
             "Version": "3.0",
         })
     })
+
     port := ":" + cfg.Port
     baseURL := "http://localhost:" + cfg.Port
     fmt.Printf("\n============================================================\n")
@@ -834,7 +783,10 @@ r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
     fmt.Printf("============================================================\n")
 
     log.Printf("🚀 Сервер запущен на порту %s", port)
-// Запуск планировщика синхронизации с 1С
-handlers.StartSyncScheduler()
+    
+    // Запуск планировщиков
+    handlers.StartSyncScheduler()
+    handlers.StartBitrixSyncScheduler()
+    
     r.Run(port)
 }
