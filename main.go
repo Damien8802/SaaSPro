@@ -445,6 +445,27 @@ adminOAuth.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
     r.GET("/api/vpn/stats", handlers.GetVPNStats)
     r.POST("/api/vpn/renew/:client", handlers.RenewVPNKey)
 
+// ========== ИНТЕГРАЦИЯ С BITRIX24 ==========
+
+// Настройки
+r.GET("/api/bitrix/settings", handlers.GetBitrixSettings)
+r.POST("/api/bitrix/settings", handlers.SaveBitrixSettings)
+
+// Экспорт/Импорт
+r.POST("/api/bitrix/export/lead", handlers.ExportLeadToBitrix)
+r.GET("/api/bitrix/import/leads", handlers.ImportLeadsFromBitrix)
+r.POST("/api/bitrix/sync/contacts", handlers.SyncBitrixContacts)
+
+// Логи
+r.GET("/api/bitrix/logs", handlers.GetBitrixSyncLogs)
+
+// Страница интеграции
+r.GET("/integration/bitrix", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "integration_bitrix.html", gin.H{
+        "title": "Интеграция с Bitrix24 | SaaSPro",
+    })
+})
+
     // Админ маршруты для VPN
     adminVPN := r.Group("/admin/vpn")
     adminVPN.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
