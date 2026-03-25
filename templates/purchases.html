@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Закупки | SaaSPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--dark) 0%, #1a1a2e 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+            border-radius: 0 0 30px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
+            background-size: 50px 50px;
+            animation: move 20s linear infinite;
+        }
+
+        @keyframes move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .stat-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            height: 100%;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(67,97,238,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), #6c5ce7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 32px;
+            color: white;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1);
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, var(--primary), #6c5ce7);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-custom::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .btn-custom:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(67,97,238,0.3);
+        }
+
+        .recent-orders {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .badge-status:hover {
+            transform: scale(1.05);
+        }
+
+        .badge-draft { background: #ffc107; color: #000; }
+        .badge-confirmed { background: #17a2b8; color: #fff; }
+        .badge-shipped { background: #007bff; color: #fff; }
+        .badge-received { background: #28a745; color: #fff; }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(67,97,238,0.05);
+            cursor: pointer;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        footer {
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-box-seam"></i> SaaSPro
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/dashboard-improved"><i class="bi bi-speedometer2"></i> Дашборд</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/inventory"><i class="bi bi-boxes"></i> Склад</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/purchases"><i class="bi bi-cart-plus"></i> Закупки</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/suppliers"><i class="bi bi-truck"></i> Поставщики</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/finance"><i class="bi bi-currency-ruble"></i> Финансы</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/reports"><i class="bi bi-graph-up"></i> Отчеты</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <div class="container text-center position-relative">
+            <h1 class="display-4 fw-bold mb-3 animate__animated animate__fadeInUp">
+                <i class="bi bi-cart-plus"></i> Управление закупками
+            </h1>
+            <p class="lead mb-4">Оптимизируйте процесс закупок, контролируйте поставки и управляйте складскими запасами</p>
+            <div>
+                <a href="/suppliers" class="btn btn-custom btn-lg me-3">
+                    <i class="bi bi-truck"></i> Начать закупку
+                </a>
+                <a href="/goods-receipts" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-archive"></i> Приемка товаров
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-md-3 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-building text-primary"></i>
+                    </div>
+                    <div class="stat-value" id="suppliersCount">0</div>
+                    <div class="text-muted">Активных поставщиков</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-cart text-success"></i>
+                    </div>
+                    <div class="stat-value" id="ordersCount">0</div>
+                    <div class="text-muted">Заказов в работе</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-archive text-warning"></i>
+                    </div>
+                    <div class="stat-value" id="receiptsCount">0</div>
+                    <div class="text-muted">Приемок за месяц</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-currency-ruble text-danger"></i>
+                    </div>
+                    <div class="stat-value" id="totalAmount">0 ₽</div>
+                    <div class="text-muted">Сумма закупок</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card" onclick="location.href='/suppliers'">
+                    <div class="feature-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <h4>Поставщики</h4>
+                    <p class="text-muted">Управление базой поставщиков, контакты, рейтинги, история закупок</p>
+                    <span class="badge bg-primary mt-2">Перейти →</span>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card" onclick="location.href='/suppliers?tab=orders'">
+                    <div class="feature-icon">
+                        <i class="bi bi-cart"></i>
+                    </div>
+                    <h4>Заказы поставщикам</h4>
+                    <p class="text-muted">Создание заказов, контроль поставок, отслеживание статусов</p>
+                    <span class="badge bg-success mt-2">Перейти →</span>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card" onclick="location.href='/goods-receipts'">
+                    <div class="feature-icon">
+                        <i class="bi bi-archive"></i>
+                    </div>
+                    <h4>Приемка товаров</h4>
+                    <p class="text-muted">Оприходование товаров, контроль качества, списание брака</p>
+                    <span class="badge bg-warning mt-2">Перейти →</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="recent-orders">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="bi bi-clock-history"></i> Последние заказы</h3>
+                <a href="/suppliers?tab=orders" class="btn btn-outline-primary">
+                    <i class="bi bi-eye"></i> Все заказы →
+                </a>
+            </div>
+            <div id="recentOrdersList" class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th><i class="bi bi-hash"></i> № заказа</th>
+                            <th><i class="bi bi-building"></i> Поставщик</th>
+                            <th><i class="bi bi-currency-ruble"></i> Сумма</th>
+                            <th><i class="bi bi-calendar"></i> Дата</th>
+                            <th><i class="bi bi-info-circle"></i> Статус</th>
+                        </thead>
+                    <tbody id="recentOrdersBody">
+                        <tr><td colspan="5" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Загрузка заказов...</p>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white-50 text-center py-4">
+        <div class="container">
+            <p class="mb-0">© 2026 SaaSPro. Все права защищены.</p>
+            <small class="text-muted">Версия 3.7.0</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function loadStats() {
+            try {
+                const suppliersRes = await fetch('/api/suppliers?active=true');
+                const suppliersData = await suppliersRes.json();
+                document.getElementById('suppliersCount').textContent = suppliersData.suppliers?.length || 0;
+
+                const ordersRes = await fetch('/api/purchase-orders');
+                const ordersData = await ordersRes.json();
+                const activeOrders = (ordersData.orders || []).filter(o => o.status !== 'received' && o.status !== 'cancelled');
+                document.getElementById('ordersCount').textContent = activeOrders.length;
+
+                const receiptsRes = await fetch('/api/goods-receipts');
+                const receiptsData = await receiptsRes.json();
+                const monthReceipts = (receiptsData.receipts || []).filter(r => {
+                    const date = new Date(r.receipt_date);
+                    const now = new Date();
+                    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                });
+                document.getElementById('receiptsCount').textContent = monthReceipts.length;
+
+                const total = (ordersData.orders || []).reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                document.getElementById('totalAmount').textContent = total.toLocaleString() + ' ₽';
+
+                const recentOrders = (ordersData.orders || []).slice(0, 5);
+                const tbody = document.getElementById('recentOrdersBody');
+                if (recentOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><i class="bi bi-inbox fs-1 text-muted"></i><p class="mt-2">Нет заказов</p></td></tr>';
+                } else {
+                    tbody.innerHTML = recentOrders.map(o => `
+                        <tr onclick="window.location.href='/suppliers?tab=orders'">
+                            <td><strong>${o.order_number}</strong></td>
+                            <td>${o.supplier_name || '-'}</td>
+                            <td class="fw-bold text-primary">${(o.total_amount || 0).toLocaleString()} ₽</td>
+                            <td>${new Date(o.order_date).toLocaleDateString('ru-RU')}</td>
+                            <td><span class="badge-status badge-${o.status}">${getStatusText(o.status)}</span></td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('recentOrdersBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Ошибка загрузки данных</td></tr>';
+            }
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'draft': 'Черновик',
+                'confirmed': 'Подтвержден',
+                'shipped': 'Отправлен',
+                'received': 'Получен',
+                'cancelled': 'Отменен'
+            };
+            return texts[status] || status;
+        }
+
+        loadStats();
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>

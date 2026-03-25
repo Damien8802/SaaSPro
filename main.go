@@ -341,8 +341,12 @@ r.GET("/suppliers", func(c *gin.Context) {
         "title": "Поставщики | SaaSPro",
     })
 })
+
 //Bitrix24
-r.GET("/projects", handlers.ProjectsPageHandler)
+// Перенаправление со старых проектов на Bitrix24
+r.GET("/projects", func(c *gin.Context) {
+    c.Redirect(http.StatusMovedPermanently, "/integration/bitrix")
+})
 r.GET("/api/projects", handlers.GetProjects)
 r.POST("/api/projects", handlers.CreateProject)
 r.GET("/api/tasks", handlers.GetTasks)
@@ -749,15 +753,27 @@ r.GET("/integration/bitrix", func(c *gin.Context) {
         adminAPI.POST("/users/delete", handlers.AdminDeleteUser)
     }
 
-    r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+// Страница закупок
+r.GET("/purchases", func(c *gin.Context) {
+    c.Header("Cache-Control", "no-cache, no-store, must-revalidate, private")
+    c.Header("Pragma", "no-cache")
+    c.Header("Expires", "0")
+    c.Header("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
+      c.Header("ETag", "")
+    c.HTML(http.StatusOK, "purchases.html", gin.H{
+        "title": "Закупки | SaaSPro",
+        "cacheBuster": time.Now().UnixNano(),
+    })
+})
+
+r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
     r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
             "Version": "3.0",
         })
     })
-
     port := ":" + cfg.Port
     baseURL := "http://localhost:" + cfg.Port
     fmt.Printf("\n============================================================\n")
