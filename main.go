@@ -358,6 +358,10 @@ r.GET("/api/notifications", handlers.GetNotifications)
 r.PUT("/api/notifications/:id/read", handlers.MarkNotificationRead)
 r.GET("/api/notifications/unread", handlers.GetUnreadCount)
 
+// Экспорт отчетов
+r.GET("/api/reports/export/osv", handlers.ExportOSVToExcel)
+r.GET("/api/reports/export/profit-loss", handlers.ExportProfitLossToHTML)
+
 // Гант-диаграмма
 r.GET("/api/gantt", handlers.GetGanttData)
 

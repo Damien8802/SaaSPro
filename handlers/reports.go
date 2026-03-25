@@ -2,6 +2,7 @@ package handlers
 
 import (
     "context"
+    "fmt"
     "net/http"
     "time"
     
@@ -461,6 +462,161 @@ func GetInventoryTurnover(c *gin.Context) {
         "turnover":       turnover,
         "turnover_days":  safeDiv(30, turnover),
     })
+}
+
+// ExportOSVToExcel - экспорт ОСВ в Excel
+func ExportOSVToExcel(c *gin.Context) {
+    userID := getUserID(c)
+    
+    startDate := c.Query("start_date")
+    endDate := c.Query("end_date")
+    
+    if startDate == "" {
+        startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
+    }
+    if endDate == "" {
+        endDate = time.Now().Format("2006-01-02")
+    }
+    
+    accounts, err := getAccounts(userID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    
+    postings, err := getPostingsByPeriod(userID, startDate, endDate)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    
+    html := `<html><head><meta charset="UTF-8"><title>Оборотно-сальдовая ведомость</title></head><body>`
+    html += fmt.Sprintf("<h2>Оборотно-сальдовая ведомость</h2>")
+    html += fmt.Sprintf("<p>Период: %s - %s</p>", startDate, endDate)
+    html += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">`
+    html += `<thead><tr bgcolor="#4472C4" style="color:white;">`
+    html += `<th>Код счета</th><th>Наименование</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th>`
+    html += `</tr></thead><tbody>`
+    
+    for _, acc := range accounts {
+        var periodDebit, periodCredit float64
+        for _, p := range postings {
+            if p.AccountID == acc.ID {
+                periodDebit += p.DebitAmount
+                periodCredit += p.CreditAmount
+            }
+        }
+        
+        balance := periodDebit - periodCredit
+        
+        if periodDebit > 0 || periodCredit > 0 {
+            html += fmt.Sprintf("<tr>")
+            html += fmt.Sprintf("<td>%s</td>", acc.Code)
+            html += fmt.Sprintf("<td>%s</td>", acc.Name)
+            html += fmt.Sprintf("<td align='right'>%.2f</td>", periodDebit)
+            html += fmt.Sprintf("<td align='right'>%.2f</td>", periodCredit)
+            html += fmt.Sprintf("<td align='right'>%.2f</td>", balance)
+            html += "</tr>"
+        }
+    }
+    
+    html += `</tbody></table>`
+    html += fmt.Sprintf("<p>Сформировано: %s</p>", time.Now().Format("2006-01-02 15:04:05"))
+    html += `</body></html>`
+    
+    filename := fmt.Sprintf("osv_%s_%s.xls", startDate, endDate)
+    c.Header("Content-Type", "application/vnd.ms-excel")
+    c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+    c.String(http.StatusOK, html)
+}
+
+// ExportProfitLossToHTML - экспорт отчета о прибылях и убытках в HTML
+func ExportProfitLossToHTML(c *gin.Context) {
+    userID := getUserID(c)
+    
+    startDate := c.Query("start_date")
+    endDate := c.Query("end_date")
+    
+    if startDate == "" {
+        startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
+    }
+    if endDate == "" {
+        endDate = time.Now().Format("2006-01-02")
+    }
+    
+    var revenue, expenses float64
+    
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(credit_amount), 0)
+        FROM journal_postings p
+        JOIN journal_entries e ON p.entry_id = e.id
+        WHERE e.user_id = $1 AND e.entry_status = 'posted'
+        AND e.entry_date BETWEEN $2 AND $3
+        AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('90', '91'))
+    `, userID, startDate, endDate).Scan(&revenue)
+    
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(debit_amount), 0)
+        FROM journal_postings p
+        JOIN journal_entries e ON p.entry_id = e.id
+        WHERE e.user_id = $1 AND e.entry_status = 'posted'
+        AND e.entry_date BETWEEN $2 AND $3
+        AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('20', '26', '44', '91'))
+    `, userID, startDate, endDate).Scan(&expenses)
+    
+    profit := revenue - expenses
+    
+    profitClass := "profit"
+    if profit < 0 {
+        profitClass = "loss"
+    }
+    
+    html := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Отчет о прибылях и убытках</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #333; text-align: center; }
+        .period { text-align: center; color: #666; margin-bottom: 30px; }
+        table { width: 100%%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #4472C4; color: white; }
+        .total { font-weight: bold; background-color: #f9f9f9; }
+        .profit { font-weight: bold; color: green; }
+        .loss { font-weight: bold; color: red; }
+        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>Отчет о прибылях и убытках</h1>
+    <div class="period">Период: %s - %s</div>
+    
+    <table>
+        <thead>
+            <tr><th>Показатель</th><th>Сумма, ₽</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Выручка</td><td>%.2f</td></tr>
+            <tr><td>Расходы</td><td>%.2f</td></tr>
+            <tr class="total"><td>Прибыль/Убыток</td><td class="%s">%.2f</td></tr>
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        Сформировано: %s<br>
+        SaaSPro ERP
+    </div>
+</body>
+</html>
+`, startDate, endDate, revenue, expenses, profitClass, profit, time.Now().Format("2006-01-02 15:04:05"))
+    
+    filename := fmt.Sprintf("pnl_%s_%s.html", startDate, endDate)
+    c.Header("Content-Type", "text/html")
+    c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+    c.String(http.StatusOK, html)
 }
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
