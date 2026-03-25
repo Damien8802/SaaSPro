@@ -1,9 +1,12 @@
 package handlers
 
 import (
+    "bytes"
+    "context"
     "encoding/json"
     "encoding/xml"
     "fmt"
+    "log"
     "net/http"
     "os"
     "time"
@@ -55,7 +58,6 @@ type ItemXML struct {
 func ExportProductsTo1C(c *gin.Context) {
     userID := getUserID(c)
     
-    // Получаем товары
     rows, err := database.Pool.Query(c.Request.Context(), `
         SELECT id, name, COALESCE(sku, ''), price, quantity, COALESCE(unit, 'шт')
         FROM products
@@ -76,10 +78,8 @@ func ExportProductsTo1C(c *gin.Context) {
         products = append(products, p)
     }
     
-    // Формируем XML
     xmlData := ProductsXML{Products: products}
     
-    // Сохраняем лог
     var logID uuid.UUID
     database.Pool.QueryRow(c.Request.Context(), `
         INSERT INTO sync_logs (user_id, direction, entity_type, record_count, status, started_at)
@@ -87,14 +87,11 @@ func ExportProductsTo1C(c *gin.Context) {
         RETURNING id
     `, userID, len(products)).Scan(&logID)
     
-    // Генерируем файл
     filename := fmt.Sprintf("export_products_%d.xml", time.Now().Unix())
     filepath := fmt.Sprintf("./exports/%s", filename)
     
-    // Создаем папку если нет
     os.MkdirAll("./exports", 0755)
     
-    // Записываем XML в файл
     file, err := os.Create(filepath)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать файл"})
@@ -109,7 +106,6 @@ func ExportProductsTo1C(c *gin.Context) {
         return
     }
     
-    // Обновляем лог
     database.Pool.Exec(c.Request.Context(), `
         UPDATE sync_logs SET status = 'completed', completed_at = NOW(), file_path = $1
         WHERE id = $2
@@ -128,7 +124,6 @@ func ExportProductsTo1C(c *gin.Context) {
 func ExportOrdersTo1C(c *gin.Context) {
     userID := getUserID(c)
     
-    // Получаем заказы с товарами
     rows, err := database.Pool.Query(c.Request.Context(), `
         SELECT o.id, o.order_number, o.created_at, o.customer_name, o.total_amount
         FROM orders o
@@ -150,7 +145,6 @@ func ExportOrdersTo1C(c *gin.Context) {
         rows.Scan(&id, &o.Number, &createdAt, &o.CustomerName, &o.TotalAmount)
         o.Date = createdAt.Format("2006-01-02")
         
-        // Получаем позиции заказа
         itemsRows, err := database.Pool.Query(c.Request.Context(), `
             SELECT product_name, sku, quantity, price, total
             FROM order_items
@@ -168,7 +162,6 @@ func ExportOrdersTo1C(c *gin.Context) {
         orders = append(orders, o)
     }
     
-    // Сохраняем лог
     var logID uuid.UUID
     database.Pool.QueryRow(c.Request.Context(), `
         INSERT INTO sync_logs (user_id, direction, entity_type, record_count, status, started_at)
@@ -176,7 +169,6 @@ func ExportOrdersTo1C(c *gin.Context) {
         RETURNING id
     `, userID, len(orders)).Scan(&logID)
     
-    // Генерируем JSON (для разнообразия)
     filename := fmt.Sprintf("export_orders_%d.json", time.Now().Unix())
     filepath := fmt.Sprintf("./exports/%s", filename)
     
@@ -221,7 +213,6 @@ func ImportProductsFrom1C(c *gin.Context) {
         return
     }
     
-    // Сохраняем временный файл
     tempPath := fmt.Sprintf("./uploads/%s", file.Filename)
     os.MkdirAll("./uploads", 0755)
     
@@ -231,7 +222,6 @@ func ImportProductsFrom1C(c *gin.Context) {
     }
     defer os.Remove(tempPath)
     
-    // Открываем файл
     f, err := os.Open(tempPath)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось открыть файл"})
@@ -239,7 +229,6 @@ func ImportProductsFrom1C(c *gin.Context) {
     }
     defer f.Close()
     
-    // Парсим XML
     decoder := xml.NewDecoder(f)
     var products ProductsXML
     
@@ -248,7 +237,6 @@ func ImportProductsFrom1C(c *gin.Context) {
         return
     }
     
-    // Сохраняем лог
     var logID uuid.UUID
     database.Pool.QueryRow(c.Request.Context(), `
         INSERT INTO sync_logs (user_id, direction, entity_type, record_count, status, started_at)
@@ -259,7 +247,6 @@ func ImportProductsFrom1C(c *gin.Context) {
     var imported int
     var errors []string
     
-    // Импортируем товары
     for _, p := range products.Products {
         _, err := database.Pool.Exec(c.Request.Context(), `
             INSERT INTO products (user_id, name, sku, price, quantity, unit, active, created_at, updated_at)
@@ -278,7 +265,6 @@ func ImportProductsFrom1C(c *gin.Context) {
         }
     }
     
-    // Обновляем лог
     status := "completed"
     errorMsg := ""
     if len(errors) > 0 {
@@ -336,15 +322,15 @@ func GetSyncLogs(c *gin.Context) {
         }
         
         logs = append(logs, map[string]interface{}{
-            "id":           id,
-            "direction":    direction,
-            "entity_type":  entityType,
-            "record_count": recordCount,
-            "status":       status,
+            "id":            id,
+            "direction":     direction,
+            "entity_type":   entityType,
+            "record_count":  recordCount,
+            "status":        status,
             "error_message": errorMsg,
-            "file_path":    filePath,
-            "started_at":   startedAt,
-            "completed_at": completedAtPtr,
+            "file_path":     filePath,
+            "started_at":    startedAt,
+            "completed_at":  completedAtPtr,
         })
     }
     
@@ -369,14 +355,13 @@ func GetSyncSettings(c *gin.Context) {
     `, userID).Scan(&settingsJSON, &lastSync, &syncStatus)
     
     if err != nil {
-        // Настройки по умолчанию
         defaultSettings := map[string]interface{}{
-            "auto_sync":          false,
-            "sync_interval":      3600,
-            "export_products":    true,
-            "export_orders":      true,
-            "import_products":    false,
-            "last_sync_status":   "never",
+            "auto_sync":        false,
+            "sync_interval":    3600,
+            "export_products":  true,
+            "export_orders":    true,
+            "import_products":  false,
+            "last_sync_status": "never",
         }
         c.JSON(http.StatusOK, gin.H{
             "success":   true,
@@ -429,5 +414,319 @@ func UpdateSyncSettings(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{
         "success": true,
         "message": "Настройки сохранены",
+    })
+}
+
+// ========== АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ ==========
+
+// SyncScheduler - планировщик синхронизации
+type SyncScheduler struct {
+    ticker *time.Ticker
+    stop   chan bool
+}
+
+var syncScheduler *SyncScheduler
+
+// StartSyncScheduler - запуск планировщика
+func StartSyncScheduler() {
+    if syncScheduler != nil {
+        return
+    }
+    
+    syncScheduler = &SyncScheduler{
+        stop: make(chan bool),
+    }
+    
+    go func() {
+        ticker := time.NewTicker(1 * time.Minute)
+        defer ticker.Stop()
+        
+        for {
+            select {
+            case <-ticker.C:
+                checkAndRunSync()
+            case <-syncScheduler.stop:
+                return
+            }
+        }
+    }()
+    
+    log.Println("🤖 Планировщик синхронизации с 1С запущен")
+}
+
+// StopSyncScheduler - остановка планировщика
+func StopSyncScheduler() {
+    if syncScheduler != nil {
+        syncScheduler.stop <- true
+        log.Println("🛑 Планировщик синхронизации с 1С остановлен")
+    }
+}
+
+// checkAndRunSync - проверка настроек и запуск синхронизации
+func checkAndRunSync() {
+    ctx := context.Background()
+    
+    rows, err := database.Pool.Query(ctx, `
+        SELECT user_id, settings
+        FROM integration_settings
+        WHERE integration_type = '1c' AND settings->>'auto_sync' = 'true'
+    `)
+    if err != nil {
+        log.Printf("⚠️ Ошибка проверки настроек синхронизации: %v", err)
+        return
+    }
+    defer rows.Close()
+    
+    for rows.Next() {
+        var userID uuid.UUID
+        var settingsJSON []byte
+        rows.Scan(&userID, &settingsJSON)
+        
+        var settings map[string]interface{}
+        json.Unmarshal(settingsJSON, &settings)
+        
+        interval := 3600
+        if val, ok := settings["sync_interval"]; ok {
+            if v, ok := val.(float64); ok {
+                interval = int(v)
+            }
+        }
+        
+        var lastSync time.Time
+        database.Pool.QueryRow(ctx, `
+            SELECT COALESCE(MAX(created_at), '1970-01-01')
+            FROM sync_logs
+            WHERE user_id = $1 AND direction = 'export' AND status = 'completed'
+        `, userID).Scan(&lastSync)
+        
+        if time.Since(lastSync) > time.Duration(interval)*time.Second {
+            go func(uid uuid.UUID) {
+                log.Printf("🔄 Запуск автоматической синхронизации для пользователя %s", uid)
+                syncProductsTo1C(uid)
+                syncOrdersTo1C(uid)
+            }(userID)
+        }
+    }
+}
+
+// syncProductsTo1C - синхронизация товаров с 1С
+func syncProductsTo1C(userID uuid.UUID) {
+    ctx := context.Background()
+    
+    var webhookURL string
+    err := database.Pool.QueryRow(ctx, `
+        SELECT webhook_url FROM integration_settings WHERE user_id = $1 AND integration_type = '1c'
+    `, userID).Scan(&webhookURL)
+    
+    if err != nil || webhookURL == "" {
+        return
+    }
+    
+    rows, err := database.Pool.Query(ctx, `
+        SELECT id, name, sku, price, quantity, updated_at
+        FROM products
+        WHERE user_id = $1 AND active = true
+        AND (synced_1c = false OR synced_1c_at < updated_at)
+        LIMIT 100
+    `, userID)
+    
+    if err != nil {
+        log.Printf("Ошибка получения товаров для синхронизации: %v", err)
+        return
+    }
+    defer rows.Close()
+    
+    var products []map[string]interface{}
+    for rows.Next() {
+        var id uuid.UUID
+        var name, sku string
+        var price float64
+        var quantity int
+        var updatedAt time.Time
+        
+        rows.Scan(&id, &name, &sku, &price, &quantity, &updatedAt)
+        
+        products = append(products, map[string]interface{}{
+            "id":       id.String(),
+            "name":     name,
+            "sku":      sku,
+            "price":    price,
+            "quantity": quantity,
+        })
+    }
+    
+    if len(products) == 0 {
+        return
+    }
+    
+    data := map[string]interface{}{
+        "action":    "sync_products",
+        "products":  products,
+        "timestamp": time.Now().Unix(),
+    }
+    
+    jsonData, _ := json.Marshal(data)
+    
+    resp, err := http.Post(webhookURL+"/sync/products", "application/json", bytes.NewBuffer(jsonData))
+    if err != nil {
+        log.Printf("Ошибка отправки в 1С: %v", err)
+        return
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode == 200 {
+        for _, p := range products {
+            id, _ := uuid.Parse(p["id"].(string))
+            database.Pool.Exec(ctx, `
+                UPDATE products SET synced_1c = true, synced_1c_at = NOW()
+                WHERE id = $1
+            `, id)
+        }
+        
+        logID := uuid.New()
+        database.Pool.Exec(ctx, `
+            INSERT INTO sync_logs (id, user_id, direction, entity_type, record_count, status, created_at)
+            VALUES ($1, $2, 'export', 'products', $3, 'completed', NOW())
+        `, logID, userID, len(products))
+        
+        log.Printf("✅ Синхронизировано %d товаров для пользователя %s", len(products), userID)
+    }
+}
+
+// syncOrdersTo1C - синхронизация заказов с 1С
+func syncOrdersTo1C(userID uuid.UUID) {
+    ctx := context.Background()
+    
+    var webhookURL string
+    err := database.Pool.QueryRow(ctx, `
+        SELECT webhook_url FROM integration_settings WHERE user_id = $1 AND integration_type = '1c'
+    `, userID).Scan(&webhookURL)
+    
+    if err != nil || webhookURL == "" {
+        return
+    }
+    
+    rows, err := database.Pool.Query(ctx, `
+        SELECT id, order_number, customer_name, customer_phone, customer_email, 
+               total_amount, created_at, status
+        FROM orders
+        WHERE user_id = $1 AND synced_1c = false
+        LIMIT 50
+    `, userID)
+    
+    if err != nil {
+        log.Printf("Ошибка получения заказов для синхронизации: %v", err)
+        return
+    }
+    defer rows.Close()
+    
+    var orders []map[string]interface{}
+    for rows.Next() {
+        var id uuid.UUID
+        var orderNumber, customerName, customerPhone, customerEmail, status string
+        var totalAmount float64
+        var createdAt time.Time
+        
+        rows.Scan(&id, &orderNumber, &customerName, &customerPhone, &customerEmail,
+            &totalAmount, &createdAt, &status)
+        
+        itemsRows, _ := database.Pool.Query(ctx, `
+            SELECT product_name, sku, quantity, price, total
+            FROM order_items
+            WHERE order_id = $1
+        `, id)
+        
+        var items []map[string]interface{}
+        for itemsRows.Next() {
+            var name, sku string
+            var quantity int
+            var price, total float64
+            itemsRows.Scan(&name, &sku, &quantity, &price, &total)
+            items = append(items, map[string]interface{}{
+                "name":     name,
+                "sku":      sku,
+                "quantity": quantity,
+                "price":    price,
+                "total":    total,
+            })
+        }
+        itemsRows.Close()
+        
+        orders = append(orders, map[string]interface{}{
+            "id":       id.String(),
+            "number":   orderNumber,
+            "customer": customerName,
+            "phone":    customerPhone,
+            "email":    customerEmail,
+            "total":    totalAmount,
+            "date":     createdAt.Format("2006-01-02"),
+            "status":   status,
+            "items":    items,
+        })
+    }
+    
+    if len(orders) == 0 {
+        return
+    }
+    
+    data := map[string]interface{}{
+        "action":    "sync_orders",
+        "orders":    orders,
+        "timestamp": time.Now().Unix(),
+    }
+    
+    jsonData, _ := json.Marshal(data)
+    
+    resp, err := http.Post(webhookURL+"/sync/orders", "application/json", bytes.NewBuffer(jsonData))
+    if err != nil {
+        log.Printf("Ошибка отправки заказов в 1С: %v", err)
+        return
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode == 200 {
+        for _, o := range orders {
+            id, _ := uuid.Parse(o["id"].(string))
+            database.Pool.Exec(ctx, `
+                UPDATE orders SET synced_1c = true, synced_1c_at = NOW()
+                WHERE id = $1
+            `, id)
+        }
+        
+        logID := uuid.New()
+        database.Pool.Exec(ctx, `
+            INSERT INTO sync_logs (id, user_id, direction, entity_type, record_count, status, created_at)
+            VALUES ($1, $2, 'export', 'orders', $3, 'completed', NOW())
+        `, logID, userID, len(orders))
+        
+        log.Printf("✅ Синхронизировано %d заказов для пользователя %s", len(orders), userID)
+    }
+}
+
+// AddWebhookHandler - обработчик webhook от 1С
+func AddWebhookHandler(c *gin.Context) {
+    userID := getUserID(c)
+    
+    var req struct {
+        Action   string                 `json:"action"`
+        Data     map[string]interface{} `json:"data"`
+        Timestamp int64                 `json:"timestamp"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Логируем полученный webhook
+    log.Printf("📥 Webhook от 1С:")
+    log.Printf("   Action: %s", req.Action)
+    log.Printf("   User: %s", userID)
+    log.Printf("   Data: %v", req.Data)
+    log.Printf("   Timestamp: %d", req.Timestamp)
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Webhook принят",
     })
 }

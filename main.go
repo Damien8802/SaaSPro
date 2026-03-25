@@ -425,6 +425,11 @@ r.GET("/integration/1c", func(c *gin.Context) {
     })
 })
 
+// Webhook для 1С
+r.POST("/api/1c/webhook", handlers.AddWebhookHandler)
+
+
+
 // ========== PWA И PUSH УВЕДОМЛЕНИЯ ==========
 
 // PWA
@@ -829,5 +834,7 @@ r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
     fmt.Printf("============================================================\n")
 
     log.Printf("🚀 Сервер запущен на порту %s", port)
+// Запуск планировщика синхронизации с 1С
+handlers.StartSyncScheduler()
     r.Run(port)
 }
