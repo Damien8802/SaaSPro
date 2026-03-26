@@ -135,6 +135,8 @@ func main() {
 
     handlers.InitAuthHandler(cfg)
     handlers.InitNotifier(cfg)
+   // Инициализация email сервиса
+   handlers.InitEmailService(cfg)
 
     var yandexService *services.YandexAdapter
     var aiAgentService *services.AIAgentService
@@ -656,8 +658,10 @@ func main() {
         api.GET("/transcriptions", handlers.GetTranscriptions)
         api.GET("/transcription/:id", handlers.GetTranscriptionByID)
 
-        api.GET("/notifications/settings", handlers.GetNotificationSettings)
-        api.PUT("/notifications/settings", handlers.UpdateNotificationSettings)
+        api.GET("/notifications/settings", handlers.GetUserNotificationSettings)
+        api.PUT("/notifications/settings", handlers.UpdateUserNotificationSettings)
+        api.POST("/notifications/test", handlers.SendTestNotification)
+        
         api.GET("/crm/forecast", handlers.GetSalesForecast)
         api.GET("/crm/conversion", handlers.GetStageConversion)
         api.DELETE("/crm/activities/:id", handlers.DeleteActivity)

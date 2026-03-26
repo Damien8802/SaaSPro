@@ -18,7 +18,9 @@ type Config struct {
     Debug          bool
     TrustedProxies []string
     AllowedOrigins []string
+    SkipAuth       bool
 
+    // Database
     DBHost     string
     DBPort     string
     DBUser     string
@@ -26,31 +28,41 @@ type Config struct {
     DBName     string
     DBSSLMode  string
 
+    // JWT
     JWTSecret        string
     JWTRefreshSecret string
     JWTAccessExpiry  time.Duration
     JWTRefreshExpiry time.Duration
 
-    SkipAuth bool // если true – отключает проверку JWT (для разработки)
-
-    // API ключи для AI-агента
-    OpenRouterAPIKey string // ключ для OpenRouter
+    // AI
+    OpenRouterAPIKey string
     YandexFolderID   string
     YandexAPIKey     string
-    GigaChatClientID string // для бизнес-версии (Client ID)
-    GigaChatSecret   string // для бизнес-версии (Client Secret)
-    GigaChatAuthKey  string // прямой ключ авторизации (для физических лиц)
+    YandexSearchKey  string
+    YandexSearchUser string
+    YandexSearchEmail string
+    GigaChatClientID string
+    GigaChatSecret   string
+    GigaChatAuthKey  string
 
-    // SMTP для почтовых уведомлений
+    // SMTP
     SMTPHost     string
     SMTPPort     int
     SMTPUser     string
     SMTPPassword string
+    SMTPFrom     string
+    SMTPFromName string
     EmailFrom    string
+    SMTPTLS      bool
 
-    // Telegram для уведомлений
-    TelegramBotToken string // Токен бота (получаем у @BotFather)
-    TelegramChatID   string // ID чата или пользователя, куда отправлять уведомления (можно числом или строкой)
+    // Telegram
+    TelegramBotToken string
+    TelegramChatID   string
+
+    // VPN
+    VPNInterface string
+    VPNSubnet    string
+    VPNDNS       string
 }
 
 func Load() *Config {
@@ -64,6 +76,7 @@ func Load() *Config {
         Debug:          getEnvAsBool("DEBUG", true),
         TrustedProxies: []string{},
         AllowedOrigins: getEnvAsSlice("CORS_ALLOWED_ORIGINS", []string{"*"}),
+        SkipAuth:       getEnvAsBool("SKIP_AUTH", false),
 
         DBHost:     getEnv("DB_HOST", "localhost"),
         DBPort:     getEnv("DB_PORT", "5432"),
@@ -77,12 +90,13 @@ func Load() *Config {
         JWTAccessExpiry:  getEnvAsDuration("JWT_ACCESS_EXPIRY", 15*time.Minute),
         JWTRefreshExpiry: getEnvAsDuration("JWT_REFRESH_EXPIRY", 30*24*time.Hour),
 
-        SkipAuth: getEnvAsBool("SKIP_AUTH", false),
-
-        // AI ключи
+        // AI
         OpenRouterAPIKey: getEnv("OPENROUTER_API_KEY", ""),
         YandexFolderID:   getEnv("YANDEX_FOLDER_ID", ""),
         YandexAPIKey:     getEnv("YANDEX_API_KEY", ""),
+        YandexSearchKey:  getEnv("YANDEX_SEARCH_KEY", ""),
+        YandexSearchUser: getEnv("YANDEX_SEARCH_USER", ""),
+        YandexSearchEmail: getEnv("YANDEX_SEARCH_EMAIL", ""),
         GigaChatClientID: getEnv("GIGACHAT_CLIENT_ID", ""),
         GigaChatSecret:   getEnv("GIGACHAT_CLIENT_SECRET", ""),
         GigaChatAuthKey:  getEnv("GIGACHAT_AUTH_KEY", ""),
@@ -92,11 +106,19 @@ func Load() *Config {
         SMTPPort:     getEnvAsInt("SMTP_PORT", 587),
         SMTPUser:     getEnv("SMTP_USER", ""),
         SMTPPassword: getEnv("SMTP_PASSWORD", ""),
+        SMTPFrom:     getEnv("SMTP_FROM", ""),
+        SMTPFromName: getEnv("SMTP_FROM_NAME", "SaaSPro"),
         EmailFrom:    getEnv("EMAIL_FROM", ""),
+        SMTPTLS:      getEnvAsBool("SMTP_TLS", true),
 
         // Telegram
         TelegramBotToken: getEnv("TELEGRAM_BOT_TOKEN", ""),
         TelegramChatID:   getEnv("TELEGRAM_CHAT_ID", ""),
+
+        // VPN
+        VPNInterface: getEnv("VPN_INTERFACE", "wg0"),
+        VPNSubnet:    getEnv("VPN_SUBNET", "10.0.0.0/24"),
+        VPNDNS:       getEnv("VPN_DNS", "8.8.8.8"),
     }
 
     if proxies := getEnv("TRUSTED_PROXIES", ""); proxies != "" {
