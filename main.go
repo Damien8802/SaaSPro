@@ -733,6 +733,20 @@ func main() {
 
     r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+// Обработка запросов Chrome DevTools
+r.GET("/.well-known/appspecific/com.chrome.devtools.json", func(c *gin.Context) {
+    c.JSON(http.StatusOK, gin.H{
+        "app-specific": true,
+    })
+})
+
+r.NoRoute(func(c *gin.Context) {
+    c.HTML(http.StatusNotFound, "404.html", gin.H{
+        "Title":   "Страница не найдена - SaaSPro",
+        "Version": "3.0",
+    })
+})
+
     r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
