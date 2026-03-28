@@ -120,54 +120,64 @@
         }
         .status-active { background: #d1fae5; color: #065f46; }
         .status-away { background: #fef3c7; color: #92400e; }
+        
+        /* Кнопка Добавить участника - СЛЕВА */
         .btn-add {
             position: fixed;
             bottom: 30px;
-            right: 120px;
+            left: 30px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 12px 28px;
+            padding: 10px 20px;
             border-radius: 30px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             text-decoration: none;
             font-weight: 500;
+            font-size: 13px;
             transition: 0.3s;
             z-index: 1000;
             border: none;
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
         }
         .btn-add:hover {
             transform: translateY(-2px);
             background: linear-gradient(135deg, #764ba2, #667eea);
             color: white;
         }
+        
+        /* Кнопка Назад - СПРАВА */
         .btn-back {
             position: fixed;
             bottom: 30px;
             right: 30px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 12px 28px;
+            padding: 10px 20px;
             border-radius: 30px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             text-decoration: none;
             font-weight: 500;
+            font-size: 13px;
             transition: 0.3s;
             z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .btn-back:hover {
             transform: translateY(-2px);
             background: linear-gradient(135deg, #764ba2, #667eea);
             color: white;
         }
+        
         @media (max-width: 768px) {
             .hero h1 { font-size: 1.8rem; }
-            .btn-add, .btn-back { padding: 10px 20px; font-size: 12px; }
-            .btn-add { right: 100px; }
+            .btn-add, .btn-back { padding: 6px 12px; font-size: 11px; }
+            .btn-add { left: 15px; }
+            .btn-back { right: 15px; }
         }
     </style>
 </head>
@@ -179,20 +189,17 @@
             <a href="/teamsphere" class="nav-btn"><i class="fas fa-home"></i> Главная</a>
             <a href="/crm" class="nav-btn"><i class="fas fa-users"></i> CRM</a>
             <a href="/projects" class="nav-btn"><i class="fas fa-tasks"></i> Проекты</a>
-            <a href="/team/team" class="nav-btn"><i class="fas fa-user-friends"></i> Команда</a>
+            <a href="/team/team" class="nav-btn active"><i class="fas fa-user-friends"></i> Команда</a>
             <a href="/tasks" class="nav-btn"><i class="fas fa-check-square"></i> Задачи</a>
             <a href="/chat" class="nav-btn"><i class="fas fa-comments"></i> Чат</a>
-            <a href="/calendar" class="nav-btn"><i class="fas fa-calendar-alt"></i> Календарь</a>
-            <a href="/swagger/index.html" class="nav-btn"><i class="fas fa-book"></i> API</a>
+            <a href="/team-calendar" class="nav-btn"><i class="fas fa-calendar-alt"></i> Календарь</a>
+            <a href="/team-analytics" class="nav-btn"><i class="fas fa-chart-line"></i> Аналитика</a>
+            
         </div>
     </div>
 </nav>
 
-
-
 <div class="animated-bg"></div>
-
-
 
 <div class="hero">
     <h1><i class="fas fa-user-friends"></i> Команда TeamSphere</h1>
@@ -236,8 +243,15 @@
     </div>
 </div>
 
-<button class="btn-add" onclick="addTeamMember()"><i class="fas fa-plus"></i> Добавить участника</button>
-<a href="javascript:history.back()" class="btn-back"><i class="fas fa-arrow-left"></i> Назад</a>
+<!-- Кнопка Добавить участника - СЛЕВА -->
+<button class="btn-add" onclick="addTeamMember()">
+    <i class="fas fa-plus"></i> Добавить участника
+</button>
+
+<!-- Кнопка Назад - СПРАВА -->
+<a href="javascript:history.back()" class="btn-back">
+    <i class="fas fa-arrow-left"></i> Назад
+</a>
 
 <script>
     function addTeamMember() {
@@ -250,7 +264,3 @@
 </script>
 </body>
 </html>
-
-
-
-

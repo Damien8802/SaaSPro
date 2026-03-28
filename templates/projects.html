@@ -22,11 +22,65 @@
         .status-active { background: #d1fae5; color: #065f46; }
         .progress-bar-custom { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 4px; }
-        .btn-create, .btn-back { position: fixed; bottom: 30px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 28px; border-radius: 30px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 500; transition: 0.3s; z-index: 1000; border: none; cursor: pointer; }
-        .btn-create { right: 120px; }
-        .btn-back { right: 30px; }
-        .btn-create:hover, .btn-back:hover { transform: translateY(-2px); background: linear-gradient(135deg, #764ba2, #667eea); color: white; }
-        @media (max-width: 768px) { .hero h1 { font-size: 2rem; } .btn-create, .btn-back { padding: 10px 20px; } }
+        
+        /* Кнопка Создать проект - СЛЕВА */
+        .btn-create {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 13px;
+            transition: 0.3s;
+            z-index: 1000;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+        .btn-create:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            color: white;
+        }
+        
+        /* Кнопка Назад - СПРАВА */
+        .btn-back {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 13px;
+            transition: 0.3s;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .btn-create, .btn-back { padding: 6px 12px; font-size: 11px; }
+            .btn-create { left: 15px; }
+            .btn-back { right: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -36,19 +90,16 @@
         <div class="d-flex">
             <a href="/teamsphere" class="nav-btn"><i class="fas fa-home"></i> Главная</a>
             <a href="/crm" class="nav-btn"><i class="fas fa-users"></i> CRM</a>
-            <a href="/projects" class="nav-btn"><i class="fas fa-tasks"></i> Проекты</a>
+            <a href="/projects" class="nav-btn active"><i class="fas fa-tasks"></i> Проекты</a>
             <a href="/team/team" class="nav-btn"><i class="fas fa-user-friends"></i> Команда</a>
             <a href="/tasks" class="nav-btn"><i class="fas fa-check-square"></i> Задачи</a>
             <a href="/chat" class="nav-btn"><i class="fas fa-comments"></i> Чат</a>
-            <a href="/calendar" class="nav-btn"><i class="fas fa-calendar-alt"></i> Календарь</a>
-            <a href="/swagger/index.html" class="nav-btn"><i class="fas fa-book"></i> API</a>
+            <a href="/team-calendar" class="nav-btn"><i class="fas fa-calendar-alt"></i> Календарь</a>
+            <a href="/team-analytics" class="nav-btn"><i class="fas fa-chart-line"></i> Аналитика</a>
+            <a href="/api-docs" class="nav-btn"><i class="fas fa-book"></i> API</a>
         </div>
     </div>
 </nav>
-
-
-
-
 
 <div class="hero">
     <h1><i class="fas fa-tasks"></i> Управление проектами</h1>
@@ -65,13 +116,20 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="text-white">📋 Активные проекты</h3>
-        <button class="btn-create" onclick="createSampleProject()"><i class="fas fa-plus"></i> Создать проект</button>
     </div>
     
     <div id="projectsList" class="row"></div>
 </div>
 
-<button onclick="window.history.back()" class="btn-back"><i class="fas fa-arrow-left"></i> Назад</button>
+<!-- Кнопка Создать проект - СЛЕВА -->
+<button class="btn-create" onclick="createSampleProject()">
+    <i class="fas fa-plus"></i> Создать проект
+</button>
+
+<!-- Кнопка Назад - СПРАВА -->
+<a href="javascript:history.back()" class="btn-back">
+    <i class="fas fa-arrow-left"></i> Назад
+</a>
 
 <script>
     let projects = JSON.parse(localStorage.getItem('teamsphere_projects')) || [
@@ -134,7 +192,3 @@
 </script>
 </body>
 </html>
-
-
-
-

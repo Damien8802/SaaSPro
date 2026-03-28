@@ -408,7 +408,13 @@ func main() {
     r.POST("/api/bitrix/webhook", handlers.BitrixWebhookHandler)
 
  // TeamSphere - Bitrix24 Alternative
-    r.GET("/teamsphere", handlers.TeamSphereDashboard)
+   r.GET("/teamsphere", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "teamsphere_welcome.html", gin.H{
+        "title": "TeamSphere | Добро пожаловать",
+    })
+})
+
+r.GET("/teamsphere/dashboard", handlers.TeamSphereDashboard)
     r.GET("/integrations", handlers.IntegrationsHandler)
    // Projects page
    r.GET("/projects", handlers.ProjectsPageHandler)
@@ -731,7 +737,15 @@ func main() {
         adminAPI.POST("/users/delete", handlers.AdminDeleteUser)
     }
 
-    r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+   // API Documentation with back button
+r.GET("/api-docs", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "api_with_back.html", gin.H{
+        "title": "API Documentation - TeamSphere",
+    })
+})
+
+// Original Swagger (без кнопки)
+r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 // Обработка запросов Chrome DevTools
 r.GET("/.well-known/appspecific/com.chrome.devtools.json", func(c *gin.Context) {
@@ -815,12 +829,18 @@ handlers.StartTeamSphereScheduler() // Планировщик TeamSphere
 r.GET("/favicon.ico", func(c *gin.Context) {
     c.File("./static/favicon.ico")
 })  
-        // Team page
-    r.GET("/team/team", func(c *gin.Context) {
-        c.HTML(http.StatusOK, "team.html", gin.H{
-            "title": "Команда - TeamSphere",
-        })
+  r.GET("/team/team", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "team_page.html", gin.H{
+        "title": "Команда | TeamSphere",
     })
+})
+
+r.GET("/analytics-new", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "teamsphere_dashboard.html", gin.H{
+        "title": "Аналитика | TeamSphere",
+    })
+})
+
     
         // Tasks page
     r.GET("/tasks", func(c *gin.Context) {
@@ -842,8 +862,16 @@ r.GET("/team-calendar", func(c *gin.Context) {
     })
 })
     
+   // TeamSphere Analytics page
+r.GET("/team-analytics", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "analytics.html", gin.H{
+        "title": "Аналитика - TeamSphere",
+    })
+})
+
     r.Run(port)
 }
+
 
 
 
