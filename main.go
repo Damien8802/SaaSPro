@@ -869,6 +869,12 @@ r.GET("/team-analytics", func(c *gin.Context) {
     })
 })
 
+// TeamSphere Security page
+r.GET("/team-security", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "team_security.html", gin.H{
+        "title": "Безопасность | TeamSphere",
+    })
+})
     r.Run(port)
 }
 
