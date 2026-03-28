@@ -159,6 +159,7 @@ func main() {
     r.Use(middleware.Logger())
     r.SetTrustedProxies(cfg.TrustedProxies)
     r.Use(middleware.SetupCORS(cfg))
+    r.Use(middleware.TenantMiddleware(database.Pool))
 
     rateLimiter := middleware.NewRateLimiter(30, time.Minute)
     r.Use(middleware.SecurityMonitor())

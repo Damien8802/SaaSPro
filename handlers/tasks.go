@@ -13,7 +13,6 @@ import (
     
     "subscription-system/database"
 )
-
 // Получить проекты
 func GetProjects(c *gin.Context) {
     userID := getUserID(c)
