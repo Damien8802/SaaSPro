@@ -73,3 +73,7 @@ static/dist/
 *.cover
 *.coverprofile
 coverage.html
+
+# Logs
+*.log
+logs/
