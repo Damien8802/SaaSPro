@@ -1,0 +1,115 @@
+<!-- Навигационное меню -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard-improved">
+            <i class="bi bi-box-seam"></i> SaaSPro
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard-improved">
+                        <i class="bi bi-speedometer2"></i> Дашборд
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-box"></i> Склад
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/inventory">Товары</a></li>
+                        <li><a class="dropdown-item" href="/inventory?tab=orders">Заказы</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-truck"></i> Закупки
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/suppliers">Поставщики</a></li>
+                        <li><a class="dropdown-item" href="/purchases">Заказы</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/crm">
+                        <i class="bi bi-people"></i> CRM
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/projects">
+                        <i class="bi bi-projector"></i> Проекты
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-graph-up"></i> Аналитика
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/analytics">Отчеты</a></li>
+                        <li><a class="dropdown-item" href="/revenue-dashboard">Выручка</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings">
+                        <i class="bi bi-gear"></i> Настройки
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> Профиль
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/profile">Мой профиль</a></li>
+                        <li><a class="dropdown-item" href="/security">Безопасность</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="/logout">Выйти</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .navbar {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 0.8rem 1rem;
+    }
+    .navbar-brand {
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    .nav-link {
+        color: rgba(255,255,255,0.9) !important;
+        padding: 0.5rem 1rem !important;
+        margin: 0 0.2rem;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+    .nav-link:hover, .nav-link.active {
+        background-color: rgba(255,255,255,0.15);
+        color: white !important;
+    }
+    .dropdown-menu {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: none;
+        margin-top: 0.5rem;
+    }
+    .dropdown-item {
+        padding: 0.5rem 1.5rem;
+        transition: all 0.2s;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+        padding-left: 1.8rem;
+    }
+    .dropdown-item i {
+        margin-right: 0.5rem;
+        width: 1.2rem;
+    }
+</style>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Доверенные устройства | SaaSPro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        /* Навигационное меню */
+        .navbar {
+            background: white;
+            border-radius: 50px;
+            padding: 15px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-link:hover {
+            color: #667eea;
+            background: #f0f3ff;
+        }
+        
+        .nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        /* Хлебные крошки */
+        .breadcrumbs {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .breadcrumb-item.active {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .breadcrumb-item .number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .breadcrumb-item.active .number {
+            background: white;
+            color: #667eea;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 32px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .security-card {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .info-box {
+            background: #f0f3ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .info-icon {
+            font-size: 24px;
+            background: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+        }
+        .info-text h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .info-text p {
+            color: #666;
+        }
+        .device-list {
+            list-style: none;
+        }
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.3s;
+        }
+        .device-item:hover {
+            background: #f8fafc;
+        }
+        .device-item:last-child {
+            border-bottom: none;
+        }
+        .device-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .device-icon {
+            font-size: 32px;
+            width: 50px;
+            height: 50px;
+            background: #f0f3ff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+        }
+        .device-details h3 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+        .device-meta {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+        .device-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .device-status {
+            margin-top: 5px;
+        }
+        .badge-current {
+            background: #48bb78;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-expires {
+            background: #fbbf24;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .device-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-revoke {
+            background: white;
+            color: #f56565;
+            border: 2px solid #f56565;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-revoke:hover {
+            background: #f56565;
+            color: white;
+        }
+        .btn-settings {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-settings:hover {
+            background: #667eea;
+            color: white;
+        }
+        .activity-log {
+            margin-top: 30px;
+        }
+        .log-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .log-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .log-icon {
+            font-size: 20px;
+            color: #667eea;
+        }
+        .log-details {
+            flex: 1;
+        }
+        .log-details div {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .log-time {
+            color: #666;
+            font-size: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8fafc;
+            border-radius: 20px;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            color: #a0aec0;
+            margin-bottom: 15px;
+        }
+        .empty-state h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .empty-state p {
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .device-item {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .device-actions {
+                width: 100%;
+            }
+            .btn-revoke, .btn-settings {
+                flex: 1;
+                text-align: center;
+            }
+            .nav-links {
+                gap: 10px;
+            }
+            .nav-link {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Навигационное меню -->
+        <div class="navbar">
+            <div class="nav-links">
+                <a href="/" class="nav-link">🏠 Главная</a>
+                <a href="/pricing" class="nav-link">💰 Тарифы</a>
+                <a href="/ai" class="nav-link">🤖 AI чат</a>
+                <a href="/ai-settings" class="nav-link">⚙️ Настройки AI</a>
+                <a href="/dashboard-stats" class="nav-link">📊 Статистика</a>
+                <a href="/security" class="nav-link">🔐 Безопасность</a>
+                <a href="/trusted-devices" class="nav-link active">📱 Устройства</a>
+                <a href="/profile" class="nav-link">👤 Профиль</a>
+            </div>
+        </div>
+        
+        <!-- Хлебные крошки -->
+        <div class="breadcrumbs">
+            <div class="breadcrumb-item">
+                <span class="number">1</span>
+                <span>Безопасность</span>
+            </div>
+            <div class="breadcrumb-item active">
+                <span class="number">2</span>
+                <span>Доверенные устройства</span>
+            </div>
+            <div class="breadcrumb-item">
+                <span class="number">3</span>
+                <span>Настройки</span>
+            </div>
+        </div>
+        
+        <div class="header">
+            <h1>🔐 Доверенные устройства</h1>
+            <a href="/security" style="color: white;">← Назад к безопасности</a>
+        </div>
+        
+        <div class="security-card">
+            <div class="info-box">
+                <div class="info-icon">🔒</div>
+                <div class="info-text">
+                    <h3>Управление доступом к аккаунту</h3>
+                    <p>Здесь отображаются все устройства, которые имеют доступ к вашему аккаунту. Вы можете отозвать доступ для незнакомых устройств.</p>
+                </div>
+            </div>
+            
+            <!-- Текущее устройство -->
+            <div class="device-item">
+                <div class="device-info">
+                    <div class="device-icon">💻</div>
+                    <div class="device-details">
+                        <h3>Это устройство</h3>
+                        <div class="device-meta">
+                            <span>🌐 95.139.45.50</span>
+                            <span>📍 Москва</span>
+                            <span>🖥️ Windows / Chrome</span>
+                        </div>
+                        <div class="device-status">
+                            <span class="badge-current">Текущая сессия</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn-settings" onclick="showDetails('current')">ℹ️ Подробнее</button>
+                </div>
+            </div>
+            
+            <!-- Доверенные устройства -->
+            <div class="device-item">
+                <div class="device-info">
+                    <div class="device-icon">📱</div>
+                    <div class="device-details">
+                        <h3>iPhone 14 Pro</h3>
+                        <div class="device-meta">
+                            <span>🌐 85.249.23.12</span>
+                            <span>📍 Санкт-Петербург</span>
+                            <span>📱 iOS / Safari</span>
+                        </div>
+                        <div class="device-meta">
+                            <span>📅 Последний вход: 28.02.2026 14:23</span>
+                        </div>
+                        <div class="device-status">
+                            <span class="badge-expires">Доверено до 28.03.2026</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn-revoke" onclick="revokeDevice('iphone')">🚫 Отозвать</button>
+                </div>
+            </div>
+            
+            <div class="device-item">
+                <div class="device-info">
+                    <div class="device-icon">💻</div>
+                    <div class="device-details">
+                        <h3>MacBook Pro</h3>
+                        <div class="device-meta">
+                            <span>🌐 92.168.1.45</span>
+                            <span>📍 Москва</span>
+                            <span>🖥️ macOS / Safari</span>
+                        </div>
+                        <div class="device-meta">
+                            <span>📅 Последний вход: 27.02.2026 09:45</span>
+                        </div>
+                        <div class="device-status">
+                            <span class="badge-expires">Доверено до 27.03.2026</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn-revoke" onclick="revokeDevice('macbook')">🚫 Отозвать</button>
+                </div>
+            </div>
+            
+            <div class="device-item">
+                <div class="device-info">
+                    <div class="device-icon">📱</div>
+                    <div class="device-details">
+                        <h3>Samsung Galaxy S23</h3>
+                        <div class="device-meta">
+                            <span>🌐 77.45.89.12</span>
+                            <span>📍 Екатеринбург</span>
+                            <span>📱 Android / Chrome</span>
+                        </div>
+                        <div class="device-meta">
+                            <span>📅 Последний вход: 25.02.2026 18:30</span>
+                        </div>
+                        <div class="device-status">
+                            <span class="badge-expires">Доверено до 25.03.2026</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn-revoke" onclick="revokeDevice('samsung')">🚫 Отозвать</button>
+                </div>
+            </div>
+            
+            <!-- История активности -->
+            <div class="activity-log">
+                <div class="log-title">📋 Последние действия</div>
+                
+                <div class="log-item">
+                    <div class="log-icon">🔓</div>
+                    <div class="log-details">
+                        <div>Вход с нового устройства</div>
+                        <div>iPhone 14 Pro • Москва</div>
+                    </div>
+                    <div class="log-time">2 часа назад</div>
+                </div>
+                
+                <div class="log-item">
+                    <div class="log-icon">✅</div>
+                    <div class="log-details">
+                        <div>Устройство добавлено в доверенные</div>
+                        <div>MacBook Pro • Москва</div>
+                    </div>
+                    <div class="log-time">2 дня назад</div>
+                </div>
+                
+                <div class="log-item">
+                    <div class="log-icon">🔐</div>
+                    <div class="log-details">
+                        <div>Включена двухфакторная аутентификация</div>
+                    </div>
+                    <div class="log-time">5 дней назад</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Настройки уведомлений -->
+        <div class="security-card">
+            <h2 style="margin-bottom: 20px; color: #333;">⚙️ Настройки безопасности</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" checked>
+                    <span style="color: #333;">Уведомлять о входе с нового устройства</span>
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" checked>
+                    <span style="color: #333;">Автоматически добавлять доверенные устройства на 30 дней</span>
+                </label>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox">
+                    <span style="color: #333;">Требовать 2FA при каждом входе (не запоминать устройство)</span>
+                </label>
+            </div>
+            
+            <button class="btn-settings" style="margin-top: 20px; padding: 12px 30px;" onclick="saveSettings()">
+                💾 Сохранить настройки
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        function revokeDevice(deviceId) {
+            if (confirm('Вы уверены, что хотите отозвать доступ для этого устройства? При следующем входе потребуется подтверждение 2FA.')) {
+                alert(`✅ Доступ для устройства отозван`);
+                // Здесь будет API вызов
+            }
+        }
+        
+        function showDetails(deviceId) {
+            alert('Информация о текущем устройстве:\nIP: 95.139.45.50\nБраузер: Chrome 122\nОС: Windows 11\nПоследняя активность: сейчас');
+        }
+        
+        function saveSettings() {
+            alert('✅ Настройки безопасности сохранены');
+        }
+    </script>
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    z-index: 1000;
+    cursor: pointer;
+}
+.back-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+}
+</style>
+<a href="javascript:history.back()" class="back-button" title="Go Back">
+    <i class="fas fa-arrow-left fa-lg"></i>
+</a>
+</body>
+</html>
+

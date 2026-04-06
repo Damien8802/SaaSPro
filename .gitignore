@@ -1,0 +1,38 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cert
+secrets*
+*_secret.go
+
+# Backups
+*.backup
+*.bak
+*~
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+subscription-system
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Test files
+tests/test_search.go
+*_test.go

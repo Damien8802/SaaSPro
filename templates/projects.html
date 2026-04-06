@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проекты | TeamSphere</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; font-family: "Segoe UI", system-ui; }
+        .navbar { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 28px; font-weight: bold; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-btn { display: inline-block; padding: 8px 20px; margin: 0 5px; border-radius: 30px; text-decoration: none; font-weight: 500; transition: 0.3s; color: #4a5568; }
+        .nav-btn:hover, .nav-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; transform: translateY(-2px); }
+        .hero { text-align: center; padding: 60px 20px; color: white; }
+        .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 20px; }
+        .stat-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+        .stat-number { font-size: 2.5rem; font-weight: 800; color: #fff; }
+        .project-card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 25px; transition: 0.3s; border: 1px solid #e2e8f0; }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .project-status { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .progress-bar-custom { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 4px; }
+        
+        /* Кнопка Создать проект - СЛЕВА */
+        .btn-create {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 13px;
+            transition: 0.3s;
+            z-index: 1000;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+        .btn-create:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            color: white;
+        }
+        
+        /* Кнопка Назад - СПРАВА */
+        .btn-back {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 13px;
+            transition: 0.3s;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .btn-create, .btn-back { padding: 6px 12px; font-size: 11px; }
+            .btn-create { left: 15px; }
+            .btn-back { right: 15px; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="/teamsphere"><i class="fas fa-globe me-2"></i>TeamSphere</a>
+        <div class="d-flex">
+            <a href="/teamsphere" class="nav-btn"><i class="fas fa-home"></i> Главная</a>
+            <a href="/crm" class="nav-btn"><i class="fas fa-users"></i> CRM</a>
+            <a href="/projects" class="nav-btn active"><i class="fas fa-tasks"></i> Проекты</a>
+            <a href="/team/team" class="nav-btn"><i class="fas fa-user-friends"></i> Команда</a>
+            <a href="/tasks" class="nav-btn"><i class="fas fa-check-square"></i> Задачи</a>
+            <a href="/chat" class="nav-btn"><i class="fas fa-comments"></i> Чат</a>
+            <a href="/team-calendar" class="nav-btn"><i class="fas fa-calendar-alt"></i> Календарь</a>
+            <a href="/swagger/index.html" class="nav-btn"><i class="fas fa-book"></i> API</a>
+        </div>
+    </div>
+</nav>
+
+<div class="hero">
+    <h1><i class="fas fa-tasks"></i> Управление проектами</h1>
+    <p>Планируйте, отслеживайте и управляйте проектами вашей команды</p>
+</div>
+
+<div class="container">
+    <div class="row stats-section mb-4">
+        <div class="col-md-3"><div class="stat-card"><div class="stat-number" id="totalProjects">0</div><div class="stat-label">Всего проектов</div></div></div>
+        <div class="col-md-3"><div class="stat-card"><div class="stat-number" id="activeProjects">0</div><div class="stat-label">Активных</div></div></div>
+        <div class="col-md-3"><div class="stat-card"><div class="stat-number" id="completedProjects">0</div><div class="stat-label">Завершено</div></div></div>
+        <div class="col-md-3"><div class="stat-card"><div class="stat-number" id="teamMembers">0</div><div class="stat-label">Участников</div></div></div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-white">📋 Активные проекты</h3>
+    </div>
+    
+    <div id="projectsList" class="row"></div>
+</div>
+
+<!-- Кнопка Создать проект - СЛЕВА -->
+<button class="btn-create" onclick="createSampleProject()">
+    <i class="fas fa-plus"></i> Создать проект
+</button>
+
+<!-- Кнопка Назад - СПРАВА -->
+<a href="javascript:history.back()" class="btn-back">
+    <i class="fas fa-arrow-left"></i> Назад
+</a>
+
+<script>
+    let projects = JSON.parse(localStorage.getItem('teamsphere_projects')) || [
+        { id: 1, name: "Разработка CRM", description: "Полнофункциональная CRM", status: "active", progress: 75, deadline: "2024-12-31", members: 4 },
+        { id: 2, name: "Интеграция с 1С", description: "Синхронизация данных", status: "active", progress: 45, deadline: "2024-11-15", members: 2 },
+        { id: 3, name: "AI Ассистент", description: "Искусственный интеллект", status: "completed", progress: 100, deadline: "2024-09-30", members: 5 }
+    ];
+    
+    function saveProjects() { localStorage.setItem('teamsphere_projects', JSON.stringify(projects)); }
+    
+    function getStatusBadge(status) {
+        if(status === 'active') return '<span class="project-status status-active"><i class="fas fa-play me-1"></i>Активный</span>';
+        if(status === 'completed') return '<span class="project-status status-active" style="background:#e0e7ff;color:#3730a3;"><i class="fas fa-check me-1"></i>Завершен</span>';
+        return '<span class="project-status status-active" style="background:#fef3c7;color:#92400e;"><i class="fas fa-clock me-1"></i>Планирование</span>';
+    }
+    
+    function renderProjects() {
+        const container = document.getElementById('projectsList');
+        if (!projects.length) { container.innerHTML = '<div class="col-12 text-center text-white py-5"><i class="fas fa-folder-open fa-3x mb-3"></i><p>Нет проектов. Создайте первый проект!</p></div>'; return; }
+        
+        container.innerHTML = '<div class="row">' + projects.map(p => `
+            <div class="col-md-4">
+                <div class="project-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">${escapeHtml(p.name)}</h5>
+                        ${getStatusBadge(p.status)}
+                    </div>
+                    <p class="text-muted small">${escapeHtml(p.description)}</p>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1"><span>Прогресс</span><span>${p.progress}%</span></div>
+                        <div class="progress-bar-custom"><div class="progress-fill" style="width: ${p.progress}%"></div></div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span><i class="fas fa-calendar-alt"></i> ${p.deadline ? new Date(p.deadline).toLocaleDateString('ru-RU') : 'Не указана'}</span>
+                        <span><i class="fas fa-users"></i> ${p.members} участников</span>
+                    </div>
+                </div>
+            </div>
+        `).join('') + '</div>';
+        
+        document.getElementById('totalProjects').textContent = projects.length;
+        document.getElementById('activeProjects').textContent = projects.filter(p => p.status === 'active').length;
+        document.getElementById('completedProjects').textContent = projects.filter(p => p.status === 'completed').length;
+        document.getElementById('teamMembers').textContent = projects.reduce((s, p) => s + p.members, 0);
+    }
+    
+    function escapeHtml(text) { if (!text) return ''; return text.replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
+    
+    function createSampleProject() {
+        const name = prompt("Введите название проекта:");
+        if (!name) return;
+        const newProject = { id: Date.now(), name: name, description: "Новый проект", status: "planning", progress: 0, deadline: "", members: 1 };
+        projects.unshift(newProject);
+        saveProjects();
+        renderProjects();
+        alert('✅ Проект "' + name + '" создан!');
+    }
+    
+    renderProjects();
+</script>
+</body>
+</html>
+

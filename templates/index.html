@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaSPro - Платформа управления подписками</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .content-wrapper {
+            background: white;
+            border-radius: 40px 40px 0 0;
+            margin-top: 40px;
+            padding: 40px 0 100px 0;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, #ffd89b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        .auth-buttons a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+        }
+        .login {
+            background: rgba(255,255,255,0.2);
+        }
+        .register {
+            background: white;
+            color: #667eea !important;
+            font-weight: 600;
+        }
+        
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            align-items: center;
+        }
+        .hero-content h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .hero-content p {
+            font-size: 18px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        .hero-image {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            height: 300px;
+        }
+        .hero-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.15);
+        }
+        .stat-number {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .features {
+            max-width: 1200px;
+            margin: 0 auto 80px;
+            padding: 0 20px;
+            text-align: center;
+        }
+        .features h2 {
+            font-size: 42px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .features > p {
+            color: #666;
+            margin-bottom: 50px;
+            font-size: 18px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 24px;
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        .feature-card p {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        .products-section {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .products-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .products-header h2 {
+            font-size: 42px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .products-header p {
+            color: #666;
+            font-size: 18px;
+        }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        .product-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            padding: 35px 25px;
+            color: white;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .product-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .product-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .product-desc {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        .product-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .product-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .pricing-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .pricing-header h2 {
+            font-size: 42px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .pricing-header p {
+            color: #666;
+            font-size: 18px;
+        }
+        .pricing-row {
+            display: grid;
+            grid-template-columns: 3fr 1.3fr;
+            gap: 30px;
+            align-items: start;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .pricing-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 20px;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            transition: all 0.3s;
+        }
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .popular-tag {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .price {
+            font-size: 42px;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .price small {
+            font-size: 14px;
+            color: #999;
+        }
+        .features-list {
+            list-style: none;
+            margin: 25px 0;
+        }
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .features-list li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: 600;
+        }
+        .btn {
+            display: block;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            text-align: center;
+            font-weight: 600;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .ai-chat-side {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .chat-header h3 {
+            font-size: 22px;
+            color: #667eea;
+        }
+        .online-badge {
+            background: #4caf50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+        }
+        .chat-container {
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 15px;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .message {
+            max-width: 85%;
+            padding: 12px 15px;
+            border-radius: 18px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .user-message {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-radius: 18px 18px 4px 18px;
+        }
+        .bot-message {
+            background: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-radius: 18px 18px 18px 4px;
+        }
+        .typing {
+            color: #999;
+            font-style: italic;
+            padding: 10px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .typing-dots {
+            display: inline-flex;
+            gap: 3px;
+        }
+        .typing-dots span {
+            width: 4px;
+            height: 4px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typingDot 1.4s infinite;
+        }
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typingDot {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 14px;
+        }
+        .input-area input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .input-area button {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .input-area button:hover {
+            transform: scale(1.02);
+        }
+        
+        .footer {
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            padding: 60px 20px 20px;
+            margin-top: 0;
+        }
+        .footer-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 40px;
+        }
+        .footer-col h4 {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .footer-col a, .footer-col p {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            line-height: 2;
+            display: block;
+        }
+        .footer-col a:hover {
+            color: white;
+        }
+        .copyright {
+            text-align: center;
+            padding-top: 40px;
+            color: rgba(255,255,255,0.6);
+            border-top: 1px solid rgba(255,255,255,0.2);
+            max-width: 1200px;
+            margin: 40px auto 0;
+        }
+        
+        @media (max-width: 1000px) {
+            .pricing-row { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+            .hero { grid-template-columns: 1fr; text-align: center; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .features-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .pricing-grid { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .navbar { flex-direction: column; }
+            .nav-links { justify-content: center; }
+            .hero h1 { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- НАВИГАЦИЯ -->
+    <nav class="navbar">
+        <div class="logo">✨ SaaSPro</div>
+        <div class="nav-links">
+            <a href="/">Главная</a>
+            <a href="/dashboard-improved">Дашборд</a>
+            <a href="/vpn">VPN</a>
+            <a href="/identity-hub">🔐 Identity Hub</a>
+            <a href="/ai">AI Чат</a>
+            <a href="/crm">CRM</a>
+            <a href="/analytics">Аналитика</a>
+            <a href="/pricing">Тарифы</a>
+            <a href="/partner">Партнеры</a>
+        </div>
+        <div class="auth-buttons">
+            <a href="/login" class="login">Вход</a>
+            <a href="/register" class="register">Регистрация</a>
+        </div>
+    </nav>
+
+    <!-- ГЕРОЙ С ФОТО -->
+    <div class="hero">
+        <div class="hero-content">
+            <h1>Управляйте подписками легко</h1>
+            <p>Мощная платформа для управления SaaS подписками, платежами, аналитикой и автоматизацией. Все в одном месте.</p>
+        </div>
+        <div class="hero-image">
+            <img src="/static/img/tablet-20260226173920.svg" alt="Dashboard Preview">
+        </div>
+    </div>
+
+    <!-- СТАТИСТИКА -->
+    <div class="stats">
+        <div class="stat-card"><div class="stat-number">10+</div><div class="stat-label">Активных пользователей</div></div>
+        <div class="stat-card"><div class="stat-number">500+</div><div class="stat-label">Обработано платежей</div></div>
+        <div class="stat-card"><div class="stat-number">99.9%</div><div class="stat-label">Аптайм системы</div></div>
+        <div class="stat-card"><div class="stat-number">24/7</div><div class="stat-label">Поддержка</div></div>
+    </div>
+
+    <!-- БЕЛЫЙ КОНТЕЙНЕР -->
+    <div class="content-wrapper">
+        <!-- ЧЕМ МЫ ЗАНИМАЕМСЯ -->
+        <div class="features">
+            <h2>⚡ Чем занимается SaaSPro</h2>
+            <p>Мы создаём экосистему для автоматизации вашего бизнеса</p>
+            <div class="features-grid">
+                <div class="feature-card"><div class="feature-icon">💳</div><h3>Приём платежей</h3><p>Поддержка всех популярных способов оплаты: карты РФ/МИР, криптовалюты, СБП, Telegram Stars</p></div>
+                <div class="feature-card"><div class="feature-icon">📊</div><h3>Аналитика и отчеты</h3><p>Детальные графики, прогнозирование доходов, когортный анализ, LTV клиентов</p></div>
+                <div class="feature-card"><div class="feature-icon">🤖</div><h3>AI-ассистенты</h3><p>Умные помощники на основе YandexGPT. Отвечают на вопросы, помогают клиентам</p></div>
+                <div class="feature-card"><div class="feature-icon">🔒</div><h3>VPN сервис</h3><p>Безопасный доступ из любой точки мира. Шифрование WireGuard, высокая скорость</p></div>
+                <div class="feature-card"><div class="feature-icon">🔗</div><h3>Интеграции</h3><p>1С, Битрикс24, Telegram, WhatsApp, Google Sheets, amoCRM и любые другие API</p></div>
+                <div class="feature-card"><div class="feature-icon">📋</div><h3>CRM система</h3><p>Управление клиентами, сделками, воронка продаж, история взаимодействий</p></div>
+            </div>
+        </div>
+
+        <!-- ПОЧЕМУ МЫ ЛУЧШЕ -->
+        <div class="features" style="margin-top: 40px;">
+            <h2>🏆 Почему SaaSPro лучше конкурентов</h2>
+            <p>Мы создали платформу, которая решает реальные задачи бизнеса</p>
+            <div class="features-grid">
+                <div class="feature-card"><div class="feature-icon">⚡</div><h3>В 10 раз быстрее</h3><p>Оптимизированная архитектура и кэширование обеспечивают молниеносную работу</p></div>
+                <div class="feature-card"><div class="feature-icon">🔒</div><h3>Безопасность данных</h3><p>Шифрование всех данных, двухфакторная аутентификация, защита от DDoS</p></div>
+                <div class="feature-card"><div class="feature-icon">💸</div><h3>Ниже комиссии</h3><p>Комиссия всего 1% вместо 3-5% у конкурентов. Экономия до 40% в месяц</p></div>
+                <div class="feature-card"><div class="feature-icon">🎯</div><h3>Персональная поддержка</h3><p>24/7 поддержка в Telegram, WhatsApp, email. Среднее время ответа — 2 минуты</p></div>
+                <div class="feature-card"><div class="feature-icon">📈</div><h3>Безлимитная аналитика</h3><p>Неограниченное количество отчетов, дашбордов и экспорта данных</p></div>
+                <div class="feature-card"><div class="feature-icon">🔄</div><h3>Автоматизация под ключ</h3><p>Настроим любые интеграции, скрипты, вебхуки. Полная автоматизация ваших процессов</p></div>
+            </div>
+        </div>
+
+        <!-- ПРОДУКТЫ -->
+        <div class="products-section">
+            <div class="products-header"><h2>🚀 Наши продукты</h2><p>Готовые решения для вашего бизнеса</p></div>
+            <div class="products-grid">
+                <div class="product-card" onclick="location.href='/vpn'"><div class="product-icon">🔒</div><div class="product-title">VPN Сервис</div><div class="product-desc">Безопасный доступ из любой точки мира. Высокая скорость, шифрование WireGuard. 3 дня бесплатно.</div><div class="product-btn">Купить VPN →</div></div>
+                <div class="product-card" onclick="location.href='/ai'"><div class="product-icon">🤖</div><div class="product-title">AI Чат</div><div class="product-desc">Интеллектуальный помощник. Отвечает на вопросы, помогает с заказами.</div><div class="product-btn">Попробовать →</div></div>
+            </div>
+        </div>
+
+        <!-- ТАРИФЫ И AI ЧАТ -->
+        <div class="pricing-section">
+            <div class="pricing-header"><h2>💰 Выберите свой тариф</h2><p>Гибкие планы для любого бизнеса</p></div>
+            <div class="pricing-row">
+                <div class="pricing-grid">
+                    <div class="pricing-card"><h3>Базовый</h3><div class="price">₽990 <small>/мес</small></div><ul class="features-list"><li>До 100 пользователей</li><li>Базовая аналитика</li><li>Email поддержка</li><li>5 интеграций</li></ul><button class="btn" onclick="location.href='/payment?plan=basic&price=990'">Выбрать</button></div>
+                    <div class="pricing-card"><div class="popular-tag">🔥 ПОПУЛЯРНЫЙ</div><h3>Профессиональный</h3><div class="price">₽2 990 <small>/мес</small></div><ul class="features-list"><li>До 1000 пользователей</li><li>Продвинутая аналитика</li><li>Приоритетная поддержка</li><li>20 интеграций</li><li>CRM система</li></ul><button class="btn" onclick="location.href='/payment?plan=pro&price=2990'">Выбрать</button></div>
+                    <div class="pricing-card"><h3>Предприятие</h3><div class="price">₽9 990 <small>/мес</small></div><ul class="features-list"><li>Неограниченно пользователей</li><li>Полная аналитика + AI</li><li>24/7 персональная поддержка</li><li>Все интеграции</li><li>White-label решение</li></ul><button class="btn" onclick="location.href='/contact'">Связаться</button></div>
+                </div>
+                
+                <!-- AI КОНСУЛЬТАНТ -->
+                <div class="ai-chat-side">
+                    <div class="chat-header"><h3>🤖 AI Консультант</h3><span class="online-badge">Online 24/7</span></div>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Расскажите, какой проект хотите заказать — я соберу все детали и передам разработчику</p>
+                    <div class="chat-container">
+                        <div class="messages" id="messages"></div>
+                        <div id="typingIndicator" class="typing" style="display: none;">
+                            AI печатает
+                            <div class="typing-dots"><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="input-area">
+                            <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                            <button onclick="sendMessage()">Отправить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ФУТЕР -->
+    <div class="footer">
+        <div class="footer-grid">
+            <div class="footer-col"><h4>SaaSPro</h4><p>Платформа для управления подписками нового поколения. Эффективно, безопасно, масштабируемо.</p></div>
+            <div class="footer-col"><h4>Продукты</h4><a href="/vpn">VPN Сервис</a><a href="/ai">AI Чат</a></div>
+            <div class="footer-col"><h4>Ресурсы</h4><a href="/docs">Документация</a><a href="/support">Поддержка</a><a href="/pricing">Тарифы</a></div>
+            <div class="footer-col"><h4>Контакты</h4><p>📧 support@saaspro.ru</p><p>📞 +7 (999) 123-45-67</p></div>
+        </div>
+        <div class="copyright">© 2024 SaaSPro. Все права защищены.</div>
+    </div>
+
+    <script>
+        // ========== AI Консультант с эффектом печатания и автоскроллом ==========
+        let sessionId = localStorage.getItem('consultantSessionId') || '';
+        let messagesDiv = document.getElementById('messages');
+        let typingDiv = document.getElementById('typingIndicator');
+        let isTyping = false;
+        
+        // Функция прокрутки вниз
+        function scrollToBottom() {
+            if (messagesDiv) {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+        
+        async function typeMessage(text, element) {
+            return new Promise((resolve) => {
+                let i = 0;
+                element.textContent = '';
+                
+                function type() {
+                    if (i < text.length) {
+                        element.textContent += text.charAt(i);
+                        i++;
+                        scrollToBottom();
+                        setTimeout(type, 20 + Math.random() * 15);
+                    } else {
+                        resolve();
+                    }
+                }
+                
+                type();
+            });
+        }
+        
+        function addMessage(text, isUser) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            if (!isUser) {
+                msgDiv.textContent = '';
+                messagesDiv.appendChild(msgDiv);
+                scrollToBottom();
+                return { element: msgDiv, text: text };
+            } else {
+                msgDiv.textContent = text;
+                messagesDiv.appendChild(msgDiv);
+                scrollToBottom();
+                return null;
+            }
+        }
+        
+        function showTyping() {
+            typingDiv.style.display = 'block';
+            scrollToBottom();
+        }
+        
+        function hideTyping() {
+            typingDiv.style.display = 'none';
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || isTyping) return;
+            
+            addMessage(message, true);
+            input.value = '';
+            showTyping();
+            
+            try {
+                const response = await fetch('/api/ai/consultant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId, message: message })
+                });
+                const data = await response.json();
+                
+                if (data.session_id) {
+                    sessionId = data.session_id;
+                    localStorage.setItem('consultantSessionId', sessionId);
+                }
+                
+                hideTyping();
+                
+                const msgPromise = addMessage('', false);
+                if (msgPromise) {
+                    await typeMessage(data.message, msgPromise.element);
+                }
+                
+                if (data.completed) {
+                    setTimeout(() => {
+                        if (confirm('Хотите оформить ещё одну заявку?')) {
+                            localStorage.removeItem('consultantSessionId');
+                            sessionId = '';
+                            const resetMsg = addMessage('', false);
+                            if (resetMsg) {
+                                typeMessage('Здравствуйте! Я помогу вам оформить заявку. Расскажите, что хотите создать?', resetMsg.element);
+                            }
+                        }
+                    }, 1000);
+                }
+            } catch (error) {
+                hideTyping();
+                const errorMsg = addMessage('', false);
+                if (errorMsg) {
+                    typeMessage('Извините, произошла ошибка. Попробуйте позже.', errorMsg.element);
+                }
+            }
+        }
+        
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        // Наблюдатель за изменениями для автоскролла
+        const observer = new MutationObserver(function(mutations) {
+            scrollToBottom();
+        });
+        if (messagesDiv) {
+            observer.observe(messagesDiv, { childList: true, subtree: true });
+        }
+        
+        if (!sessionId) {
+            setTimeout(() => {
+                const welcomeMsg = addMessage('', false);
+                if (welcomeMsg) {
+                    typeMessage('Здравствуйте! Я помогу вам оформить заявку на индивидуальную разработку. Расскажите, что именно вы хотите создать?', welcomeMsg.element);
+                }
+            }, 500);
+        } else {
+            setTimeout(() => {
+                const continueMsg = addMessage('', false);
+                if (continueMsg) {
+                    typeMessage('Продолжим оформление заявки? Напишите ваш ответ.', continueMsg.element);
+                }
+            }, 500);
+        }
+    </script>
+<!-- PWA регистрация -->
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => {
+            console.log('Service Worker registered:', reg);
+        })
+        .catch(err => {
+            console.error('Service Worker registration failed:', err);
+        });
+}
+
+// Запрос разрешения на push-уведомления
+async function subscribeToPush() {
+    if (!('PushManager' in window)) {
+        console.log('Push messaging is not supported');
+        return;
+    }
+    
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
+        });
+        
+        await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(subscription)
+        });
+        
+        console.log('Push subscription successful');
+    } catch (err) {
+        console.error('Push subscription failed:', err);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// Предлагаем подписаться при заходе на сайт
+setTimeout(() => {
+    if (confirm('Хотите получать push-уведомления?')) {
+        subscribeToPush();
+    }
+}, 5000);
+</script>
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    z-index: 1000;
+    cursor: pointer;
+}
+.back-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+}
+</style>
+<a href="javascript:history.back()" class="back-button" title="Go Back">
+    <i class="fas fa-arrow-left fa-lg"></i>
+</a>
+</body>
+</html>
+
+

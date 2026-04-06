@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки AI | SaaSPro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* Навигационное меню */
+        .navbar {
+            background: white;
+            border-radius: 50px;
+            padding: 15px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-link:hover {
+            color: #667eea;
+            background: #f0f3ff;
+        }
+        
+        .nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        /* Хлебные крошки */
+        .breadcrumbs {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .breadcrumb-item.active {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .breadcrumb-item .number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .breadcrumb-item.active .number {
+            background: white;
+            color: #667eea;
+        }
+        
+        .ai-card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .section {
+            margin-bottom: 35px;
+        }
+        
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .model-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .model-card {
+            background: #f8f9fa;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .model-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.2);
+        }
+        
+        .model-card.selected {
+            border-color: #667eea;
+            background: #ebf4ff;
+        }
+        
+        .model-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .model-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .model-desc {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .slider-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: #666;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(102,126,234,0.3);
+            transition: transform 0.2s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preset-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .preset-btn:hover {
+            background: #ebf4ff;
+            border-color: #667eea;
+        }
+        
+        .preset-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            resize: vertical;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .history-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.3s;
+            border-radius: 10px;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-item:hover {
+            background: #ebf4ff;
+        }
+        
+        .history-question {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .history-meta {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+        
+        .back-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .model-selector {
+                grid-template-columns: 1fr;
+            }
+            .navbar {
+                padding: 10px;
+            }
+            .nav-links {
+                gap: 10px;
+            }
+            .nav-link {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Навигационное меню -->
+        <div class="navbar">
+            <div class="nav-links">
+                <a href="/" class="nav-link">🏠 Главная</a>
+                <a href="/pricing" class="nav-link">💰 Тарифы</a>
+                <a href="/ai" class="nav-link">🤖 AI чат</a>
+                <a href="/ai-settings" class="nav-link active">⚙️ Настройки AI</a>
+                <a href="/dashboard-stats" class="nav-link">📊 Статистика</a>
+                <a href="/security" class="nav-link">🔐 Безопасность</a>
+                <a href="/trusted-devices" class="nav-link">📱 Устройства</a>
+                <a href="/profile" class="nav-link">👤 Профиль</a>
+            </div>
+        </div>
+        
+        <!-- Хлебные крошки -->
+        <div class="breadcrumbs">
+            <div class="breadcrumb-item">
+                <span class="number">1</span>
+                <span>AI чат</span>
+            </div>
+            <div class="breadcrumb-item active">
+                <span class="number">2</span>
+                <span>Настройки AI</span>
+            </div>
+            <div class="breadcrumb-item">
+                <span class="number">3</span>
+                <span>Статистика</span>
+            </div>
+        </div>
+        
+        <div class="ai-card">
+            <h1>🤖 Настройки AI</h1>
+            <div class="subtitle">Управляйте параметрами искусственного интеллекта под свои задачи</div>
+            
+            <!-- Статистика использования -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="usedQuota">47</div>
+                    <div class="stat-label">Использовано сегодня</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalQuota">100</div>
+                    <div class="stat-label">Дневной лимит</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="resetTime">03:00</div>
+                    <div class="stat-label">Сброс квоты</div>
+                </div>
+            </div>
+            
+            <!-- Прогресс-бар -->
+            <div style="height: 12px; background: #e2e8f0; border-radius: 6px; margin-bottom: 30px;">
+                <div style="height: 100%; width: 47%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 6px; transition: width 0.3s;"></div>
+            </div>
+            
+            <!-- Выбор модели -->
+            <div class="section">
+                <h2>🧠 Модель AI</h2>
+                <div class="model-selector">
+                    <div class="model-card selected" onclick="selectModel('basic')">
+                        <div class="model-icon">📝</div>
+                        <div class="model-name">Базовая</div>
+                        <div class="model-desc">Быстрые ответы, экономия токенов</div>
+                    </div>
+                    <div class="model-card" onclick="selectModel('advanced')">
+                        <div class="model-icon">🚀</div>
+                        <div class="model-name">Продвинутая</div>
+                        <div class="model-desc">Детальные ответы, глубокий анализ</div>
+                    </div>
+                    <div class="model-card" onclick="selectModel('expert')">
+                        <div class="model-icon">⭐</div>
+                        <div class="model-name">Эксперт</div>
+                        <div class="model-desc">Максимальное качество, сложные задачи</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Креативность (температура) -->
+            <div class="section">
+                <h2>🎨 Креативность</h2>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>🎯 Точные</span>
+                        <span id="tempValue" style="font-weight: 600; color: #667eea;">0.7</span>
+                        <span>🎨 Креативные</span>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.1" value="0.7" class="slider" id="temperature" oninput="updateTemp(this.value)">
+                    
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="setTemperature(0.2)">🎯 Точный</button>
+                        <button class="preset-btn active" onclick="setTemperature(0.7)">⚖️ Сбаланс.</button>
+                        <button class="preset-btn" onclick="setTemperature(1.0)">🎨 Креативный</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Системный промпт -->
+            <div class="section">
+                <h2>📋 Системный промпт</h2>
+                <textarea id="systemPrompt" rows="4" placeholder="Введите инструкции для AI...">Ты — полезный ассистент. Отвечай на русском языке, будь вежливым и точным.</textarea>
+                <p style="font-size: 12px; color: #666; margin-top: 8px;">Эта инструкция будет передаваться AI перед каждым запросом</p>
+            </div>
+            
+            <!-- История диалогов -->
+            <div class="section">
+                <h2>📜 История диалогов</h2>
+                <div class="history-list" id="historyList">
+                    <div class="history-item" onclick="loadHistory(1)">
+                        <div class="history-question">Как выбрать тариф?</div>
+                        <div class="history-meta">
+                            <span>🤖 AI</span>
+                            <span>📅 01.03.2026</span>
+                            <span>⚡ 23 токена</span>
+                        </div>
+                    </div>
+                    <div class="history-item" onclick="loadHistory(2)">
+                        <div class="history-question">Что такое AI-квоты?</div>
+                        <div class="history-meta">
+                            <span>🤖 AI</span>
+                            <span>📅 01.03.2026</span>
+                            <span>⚡ 45 токенов</span>
+                        </div>
+                    </div>
+                    <div class="history-item" onclick="loadHistory(3)">
+                        <div class="history-question">Какие способы оплаты?</div>
+                        <div class="history-meta">
+                            <span>🤖 AI</span>
+                            <span>📅 28.02.2026</span>
+                            <span>⚡ 31 токен</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Кнопка сохранения -->
+            <button class="btn" onclick="saveSettings()">💾 Сохранить настройки</button>
+        </div>
+        <a href="/ai" class="back-link">← Вернуться к AI чату</a>
+    </div>
+    
+    <script>
+        let selectedModel = 'basic';
+        let temperature = 0.7;
+        
+        function selectModel(model) {
+            selectedModel = model;
+            document.querySelectorAll('.model-card').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`.model-card[onclick*="${model}"]`).classList.add('selected');
+        }
+        
+        function updateTemp(val) {
+            temperature = val;
+            document.getElementById('tempValue').textContent = val;
+            
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            if (val <= 0.3) document.querySelector('.preset-btn[onclick*="0.2"]').classList.add('active');
+            else if (val >= 0.8) document.querySelector('.preset-btn[onclick*="1.0"]').classList.add('active');
+            else document.querySelector('.preset-btn[onclick*="0.7"]').classList.add('active');
+        }
+        
+        function setTemperature(val) {
+            document.getElementById('temperature').value = val;
+            updateTemp(val);
+        }
+        
+        function saveSettings() {
+            const systemPrompt = document.getElementById('systemPrompt').value;
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('ai_model', selectedModel);
+            localStorage.setItem('ai_temperature', temperature);
+            localStorage.setItem('ai_system_prompt', systemPrompt);
+            
+            alert('✅ Настройки сохранены');
+        }
+        
+        function loadHistory(id) {
+            // Загружаем диалог по ID
+            window.location.href = `/ai?history=${id}`;
+        }
+        
+        // Загрузка сохранённых настроек
+        window.onload = function() {
+            const savedModel = localStorage.getItem('ai_model');
+            const savedTemp = localStorage.getItem('ai_temperature');
+            const savedPrompt = localStorage.getItem('ai_system_prompt');
+            
+            if (savedModel) selectModel(savedModel);
+            if (savedTemp) {
+                document.getElementById('temperature').value = savedTemp;
+                updateTemp(savedTemp);
+            }
+            if (savedPrompt) document.getElementById('systemPrompt').value = savedPrompt;
+        };
+    </script>
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    z-index: 1000;
+    cursor: pointer;
+}
+.back-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+}
+</style>
+<a href="javascript:history.back()" class="back-button" title="Go Back">
+    <i class="fas fa-arrow-left fa-lg"></i>
+</a>
+</body>
+</html>
+

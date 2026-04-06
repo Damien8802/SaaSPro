@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Документация API для партнеров</title>
+    <style>
+        body { font-family: 'Courier New', monospace; margin: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .endpoint { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #007bff; }
+        code { background: #e9ecef; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Документация API для партнеров</h1>
+        
+        <h2>API Endpoints</h2>
+        
+        <div class="endpoint">
+            <h3>GET /api/partner/stats</h3>
+            <p>Получить статистику партнера</p>
+            <code>curl -X GET http://localhost:8080/api/partner/stats</code>
+        </div>
+        
+        <div class="endpoint">
+            <h3>GET /api/partner/earnings</h3>
+            <p>Получить доходы партнера</p>
+            <code>curl -X GET http://localhost:8080/api/partner/earnings</code>
+        </div>
+        
+        <h2>Пример ответа</h2>
+        <pre>
+{
+  "status": "success",
+  "data": {
+    "revenue": 0,
+    "referrals": 0,
+    "commission": 0,
+    "active": true,
+    "level": "basic"
+  }
+}
+        </pre>
+        
+        <a href="/partner">← К партнерской программе</a>
+    </div>
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    z-index: 1000;
+    cursor: pointer;
+}
+.back-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+}
+</style>
+<a href="javascript:history.back()" class="back-button" title="Go Back">
+    <i class="fas fa-arrow-left fa-lg"></i>
+</a>
+</body>
+</html>
+
+

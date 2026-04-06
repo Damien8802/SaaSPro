@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaSPro Identity Hub - Вход и регистрация</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+        }
+        
+        .card-header .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .card-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .card-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        /* Вкладки */
+        .nav-tabs {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 1.5rem;
+            gap: 8px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+            background: #f8f9fa;
+            font-size: 14px;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            background: #e9ecef;
+            color: #667eea;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+        
+        /* Формы */
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+        
+        .form-control {
+            border-radius: 16px;
+            border: 1.5px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            height: auto;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+        
+        .btn-outline-secondary {
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        /* QR код */
+        .qr-container {
+            text-align: center;
+            padding: 10px 0;
+        }
+        
+        .qr-code {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-scanned { background: #cce5ff; color: #004085; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-expired { background: #f8d7da; color: #721c24; }
+        
+        .qr-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            color: #adb5bd;
+            margin: 1.5rem 0;
+        }
+        
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e9ecef, transparent);
+        }
+        
+        .divider span {
+            padding: 0 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .footer-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .footer-links a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="card-header">
+            <div class="logo">🚀</div>
+            <h1>SaaSPro Identity Hub</h1>
+            <p>Единый вход и регистрация для всех сервисов</p>
+        </div>
+        
+        <div class="card-body">
+            <!-- Вкладки -->
+            <ul class="nav nav-tabs" id="loginTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#email-login" type="button" role="tab">
+                        <i class="bi bi-envelope"></i> Email
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="phone-tab" data-bs-toggle="tab" data-bs-target="#phone-login" type="button" role="tab">
+                        <i class="bi bi-phone"></i> Телефон
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="qr-tab" data-bs-toggle="tab" data-bs-target="#qr-login" type="button" role="tab">
+                        <i class="bi bi-qr-code"></i> QR код
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content">
+                <!-- EMAIL ВХОД/РЕГИСТРАЦИЯ -->
+                <div class="tab-pane fade show active" id="email-login" role="tabpanel">
+                    <form id="emailForm">
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                            <label><i class="bi bi-envelope me-2"></i>Email</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="name" placeholder="Ваше имя">
+                            <label><i class="bi bi-person me-2"></i>Имя (для регистрации)</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="password" placeholder="Пароль" required>
+                            <label><i class="bi bi-lock me-2"></i>Пароль</label>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember">
+                                <label class="form-check-label text-muted small" for="remember">Запомнить меня</label>
+                            </div>
+                            <a href="/forgot-password" class="text-decoration-none small">Забыли пароль?</a>
+                        </div>
+                        <button type="submit" class="btn btn-login" id="emailSubmitBtn">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                        </button>
+                    </form>
+                    <div class="divider">
+                        <span>или</span>
+                    </div>
+                    <button class="btn btn-outline-secondary w-100" id="showRegisterBtn">
+                        <i class="bi bi-person-plus me-2"></i>Зарегистрироваться
+                    </button>
+                </div>
+                
+                <!-- ТЕЛЕФОННЫЙ ВХОД/РЕГИСТРАЦИЯ -->
+                <div class="tab-pane fade" id="phone-login" role="tabpanel">
+                    <form id="phoneForm">
+                        <div class="form-floating mb-3">
+                            <input type="tel" class="form-control" id="phone" placeholder="+7 999 123-45-67" required>
+                            <label><i class="bi bi-phone me-2"></i>Номер телефона</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="phoneName" placeholder="Ваше имя">
+                            <label><i class="bi bi-person me-2"></i>Имя (для регистрации)</label>
+                        </div>
+                        <div id="phoneCodeSection" style="display: none;">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="phoneCode" placeholder="Код подтверждения">
+                                <label><i class="bi bi-key me-2"></i>Код подтверждения</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-login" id="phoneSubmitBtn">
+                            <i class="bi bi-send me-2"></i>Продолжить
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- QR КОД ВХОД/РЕГИСТРАЦИЯ -->
+                <div class="tab-pane fade" id="qr-login" role="tabpanel">
+                    <div class="qr-container">
+                        <div id="qrCodeContainer" class="qr-code">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                        </div>
+                        <div id="qrStatus">
+                            <div class="status-badge status-pending" id="qrStatusBadge">
+                                <i class="bi bi-hourglass-split"></i> Ожидание сканирования
+                            </div>
+                        </div>
+                        <div id="qrAuthSuccess" style="display: none;">
+                            <div class="alert alert-success mt-3">
+                                <i class="bi bi-check-circle-fill"></i> Успешный вход! Перенаправление...
+                            </div>
+                        </div>
+                        <div class="qr-buttons">
+                            <button type="button" class="btn btn-outline-secondary" onclick="refreshQR()">
+                                <i class="bi bi-arrow-repeat"></i> Обновить QR
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="qrRegisterBtn">
+                                <i class="bi bi-person-plus"></i> Зарегистрироваться по QR
+                            </button>
+                        </div>
+                        <div id="qrRegisterInfo" class="alert alert-info mt-3" style="display: none; font-size: 13px;">
+                            <i class="bi bi-info-circle"></i> Отсканируйте QR код, чтобы создать новый аккаунт
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <a href="/identity-hub" class="fw-bold">Что такое Identity Hub?</a>
+                <span class="mx-2">•</span>
+                <a href="/terms">Условия использования</a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ========== EMAIL ЛОГИН/РЕГИСТРАЦИЯ ==========
+        let isRegisterMode = false;
+        
+        document.getElementById('showRegisterBtn').addEventListener('click', () => {
+            isRegisterMode = true;
+            const submitBtn = document.getElementById('emailSubmitBtn');
+            submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Зарегистрироваться';
+            submitBtn.classList.add('btn-success');
+            submitBtn.classList.remove('btn-login');
+            document.getElementById('showRegisterBtn').style.display = 'none';
+        });
+        
+        document.getElementById('emailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+            const submitBtn = document.getElementById('emailSubmitBtn');
+            
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Обработка...';
+            submitBtn.disabled = true;
+            
+            try {
+                let url = '/api/auth/login';
+                let body = { email, password };
+                
+                if (isRegisterMode) {
+                    url = '/api/auth/register';
+                    body = { email, password, name: name || email.split('@')[0] };
+                }
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/dashboard-improved';
+                } else {
+                    alert(data.error || 'Ошибка');
+                    submitBtn.innerHTML = isRegisterMode ? '<i class="bi bi-person-plus me-2"></i>Зарегистрироваться' : '<i class="bi bi-box-arrow-in-right me-2"></i>Войти';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+                submitBtn.innerHTML = isRegisterMode ? '<i class="bi bi-person-plus me-2"></i>Зарегистрироваться' : '<i class="bi bi-box-arrow-in-right me-2"></i>Войти';
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // ========== ТЕЛЕФОННЫЙ ЛОГИН/РЕГИСТРАЦИЯ ==========
+        let phoneCodeSent = false;
+        
+        document.getElementById('phoneForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            const name = document.getElementById('phoneName').value;
+            const code = document.getElementById('phoneCode').value;
+            const codeSection = document.getElementById('phoneCodeSection');
+            const submitBtn = document.getElementById('phoneSubmitBtn');
+            
+            if (!phoneCodeSent) {
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Отправка...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/auth/send-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        phoneCodeSent = true;
+                        codeSection.style.display = 'block';
+                        submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i> Подтвердить код';
+                        submitBtn.disabled = false;
+                        alert('Код подтверждения отправлен на телефон');
+                    } else {
+                        alert(data.error || 'Ошибка отправки кода');
+                        submitBtn.innerHTML = '<i class="bi bi-send me-2"></i> Продолжить';
+                        submitBtn.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Ошибка: ' + error.message);
+                    submitBtn.innerHTML = '<i class="bi bi-send me-2"></i> Продолжить';
+                    submitBtn.disabled = false;
+                }
+            } else {
+                if (!code) {
+                    alert('Введите код подтверждения');
+                    return;
+                }
+                
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Проверка...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/auth/verify-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, code, name: name || 'User_' + phone.slice(-4) })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        localStorage.setItem('token', data.token);
+                        window.location.href = '/dashboard-improved';
+                    } else {
+                        alert(data.error || 'Неверный код');
+                        submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i> Подтвердить код';
+                        submitBtn.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Ошибка: ' + error.message);
+                    submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i> Подтвердить код';
+                    submitBtn.disabled = false;
+                }
+            }
+        });
+        
+        // ========== QR КОД ВХОД/РЕГИСТРАЦИЯ ==========
+        let qrWebSocket = null;
+        let qrSessionToken = null;
+        let qrIsRegister = false;
+        
+        async function loadQR() {
+            const qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Загрузка...</span></div>';
+            
+            try {
+                const response = await fetch('/api/qr/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    qrSessionToken = data.session_token;
+                    qrContainer.innerHTML = `<img src="${data.qr_data_url}" alt="QR Code" style="width: 200px; height: 200px;">`;
+                    connectQRWebSocket(qrSessionToken);
+                    
+                    setTimeout(() => {
+                        if (qrWebSocket && qrWebSocket.readyState === WebSocket.OPEN) {
+                            qrWebSocket.close();
+                            loadQR();
+                        }
+                    }, data.expires_in * 1000);
+                } else {
+                    qrContainer.innerHTML = '<div class="alert alert-danger">Ошибка загрузки QR кода</div>';
+                }
+            } catch (error) {
+                console.error('QR error:', error);
+                qrContainer.innerHTML = '<div class="alert alert-danger">Ошибка соединения</div>';
+            }
+        }
+        
+        function connectQRWebSocket(token) {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/api/qr/status?token=${token}&mode=${qrIsRegister ? 'register' : 'login'}`;
+            
+            if (qrWebSocket) {
+                qrWebSocket.close();
+            }
+            
+            qrWebSocket = new WebSocket(wsUrl);
+            
+            qrWebSocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const qrStatus = document.getElementById('qrStatusBadge');
+                const qrAuthSuccess = document.getElementById('qrAuthSuccess');
+                
+                switch(data.status) {
+                    case 'scanned':
+                        qrStatus.innerHTML = '<i class="bi bi-check-circle"></i> QR код отсканирован! ' + (qrIsRegister ? 'Создание аккаунта...' : 'Подтвердите вход');
+                        qrStatus.className = 'status-badge status-scanned';
+                        break;
+                    case 'approved':
+                        qrStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + (qrIsRegister ? 'Регистрация успешна!' : 'Вход выполнен!');
+                        qrStatus.className = 'status-badge status-approved';
+                        qrAuthSuccess.style.display = 'block';
+                        if (data.token) {
+                            localStorage.setItem('token', data.token);
+                            setTimeout(() => {
+                                window.location.href = '/dashboard-improved';
+                            }, 1500);
+                        }
+                        break;
+                    case 'expired':
+                        qrStatus.innerHTML = '<i class="bi bi-exclamation-triangle"></i> QR код истек';
+                        qrStatus.className = 'status-badge status-expired';
+                        setTimeout(() => loadQR(), 2000);
+                        break;
+                    default:
+                        qrStatus.innerHTML = '<i class="bi bi-hourglass-split"></i> ' + (qrIsRegister ? 'Отсканируйте QR для регистрации' : 'Ожидание сканирования');
+                        qrStatus.className = 'status-badge status-pending';
+                }
+            };
+            
+            qrWebSocket.onerror = function() {
+                console.error('WebSocket error');
+            };
+        }
+        
+        function refreshQR() {
+            if (qrWebSocket) {
+                qrWebSocket.close();
+            }
+            loadQR();
+        }
+        
+        document.getElementById('qrRegisterBtn').addEventListener('click', () => {
+            qrIsRegister = true;
+            const info = document.getElementById('qrRegisterInfo');
+            const btn = document.getElementById('qrRegisterBtn');
+            info.style.display = 'block';
+            btn.textContent = '📱 Режим регистрации';
+            btn.disabled = true;
+            if (qrWebSocket) {
+                qrWebSocket.close();
+            }
+            loadQR();
+        });
+        
+        document.querySelector('button[data-bs-target="#qr-login"]').addEventListener('shown.bs.tab', function() {
+            qrIsRegister = false;
+            document.getElementById('qrRegisterInfo').style.display = 'none';
+            document.getElementById('qrRegisterBtn').textContent = '📱 Зарегистрироваться по QR';
+            document.getElementById('qrRegisterBtn').disabled = false;
+            loadQR();
+        });
+        
+        document.querySelector('button[data-bs-target="#phone-login"]').addEventListener('shown.bs.tab', function() {
+            phoneCodeSent = false;
+            document.getElementById('phoneCodeSection').style.display = 'none';
+            document.getElementById('phoneCode').value = '';
+            document.getElementById('phoneSubmitBtn').innerHTML = '<i class="bi bi-send me-2"></i> Продолжить';
+        });
+        
+        document.querySelector('button[data-bs-target="#email-login"]').addEventListener('shown.bs.tab', function() {
+            isRegisterMode = false;
+            const submitBtn = document.getElementById('emailSubmitBtn');
+            submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Войти';
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-login');
+            document.getElementById('showRegisterBtn').style.display = 'block';
+        });
+    </script>
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    z-index: 1000;
+    cursor: pointer;
+}
+.back-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+}
+</style>
+<a href="javascript:history.back()" class="back-button" title="Go Back">
+    <i class="fas fa-arrow-left fa-lg"></i>
+</a>
+</body>
+</html>
+

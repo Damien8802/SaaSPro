@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оплата подписки | SaaSPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .payment-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        /* Выбор тарифа */
+        .plans {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .plan {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .plan:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .plan.selected {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+        
+        .plan-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .plan-price {
+            font-size: 24px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .plan-price span {
+            font-size: 14px;
+            color: #999;
+        }
+        
+        /* Способ оплаты */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .method {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .method:hover {
+            border-color: #667eea;
+        }
+        
+        .method.selected {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+        
+        .method-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .method-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* Формы оплаты */
+        .payment-form {
+            background: #f7f7f7;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .payment-form.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        /* Кнопка */
+        .pay-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+        
+        .pay-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .pay-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Итого */
+        .total {
+            background: #f0f3ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .total-label {
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .total-amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        /* Сообщения */
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loader.show {
+            display: block;
+        }
+        
+        .loader-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-card">
+            <h1>Оформление подписки</h1>
+            
+            <!-- ВЫБОР ТАРИФА -->
+            <div class="plans">
+                <div class="plan selected" onclick="selectPlan('basic', this)">
+                    <div class="plan-name">Базовый</div>
+                    <div class="plan-price">990 <span>₽/мес</span></div>
+                </div>
+                <div class="plan" onclick="selectPlan('pro', this)">
+                    <div class="plan-name">Профессиональный</div>
+                    <div class="plan-price">2 990 <span>₽/мес</span></div>
+                </div>
+                <div class="plan" onclick="selectPlan('enterprise', this)">
+                    <div class="plan-name">Корпоративный</div>
+                    <div class="plan-price">9 990 <span>₽/мес</span></div>
+                </div>
+            </div>
+            
+            <!-- ВЫБОР СПОСОБА ОПЛАТЫ -->
+            <div class="payment-methods">
+                <div class="method selected" onclick="selectMethod('card', this)">
+                    <div class="method-icon">💳</div>
+                    <div class="method-name">Банковская карта</div>
+                </div>
+                <div class="method" onclick="selectMethod('usdt', this)">
+                    <div class="method-icon">₮</div>
+                    <div class="method-name">USDT</div>
+                </div>
+                <div class="method" onclick="selectMethod('sbp', this)">
+                    <div class="method-icon">📱</div>
+                    <div class="method-name">СБП</div>
+                </div>
+                <div class="method" onclick="selectMethod('yoomoney', this)">
+                    <div class="method-icon">💰</div>
+                    <div class="method-name">ЮMoney</div>
+                </div>
+            </div>
+            
+            <!-- ИТОГО -->
+            <div class="total">
+                <span class="total-label">К оплате:</span>
+                <span class="total-amount" id="totalAmount">990 ₽</span>
+            </div>
+            
+            <!-- ФОРМА ОПЛАТЫ КАРТОЙ -->
+            <div class="payment-form active" id="cardForm">
+                <div class="form-group">
+                    <label>Номер карты</label>
+                    <input type="text" id="cardNumber" placeholder="4242 4242 4242 4242" maxlength="19">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Срок</label>
+                        <input type="text" id="cardExpiry" placeholder="MM/YY">
+                    </div>
+                    <div class="form-group">
+                        <label>CVC</label>
+                        <input type="text" id="cardCvc" placeholder="123" maxlength="3">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Владелец</label>
+                    <input type="text" id="cardName" placeholder="IVAN PETROV">
+                </div>
+            </div>
+            
+            <!-- ФОРМА USDT -->
+            <div class="payment-form" id="usdtForm">
+                <div style="text-align: center; padding: 20px;">
+                    <p>Адрес для перевода:</p>
+                    <p style="background: white; padding: 15px; border-radius: 8px; font-family: monospace; word-break: break-all;" id="usdtAddress">T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb</p>
+                    <button class="pay-button" onclick="copyAddress()" style="width: auto; padding: 10px 20px;">Копировать</button>
+                </div>
+            </div>
+            
+            <!-- ФОРМА СБП -->
+            <div class="payment-form" id="sbpForm">
+                <div style="text-align: center; padding: 20px;">
+                    <p>QR-код для оплаты:</p>
+                    <div style="background: white; width: 200px; height: 200px; margin: 20px auto; display: flex; align-items: center; justify-content: center; border-radius: 10px;">
+                        <span style="font-size: 100px;">📱</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ФОРМА ЮMONEY -->
+            <div class="payment-form" id="yoomoneyForm">
+                <div style="text-align: center; padding: 20px;">
+                    <p>Перенаправление на ЮMoney...</p>
+                </div>
+            </div>
+            
+            <!-- СООБЩЕНИЯ -->
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage">
+                <h3>✅ Платеж выполнен!</h3>
+                <p>Подписка активирована. Перенаправляем...</p>
+            </div>
+            
+            <div class="loader" id="loader">
+                <div class="loader-spinner"></div>
+                <p>Обработка платежа...</p>
+            </div>
+            
+            <!-- КНОПКА ОПЛАТЫ -->
+            <button class="pay-button" onclick="processPayment()" id="payButton">
+                Оплатить
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedPlan = 'basic';
+        let selectedMethod = 'card';
+        
+        const prices = {
+            basic: 990,
+            pro: 2990,
+            enterprise: 9990
+        };
+        
+        function selectPlan(plan, element) {
+            selectedPlan = plan;
+            document.querySelectorAll('.plan').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            updateTotal();
+        }
+        
+        function selectMethod(method, element) {
+            selectedMethod = method;
+            document.querySelectorAll('.method').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            document.querySelectorAll('.payment-form').forEach(f => f.classList.remove('active'));
+            document.getElementById(method + 'Form').classList.add('active');
+        }
+        
+        function updateTotal() {
+            document.getElementById('totalAmount').textContent = prices[selectedPlan].toLocaleString() + ' ₽';
+        }
+        
+        function copyAddress() {
+            navigator.clipboard.writeText(document.getElementById('usdtAddress').textContent);
+            alert('Адрес скопирован');
+        }
+        
+        // Форматирование карты
+        document.getElementById('cardNumber')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            e.target.value = value;
+        });
+        
+        document.getElementById('cardExpiry')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.slice(0,2) + '/' + value.slice(2,4);
+            }
+            e.target.value = value;
+        });
+        
+        document.getElementById('cardCvc')?.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+        
+        async function processPayment() {
+            const btn = document.getElementById('payButton');
+            const loader = document.getElementById('loader');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            btn.disabled = true;
+            loader.classList.add('show');
+            errorMsg.classList.remove('show');
+            
+            try {
+                // Валидация
+                if (selectedMethod === 'card') {
+                    const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+                    if (!cardNumber || cardNumber.length < 16) {
+                        throw new Error('Введите номер карты');
+                    }
+                }
+                
+                // Имитация оплаты (тут будет реальный запрос)
+                setTimeout(() => {
+                    loader.classList.remove('show');
+                    document.getElementById('successMessage').classList.add('show');
+                    
+                    // Через 2 секунды переходим к подпискам
+                    setTimeout(() => {
+                        window.location.href = '/my-subscriptions?success=1';
+                    }, 2000);
+                }, 1500);
+                
+            } catch (error) {
+                loader.classList.remove('show');
+                errorMsg.textContent = error.message;
+                errorMsg.classList.add('show');
+                btn.disabled = false;
+            }
+        }
+    </script>
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    z-index: 1000;
+    cursor: pointer;
+}
+.back-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+}
+</style>
+<a href="javascript:history.back()" class="back-button" title="Go Back">
+    <i class="fas fa-arrow-left fa-lg"></i>
+</a>
+</body>
+</html>
+
+

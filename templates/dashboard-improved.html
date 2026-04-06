@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд | SubPro v3.0</title>
+    
+    <!-- Bootstrap 5 Dark Theme -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-dark.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --sidebar-width: 280px;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #1a1a1a;
+            border-right: 1px solid #333;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            background: #0d0d0d;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .stat-card {
+            border-radius: 16px;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--bs-primary);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+        
+        .chart-container {
+            background: #1a1a1a;
+            border-radius: 16px;
+            border: 1px solid #333;
+            padding: 20px;
+            height: 350px;
+        }
+        
+        .recent-activity {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            border-left: 3px solid;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .subscription-badge {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .action-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+        }
+        
+        .action-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
+            color: #fff;
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .action-desc {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .key-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .key-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .key-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .key-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .stat-badge {
+            background: #333;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .btn-revoke {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-revoke:hover {
+            background: #d32f2f;
+        }
+        
+        .btn-copy {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .btn-copy:hover {
+            background: #5a6fd1;
+        }
+        
+        .new-key-alert {
+            background: #1e3a2a;
+            border: 1px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Боковая панель -->
+    <div class="sidebar d-flex flex-column">
+        <div class="p-4 border-bottom border-secondary">
+            <a href="/" class="d-flex align-items-center text-decoration-none text-light">
+                <i class="bi bi-rocket-takeoff-fill fs-3 text-primary me-2"></i>
+                <span class="fs-4 fw-bold">SubPro</span>
+                <span class="badge bg-primary ms-2">v3.0</span>
+            </a>
+        </div>
+        
+        <div class="flex-grow-1 p-3">
+            <div class="d-flex align-items-center p-3 mb-4 bg-dark rounded">
+                <img src="https://ui-avatars.com/api/?name={{ .UserName }}&background=667eea&color=fff&size=50" 
+                     class="rounded-circle me-3" 
+                     alt="Аватар">
+                <div>
+                    <div class="text-light fw-bold">{{ .UserName }}</div>
+                    <div class="text-muted small">{{ .UserEmail }}</div>
+                </div>
+            </div>
+            
+            <ul class="nav flex-column">
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/">
+                        <i class="bi bi-house-door me-3"></i>
+                        Главная
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center active bg-primary bg-opacity-25 rounded" href="/dashboard-improved">
+                        <i class="bi bi-speedometer2 me-3"></i>
+                        Дашборд
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/ai-agents">
+                        <i class="bi bi-robot me-3"></i>
+                        ИИ-агенты
+                        <span class="badge bg-warning text-dark ms-2">New</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/my-subscriptions">
+                        <i class="bi bi-wallet2 me-3"></i>
+                        Мои подписки
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/analytics-center">
+                        <i class="bi bi-graph-up-arrow me-3"></i>
+                        Аналитика
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/pricing">
+                        <i class="bi bi-currency-dollar me-3"></i>
+                        Тарифы
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/security-center">
+                        <i class="bi bi-shield-check me-3"></i>
+                        Безопасность
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/referral">
+                        <i class="bi bi-gift me-3"></i>
+                        Рефералы
+                    <li class="nav-item mb-2">
+    <a class="nav-link text-light d-flex align-items-center" href="/hr">
+        <i class="bi bi-people me-3"></i>
+        HR модуль
+        <span class="badge bg-info ms-2">Новый</span>
+    </a>
+</li>
+                </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/profile">
+                        <i class="bi bi-person-circle me-3"></i>
+                        Профиль
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/vpn">
+                        <i class="bi bi-shield-lock me-3"></i>
+                        VPN
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/identity-hub">
+                        <i class="bi bi-shield-lock-fill me-3"></i>
+                        Identity Hub
+                    </a>
+                        <li class="nav-item">
+                            <a class="nav-link text-light d-flex align-items-center" href="/archive">
+                                <i class="bi bi-archive me-3"></i>
+                                Архив
+                            </a>
+                        </li>
+                </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-light d-flex align-items-center" href="/marketplace">
+                                    <i class="bi bi-shop me-3"></i>
+                                    Маркетплейс
+                                </a>
+                            </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/inventory">
+                        <i class="bi bi-box-seam me-3"></i>
+                        Складской учет
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/teamsphere">
+                        <i class="bi bi-globe me-3"></i>
+                        TeamSphere
+                    </a>
+
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-light d-flex align-items-center" href="/logistics">
+                        <i class="bi bi-truck me-3"></i>
+                        Логистика
+                    </a>
+                </li>
+                </li>
+                {{ if .IsAdmin }}
+                <li class="nav-item mb-2 mt-3">
+                    <div class="border-top border-secondary pt-3"></div>
+                    <a class="nav-link text-light d-flex align-items-center" href="/admin">
+                        <i class="bi bi-gear me-3"></i>
+                        Админка
+                    </a>
+                </li>
+                {{ end }}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="main-content">
+        <!-- Шапка -->
+        <nav class="navbar navbar-dark bg-dark border-bottom border-secondary">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-outline-secondary d-lg-none me-3" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h4 class="mb-0 text-light">
+                        <i class="bi bi-speedometer2 me-2 text-primary"></i>
+                        Панель управления
+                    </h4>
+                </div>
+                
+                <div class="d-flex align-items-center">
+                    <div class="dropdown me-3">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge bg-danger rounded-pill">3</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <h6 class="dropdown-header">Уведомления</h6>
+                            <a class="dropdown-item" href="#">
+                                <div class="text-success">
+                                    <i class="bi bi-credit-card"></i> Платеж получен
+                                </div>
+                                <small class="text-muted">5 минут назад</small>
+                            </a>
+                            <a class="dropdown-item" href="#">
+                                <div class="text-warning">
+                                    <i class="bi bi-exclamation-triangle"></i> Подписка истекает
+                                </div>
+                                <small class="text-muted">2 часа назад</small>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-center" href="#">Все уведомления</a>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-outline-primary" id="themeToggle">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Мобильная боковая панель -->
+        <div class="collapse d-lg-none" id="mobileSidebar">
+            <div class="bg-dark p-3 border-bottom border-secondary">
+                <!-- Та же навигация, что и в основной боковой панели -->
+            </div>
+        </div>
+
+        <!-- Контент -->
+        <div class="container-fluid py-4">
+            <!-- Быстрые действия -->
+            <div class="quick-actions">
+                <a href="/profile" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div class="action-title">Профиль</div>
+                    <div class="action-desc">Настройки аккаунта</div>
+                </a>
+                
+                <a href="/ai-agents" class="action-card text-decoration-none" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="action-icon">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="action-title">ИИ-агенты</div>
+                    <div class="action-desc">Автоматические помощники 24/7</div>
+                    <span class="badge bg-light text-dark mt-2">Новинка</span>
+                </a>
+                
+                <a href="/my-subscriptions" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-wallet2"></i>
+                    </div>
+                    <div class="action-title">Подписки</div>
+                    <div class="action-desc">Управление тарифами</div>
+                </a>
+                
+                <a href="/inventory" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="action-title">Складской учет</div>
+                    <div class="action-desc">Управление товарами и заказами</div>
+                </a>
+                
+                <a href="/teamsphere" class="action-card text-decoration-none" style="background: linear-gradient(135deg, #667eea20, #764ba220); border: 1px solid rgba(102,126,234,0.3);">
+                    <div class="action-icon">
+                        <i class="bi bi-globe"></i>
+                    </div>
+                    <div class="action-title">
+                        TeamSphere
+                        <span class="badge bg-primary ms-2" style="background: linear-gradient(135deg, #667eea, #764ba2); font-size: 10px;">Аналог Bitrix24</span>
+                    </div>
+                    <div class="action-desc">Управление командой, проектами и задачами</div>
+                </a>
+                
+                <a href="/vpn" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <div class="action-title">VPN</div>
+                    <div class="action-desc">Безопасный доступ из любой точки мира</div>
+                </a>
+                
+                <a href="/security-center" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div class="action-title">Безопасность</div>
+                    <div class="action-desc">2FA, резервные коды, защита</div>
+                </a>
+                
+                <a href="/analytics-center" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <div class="action-title">Аналитика</div>
+                    <div class="action-desc">Графики, отчеты, статистика</div>
+                </a>
+                
+                <a href="/identity-hub" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div class="action-title">Identity Hub</div>
+                    <div class="action-desc">Единый вход для всех сервисов</div>
+                </a>
+                
+                <a href="/api-keys" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-key"></i>
+                    </div>
+                    <div class="action-title">API ключи</div>
+                    <div class="action-desc">Управление API ключами</div>
+                </a>
+                
+                <a href="/support" class="action-card text-decoration-none">
+                    <div class="action-icon">
+                        <i class="bi bi-headset"></i>
+                    </div>
+                    <div class="action-title">Поддержка</div>
+                    <div class="action-desc">Помощь и чат</div>
+                </a>
+            </div>
+
+            <!-- Статистика в реальном времени -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="text-muted mb-1">Общий доход</div>
+                                <h3 class="mb-0 text-success">₽124,850</h3>
+                                <div class="text-success small">
+                                    <i class="bi bi-arrow-up-right"></i> 12.5%
+                                </div>
+                            </div>
+                            <div class="stat-icon bg-success bg-opacity-25">
+                                <i class="bi bi-currency-dollar text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="text-muted mb-1">Активные подписки</div>
+                                <h3 class="mb-0 text-primary">1,247</h3>
+                                <div class="text-primary small">
+                                    <i class="bi bi-arrow-up-right"></i> 8.2%
+                                </div>
+                            </div>
+                            <div class="stat-icon bg-primary bg-opacity-25">
+                                <i class="bi bi-wallet2 text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="text-muted mb-1">API запросов</div>
+                                <h3 class="mb-0 text-info">45.2K</h3>
+                                <div class="text-info small">
+                                    <i class="bi bi-arrow-up-right"></i> 23.1%
+                                </div>
+                            </div>
+                            <div class="stat-icon bg-info bg-opacity-25">
+                                <i class="bi bi-key text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="text-muted mb-1">Конверсия</div>
+                                <h3 class="mb-0 text-warning">24.7%</h3>
+                                <div class="text-warning small">
+                                    <i class="bi bi-arrow-up-right"></i> 3.1%
+                                </div>
+                            </div>
+                            <div class="stat-icon bg-warning bg-opacity-25">
+                                <i class="bi bi-graph-up-arrow text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Графики -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="chart-container">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="text-light mb-0">Динамика доходов</h5>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-secondary active">Месяц</button>
+                                <button class="btn btn-sm btn-outline-secondary">Квартал</button>
+                                <button class="btn btn-sm btn-outline-secondary">Год</button>
+                            </div>
+                        </div>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <h5 class="text-light mb-4">Распределение по тарифам</h5>
+                        <canvas id="subscriptionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Последние активности и подписки -->
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="bg-dark border border-secondary rounded p-4">
+                        <h5 class="text-light mb-4">Последние активности</h5>
+                        <div class="recent-activity">
+                            <div class="activity-item border-primary">
+                                <div class="d-flex justify-content-between">
+                                    <div class="text-light">Создан новый API ключ</div>
+                                    <div class="text-muted small">5 минут назад</div>
+                                </div>
+                                <div class="text-muted small">Название: Production • Лимит: 10,000</div>
+                            </div>
+                            
+                            <div class="activity-item border-success">
+                                <div class="d-flex justify-content-between">
+                                    <div class="text-light">API запрос выполнен</div>
+                                    <div class="text-muted small">25 минут назад</div>
+                                </div>
+                                <div class="text-muted small">Эндпоинт: /api/v1/chat • 234 токена</div>
+                            </div>
+                            
+                            <div class="activity-item border-warning">
+                                <div class="d-flex justify-content-between">
+                                    <div class="text-light">Подписка истекает через 3 дня</div>
+                                    <div class="text-muted small">2 часа назад</div>
+                                </div>
+                                <div class="text-muted small">Тариф: Basic • ID: SUB-456</div>
+                            </div>
+                            
+                            <div class="activity-item border-info">
+                                <div class="d-flex justify-content-between">
+                                    <div class="text-light">Новый реферал зарегистрирован</div>
+                                    <div class="text-muted small">5 часов назад</div>
+                                </div>
+                                <div class="text-muted small">Реферальный код: REF-789</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="bg-dark border border-secondary rounded p-4">
+                        <h5 class="text-light mb-4">Мои активные подписки</h5>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <div class="text-light">Premium</div>
+                                    <div class="text-muted small">₽999/месяц</div>
+                                </div>
+                                <span class="subscription-badge bg-primary">Активна</span>
+                            </div>
+                            <div class="progress bg-dark" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="width: 75%;"></div>
+                            </div>
+                            <div class="text-end text-muted small mt-1">Обновляется через 15 дней</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <div class="text-light">Family</div>
+                                    <div class="text-muted small">₽1,499/месяц</div>
+                                </div>
+                                <span class="subscription-badge bg-success">Активна</span>
+                            </div>
+                            <div class="progress bg-dark" style="height: 6px;">
+                                <div class="progress-bar bg-success" style="width: 45%;"></div>
+                            </div>
+                            <div class="text-end text-muted small mt-1">Обновляется через 28 дней</div>
+                        </div>
+                        
+                        <a href="/my-subscriptions" class="btn btn-outline-primary w-100 mt-3">
+                            <i class="bi bi-arrow-right me-2"></i> Управление подписками
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Кастомный JS -->
+    <script>
+        // Инициализация графиков
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл'],
+                datasets: [{
+                    label: 'Доход (тыс. ₽)',
+                    data: [85, 92, 105, 118, 124, 132, 142],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#aaa'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#aaa'
+                        }
+                    }
+                }
+            }
+        });
+        
+        const subscriptionCtx = document.getElementById('subscriptionChart').getContext('2d');
+        const subscriptionChart = new Chart(subscriptionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Basic', 'Premium', 'VIP', 'Family'],
+                datasets: [{
+                    data: [35, 40, 15, 10],
+                    backgroundColor: [
+                        '#4caf50',
+                        '#2196f3',
+                        '#ff9800',
+                        '#9c27b0'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#1a1a1a'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#fff',
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Переключение темы
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            this.innerHTML = newTheme === 'dark' ? '<i class="bi bi-moon-stars"></i>' : '<i class="bi bi-sun"></i>';
+        });
+        
+        // Обновление данных в реальном времени (симуляция)
+        setInterval(() => {
+            const stats = document.querySelectorAll('.stat-card h3');
+            stats.forEach(stat => {
+                const current = parseInt(stat.textContent.replace(/[^\d]/g, ''));
+                const increment = Math.floor(Math.random() * 10) + 1;
+                if (stat.classList.contains('text-success')) {
+                    stat.textContent = '₽' + (current + increment).toLocaleString();
+                } else {
+                    stat.textContent = (current + increment).toLocaleString();
+                }
+            });
+        }, 10000);
+    </script>
+<!-- PWA регистрация -->
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => {
+            console.log('Service Worker registered:', reg);
+        })
+        .catch(err => {
+            console.error('Service Worker registration failed:', err);
+        });
+}
+
+// Запрос разрешения на push-уведомления
+async function subscribeToPush() {
+    if (!('PushManager' in window)) {
+        console.log('Push messaging is not supported');
+        return;
+    }
+    
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
+        });
+        
+        await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(subscription)
+        });
+        
+        console.log('Push subscription successful');
+    } catch (err) {
+        console.error('Push subscription failed:', err);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// Предлагаем подписаться при заходе на сайт
+setTimeout(() => {
+    if (confirm('Хотите получать push-уведомления?')) {
+        subscribeToPush();
+    }
+}, 5000);
+</script>
+<style>
+</style>
+
+<!-- Овальная кнопка назад -->
+<a href="javascript:history.back()" class="back-button" title="Назад">
+    <i class="fas fa-arrow-left"></i> Назад
+</a>
+
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 40px !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+    z-index: 9999;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    width: auto;
+    min-width: 100px;
+}
+</style>
+</body>
+</html>
+
+
+

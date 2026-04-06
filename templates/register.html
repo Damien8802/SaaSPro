@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
+    <title>Регистрация | SaaSPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .register-card {
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 520px;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-header {
+            background: linear-gradient(145deg, #f8f9fe, #eef2f9);
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+            border-bottom: none;
+        }
+        .card-header h1 {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+            font-size: 2rem;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .nav-tabs {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 1.5rem;
+            gap: 8px;
+            display: flex;
+            justify-content: center;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+            background: #f8f9fa;
+            font-size: 14px;
+        }
+        .nav-tabs .nav-link:hover {
+            background: #e9ecef;
+            color: #667eea;
+        }
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+        .form-floating {
+            margin-bottom: 1.25rem;
+        }
+        .form-control {
+            border-radius: 16px;
+            border: 1.5px solid #e9edf4;
+            padding: 0.75rem 1rem;
+            height: auto;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+        }
+        .btn-register {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 16px;
+            padding: 0.85rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            width: 100%;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(102,126,234,0.4);
+        }
+        .btn-outline-secondary {
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        .qr-container {
+            text-align: center;
+            padding: 10px 0;
+        }
+        .qr-code {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+            border-radius: 10px;
+        }
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-scanned { background: #cce5ff; color: #004085; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-expired { background: #f8d7da; color: #721c24; }
+        .footer-links {
+            text-align: center;
+            margin-top: 1.75rem;
+            font-size: 0.95rem;
+        }
+        .footer-links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .terms {
+            font-size: 0.8rem;
+            color: #718096;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        @media (max-width: 576px) {
+            body { padding: 12px; }
+            .card-header { padding: 1.5rem 1.5rem 1rem; }
+            .card-body { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-card">
+        <div class="card-header">
+            <div class="mb-3">
+                <i class="fas fa-user-plus fa-3x" style="color: #667eea;"></i>
+            </div>
+            <h1>SaaSPro</h1>
+            <p class="text-muted mb-0">Выберите удобный способ регистрации</p>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="registerTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#email-reg" type="button">
+                        <i class="fas fa-envelope"></i> Email
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="phone-tab" data-bs-toggle="tab" data-bs-target="#phone-reg" type="button">
+                        <i class="fas fa-phone"></i> Телефон
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="qr-tab" data-bs-toggle="tab" data-bs-target="#qr-reg" type="button">
+                        <i class="fas fa-qrcode"></i> QR код
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content">
+                <!-- EMAIL РЕГИСТРАЦИЯ -->
+                <div class="tab-pane fade show active" id="email-reg" role="tabpanel">
+                    <form id="registerForm">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="name" placeholder="Ваше имя">
+                            <label for="name"><i class="fas fa-user me-2 text-secondary"></i>Имя (необязательно)</label>
+                        </div>
+                        <div class="form-floating">
+                            <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                            <label for="email"><i class="fas fa-envelope me-2 text-secondary"></i>Email</label>
+                        </div>
+                        <div class="form-floating">
+                            <input type="password" class="form-control" id="password" placeholder="Пароль" required>
+                            <label for="password"><i class="fas fa-lock me-2 text-secondary"></i>Пароль</label>
+                        </div>
+                        <div class="form-floating">
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="Подтверждение" required>
+                            <label for="confirmPassword"><i class="fas fa-check-circle me-2 text-secondary"></i>Подтвердите пароль</label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="agree" required>
+                            <label class="form-check-label text-muted small" for="agree">
+                                Я принимаю <a href="#" class="text-decoration-none">условия использования</a>
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-register">
+                            <i class="fas fa-user-check me-2"></i>Создать аккаунт
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- ТЕЛЕФОН РЕГИСТРАЦИЯ -->
+                <div class="tab-pane fade" id="phone-reg" role="tabpanel">
+                    <form id="phoneRegisterForm">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="phoneName" placeholder="Ваше имя">
+                            <label for="phoneName"><i class="fas fa-user me-2 text-secondary"></i>Имя</label>
+                        </div>
+                        <div class="form-floating">
+                            <input type="tel" class="form-control" id="phoneNumber" placeholder="+7 999 123-45-67" required>
+                            <label for="phoneNumber"><i class="fas fa-phone me-2 text-secondary"></i>Номер телефона</label>
+                        </div>
+                        <div id="phoneCodeSection" style="display: none;">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="phoneCode" placeholder="Код подтверждения">
+                                <label for="phoneCode"><i class="fas fa-key me-2 text-secondary"></i>Код подтверждения</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-register" id="phoneSubmitBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Продолжить
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- QR КОД РЕГИСТРАЦИЯ (ОПТИМИЗИРОВАННЫЙ) -->
+                <div class="tab-pane fade" id="qr-reg" role="tabpanel">
+                    <div class="qr-container">
+                        <div id="qrCodeContainer" class="qr-code">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                        </div>
+                        <div id="qrStatus">
+                            <div class="status-badge status-pending" id="qrStatusBadge">
+                                <i class="fas fa-hourglass-half"></i> Генерация QR кода...
+                            </div>
+                        </div>
+                        <div id="qrSuccess" style="display: none;">
+                            <div class="alert alert-success mt-3">
+                                <i class="fas fa-check-circle"></i> Регистрация успешна! Перенаправление...
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary mt-3" onclick="refreshQR()">
+                            <i class="fas fa-sync-alt"></i> Обновить QR
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                Уже есть аккаунт? <a href="/login">Войти</a>
+            </div>
+            <div class="terms">
+                <i class="fas fa-shield-alt me-1"></i> Ваши данные защищены
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ========== EMAIL РЕГИСТРАЦИЯ ==========
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            if (password !== confirm) {
+                alert('Пароли не совпадают!');
+                return;
+            }
+            const name = document.getElementById('name').value || 'Пользователь';
+            const email = document.getElementById('email').value;
+            const btn = e.target.querySelector('button');
+            
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Регистрация...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/dashboard-improved';
+                } else {
+                    alert('Ошибка регистрации: ' + (data.error || 'неизвестная ошибка'));
+                    btn.innerHTML = '<i class="fas fa-user-check me-2"></i>Создать аккаунт';
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert('Сетевая ошибка. Попробуйте позже.');
+                btn.innerHTML = '<i class="fas fa-user-check me-2"></i>Создать аккаунт';
+                btn.disabled = false;
+            }
+        });
+        
+        // ========== ТЕЛЕФОН РЕГИСТРАЦИЯ ==========
+        let phoneCodeSent = false;
+        
+        document.getElementById('phoneRegisterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('phoneName').value || 'User';
+            const phone = document.getElementById('phoneNumber').value;
+            const code = document.getElementById('phoneCode').value;
+            const codeSection = document.getElementById('phoneCodeSection');
+            const submitBtn = document.getElementById('phoneSubmitBtn');
+            
+            if (!phoneCodeSent) {
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Отправка...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/auth/send-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        phoneCodeSent = true;
+                        codeSection.style.display = 'block';
+                        submitBtn.innerHTML = '<i class="fas fa-check me-2"></i> Подтвердить код';
+                        submitBtn.disabled = false;
+                        alert('Код подтверждения отправлен на телефон');
+                    } else {
+                        alert(data.error || 'Ошибка отправки кода');
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Продолжить';
+                        submitBtn.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Ошибка: ' + error.message);
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Продолжить';
+                    submitBtn.disabled = false;
+                }
+            } else {
+                if (!code) {
+                    alert('Введите код подтверждения');
+                    return;
+                }
+                
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Проверка...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/auth/verify-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, code, name })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        localStorage.setItem('token', data.token);
+                        window.location.href = '/dashboard-improved';
+                    } else {
+                        alert(data.error || 'Неверный код');
+                        submitBtn.innerHTML = '<i class="fas fa-check me-2"></i> Подтвердить код';
+                        submitBtn.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Ошибка: ' + error.message);
+                    submitBtn.innerHTML = '<i class="fas fa-check me-2"></i> Подтвердить код';
+                    submitBtn.disabled = false;
+                }
+            }
+        });
+        
+        // ========== QR КОД РЕГИСТРАЦИЯ (ОПТИМИЗИРОВАННЫЙ) ==========
+        let qrWebSocket = null;
+        let qrSessionToken = null;
+        let qrRefreshTimer = null;
+        let qrGenerating = false;
+        
+        async function loadQR() {
+            if (qrGenerating) {
+                console.log('QR already generating, skipping...');
+                return;
+            }
+            
+            qrGenerating = true;
+            const container = document.getElementById('qrCodeContainer');
+            const statusBadge = document.getElementById('qrStatusBadge');
+            
+            container.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Загрузка...</span></div>';
+            statusBadge.innerHTML = '<i class="fas fa-hourglass-half"></i> Генерация QR кода...';
+            statusBadge.className = 'status-badge status-pending';
+            
+            try {
+                const response = await fetch('/api/qr/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    qrSessionToken = data.session_token;
+                    const qrUrl = `${data.qr_data_url}&_=${Date.now()}`;
+                    container.innerHTML = `<img src="${qrUrl}" alt="QR Code" style="width: 200px; height: 200px; border-radius: 10px;" onload="onQRLoaded()" onerror="onQRError()">`;
+                    statusBadge.innerHTML = '<i class="fas fa-hourglass-half"></i> Ожидание сканирования';
+                    statusBadge.className = 'status-badge status-pending';
+                    
+                    if (qrWebSocket) {
+                        try { qrWebSocket.close(); } catch(e) {}
+                    }
+                    
+                    setTimeout(() => {
+                        connectQRWebSocket(qrSessionToken);
+                    }, 500);
+                    
+                    if (qrRefreshTimer) clearTimeout(qrRefreshTimer);
+                    qrRefreshTimer = setTimeout(() => {
+                        refreshQR();
+                    }, (data.expires_in - 10) * 1000);
+                    
+                } else {
+                    container.innerHTML = '<div class="alert alert-danger">Ошибка загрузки QR кода</div>';
+                    statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Ошибка, попробуйте обновить';
+                }
+            } catch (error) {
+                console.error('QR error:', error);
+                container.innerHTML = '<div class="alert alert-danger">Ошибка соединения</div>';
+                statusBadge.innerHTML = '<i class="fas fa-wifi"></i> Нет соединения';
+            } finally {
+                qrGenerating = false;
+            }
+        }
+        
+        function onQRLoaded() {
+            console.log('QR image loaded successfully');
+        }
+        
+        function onQRError() {
+            console.error('QR image failed to load');
+            const statusBadge = document.getElementById('qrStatusBadge');
+            statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Ошибка загрузки QR, обновляю...';
+            setTimeout(() => refreshQR(), 2000);
+        }
+        
+        function connectQRWebSocket(token) {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/api/qr/status?token=${token}&mode=register`;
+            
+            qrWebSocket = new WebSocket(wsUrl);
+            
+            qrWebSocket.onopen = function() {
+                console.log('WebSocket connected for QR registration');
+            };
+            
+            qrWebSocket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    const statusBadge = document.getElementById('qrStatusBadge');
+                    const successDiv = document.getElementById('qrSuccess');
+                    
+                    switch(data.status) {
+                        case 'scanned':
+                            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> QR код отсканирован! Создание аккаунта...';
+                            statusBadge.className = 'status-badge status-scanned';
+                            break;
+                        case 'approved':
+                            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Регистрация успешна! Перенаправление...';
+                            statusBadge.className = 'status-badge status-approved';
+                            successDiv.style.display = 'block';
+                            if (data.token) {
+                                localStorage.setItem('token', data.token);
+                                setTimeout(() => {
+                                    window.location.href = '/dashboard-improved';
+                                }, 1500);
+                            }
+                            break;
+                        case 'expired':
+                            statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> QR код истек, обновляем...';
+                            statusBadge.className = 'status-badge status-expired';
+                            setTimeout(() => refreshQR(), 1000);
+                            break;
+                        default:
+                            if (data.status !== 'pending') {
+                                statusBadge.innerHTML = '<i class="fas fa-hourglass-half"></i> ' + (data.message || 'Ожидание сканирования');
+                            }
+                            statusBadge.className = 'status-badge status-pending';
+                    }
+                } catch (e) {
+                    console.error('Error parsing WebSocket message:', e);
+                }
+            };
+            
+            qrWebSocket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                const statusBadge = document.getElementById('qrStatusBadge');
+                statusBadge.innerHTML = '<i class="fas fa-wifi"></i> Ошибка соединения, переподключаюсь...';
+                setTimeout(() => {
+                    if (qrSessionToken) {
+                        connectQRWebSocket(qrSessionToken);
+                    }
+                }, 2000);
+            };
+        }
+        
+        function refreshQR() {
+            console.log('Refreshing QR code...');
+            qrGenerating = false;
+            if (qrWebSocket) {
+                try { qrWebSocket.close(); } catch(e) {}
+                qrWebSocket = null;
+            }
+            if (qrRefreshTimer) {
+                clearTimeout(qrRefreshTimer);
+                qrRefreshTimer = null;
+            }
+            loadQR();
+        }
+        
+        const qrTabButton = document.querySelector('button[data-bs-target="#qr-reg"]');
+        if (qrTabButton) {
+            qrTabButton.addEventListener('shown.bs-tab', function() {
+                setTimeout(() => {
+                    if (!qrSessionToken || (qrWebSocket && qrWebSocket.readyState !== WebSocket.OPEN)) {
+                        loadQR();
+                    }
+                }, 100);
+            });
+            
+            qrTabButton.addEventListener('mouseenter', function() {
+                if (!qrSessionToken && !qrGenerating) {
+                    loadQR();
+                }
+            });
+        }
+        
+        if (document.querySelector('#qr-reg') && document.querySelector('#qr-reg').classList.contains('show')) {
+            setTimeout(() => loadQR(), 200);
+        }
+        
+        document.querySelector('button[data-bs-target="#phone-reg"]').addEventListener('shown.bs-tab', function() {
+            phoneCodeSent = false;
+            document.getElementById('phoneCodeSection').style.display = 'none';
+            document.getElementById('phoneCode').value = '';
+            document.getElementById('phoneSubmitBtn').innerHTML = '<i class="fas fa-paper-plane me-2"></i> Продолжить';
+        });
+    </script>
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    z-index: 1000;
+    cursor: pointer;
+}
+.back-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+}
+</style>
+<a href="javascript:history.back()" class="back-button" title="Go Back">
+    <i class="fas fa-arrow-left fa-lg"></i>
+</a>
+</body>
+</html>
+

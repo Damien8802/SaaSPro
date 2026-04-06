@@ -1,0 +1,250 @@
+<!-- templates/navbar.html -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <a href="/" class="brand-logo">🚀 SaaSPro</a>
+        </div>
+        
+        <div class="nav-menu">
+            <div class="nav-item dropdown">
+                <button class="dropbtn">📊 Дашборды</button>
+                <div class="dropdown-content">
+                    <a href="/dashboard-improved">Главный дашборд</a>
+                    <a href="/realtime-dashboard">Real-time</a>
+                    <a href="/revenue-dashboard">Выручка</a>
+                    <a href="/partner-dashboard">Партнёрский</a>
+                </div>
+            </div>
+            
+            <div class="nav-item dropdown">
+                <button class="dropbtn">🤖 AI Сервисы</button>
+                <div class="dropdown-content">
+                    <a href="/ai">AI Чат</a>
+                    <a href="/ai-agents">AI Агенты</a>
+                    <a href="/ai-settings">Настройки AI</a>
+                    <a href="/transcriptions">Транскрибация</a>
+                </div>
+            </div>
+            
+            <div class="nav-item dropdown">
+                <button class="dropbtn">💳 Продукты</button>
+                <div class="dropdown-content">
+                    <a href="/api-sales">📦 API для поиска цен</a>
+                    <a href="/vpn">🔒 VPN Сервис</a>
+                    <a href="/pricing">💰 Тарифы</a>
+                </div>
+            </div>
+            
+            <div class="nav-item dropdown">
+                <button class="dropbtn">🏢 Бизнес</button>
+                <div class="dropdown-content">
+                    <a href="/crm">CRM</a>
+                    <a href="/analytics">Аналитика</a>
+                    <a href="/logistics">Логистика</a>
+                    <a href="/track">Отслеживание</a>
+                </div>
+            </div>
+            
+            <div class="nav-item dropdown">
+                <button class="dropbtn">👤 Аккаунт</button>
+                <div class="dropdown-content">
+                    <a href="/profile">Профиль</a>
+                    <a href="/my-subscriptions">Мои подписки</a>
+                    <a href="/api-keys">API ключи</a>
+                    <a href="/my-keys">Мои ключи</a>
+                    <a href="/referral">Реферальная программа</a>
+                    <a href="/settings">Настройки</a>
+                    <a href="/security">Безопасность</a>
+                </div>
+            </div>
+            
+            <div class="nav-item dropdown">
+                <button class="dropbtn">⚙️ Админ</button>
+                <div class="dropdown-content">
+                    <a href="/admin">Панель админа</a>
+                    <a href="/admin/users">Пользователи</a>
+                    <a href="/admin/subscriptions">Подписки</a>
+                    <a href="/admin/api-keys">API ключи админ</a>
+                    <a href="/admin/vpn/keys">VPN ключи</a>
+                    <a href="/admin/vpn/stats">VPN статистика</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-auth">
+            {{if .User}}
+                <span class="user-name">👤 {{.User}}</span>
+                <a href="/logout" class="btn-logout">Выйти</a>
+            {{else}}
+                <a href="/login" class="btn-login">Вход</a>
+                <a href="/register" class="btn-register">Регистрация</a>
+            {{end}}
+        </div>
+    </div>
+</nav>
+
+<style>
+    .navbar {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 1rem 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    
+    .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .brand-logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        text-decoration: none;
+        transition: transform 0.3s;
+        display: inline-block;
+    }
+    
+    .brand-logo:hover {
+        transform: scale(1.05);
+    }
+    
+    .nav-menu {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .nav-item {
+        position: relative;
+    }
+    
+    .dropbtn {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        padding: 10px 20px;
+        font-size: 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .dropbtn:hover {
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background: white;
+        min-width: 200px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        z-index: 1;
+        top: 100%;
+        left: 0;
+        margin-top: 5px;
+    }
+    
+    .dropdown-content a {
+        color: #333;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        transition: background 0.3s;
+        font-size: 14px;
+    }
+    
+    .dropdown-content a:hover {
+        background: #f0f0f0;
+    }
+    
+    .nav-item:hover .dropdown-content {
+        display: block;
+    }
+    
+    .nav-auth {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .user-name {
+        color: white;
+        padding: 8px 15px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 20px;
+        font-size: 14px;
+    }
+    
+    .btn-login, .btn-register, .btn-logout {
+        padding: 8px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+    
+    .btn-login {
+        background: transparent;
+        color: white;
+        border: 1px solid white;
+    }
+    
+    .btn-login:hover {
+        background: white;
+        color: #1e3c72;
+    }
+    
+    .btn-register {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-register:hover {
+        background: #d97706;
+    }
+    
+    .btn-logout {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-logout:hover {
+        background: #dc2626;
+    }
+    
+    @media (max-width: 768px) {
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .nav-menu {
+            justify-content: center;
+        }
+        
+        .dropdown-content {
+            position: static;
+            display: none;
+        }
+        
+        .nav-item:hover .dropdown-content {
+            display: block;
+            position: absolute;
+        }
+    }
+
+<a href="/qr-login" class="nav-link">
+    <i class="bi bi-qr-code"></i> Вход по QR
+</a>
+</style>
+

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тарифы | SaaSPro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Навигационное меню */
+        .navbar {
+            background: white;
+            border-radius: 50px;
+            padding: 15px 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-link:hover {
+            color: #667eea;
+            background: #f0f3ff;
+        }
+        
+        .nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        /* Быстрый доступ */
+        .quick-access {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .quick-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .quick-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 18px;
+            margin-bottom: 50px;
+        }
+        .plans {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+        .plan {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .plan:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(255,107,107,0.3);
+        }
+        .family-badge {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #48bb78;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(72,187,120,0.3);
+        }
+        .plan-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .plan-price {
+            font-size: 48px;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .plan-price span {
+            font-size: 16px;
+            color: #999;
+            font-weight: normal;
+        }
+        .yearly-note {
+            color: #48bb78;
+            font-size: 14px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .features {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            flex: 1;
+        }
+        .features li {
+            padding: 12px 0;
+            color: #666;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-align: left;
+        }
+        .features li:last-child {
+            border-bottom: none;
+        }
+        .features li::before {
+            content: "✓";
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.4);
+        }
+        .note {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            font-size: 14px;
+        }
+        .note a {
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* Блок "Почему мы" */
+        .why-us {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            color: white;
+        }
+        
+        .why-item {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .why-icon {
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+        
+        .why-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .why-text {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 1200px) {
+            .plans, .why-us {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .plans, .why-us {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 36px;
+            }
+            .nav-links {
+                gap: 10px;
+            }
+            .nav-link {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Навигационное меню -->
+        <div class="navbar">
+            <div class="nav-links">
+                <a href="/" class="nav-link">🏠 Главная</a>
+                <a href="/pricing" class="nav-link active">💰 Тарифы</a>
+                <a href="/ai" class="nav-link">🤖 AI чат</a>
+                <a href="/ai-settings" class="nav-link">⚙️ Настройки AI</a>
+                <a href="/dashboard-stats" class="nav-link">📊 Статистика</a>
+                <a href="/security" class="nav-link">🔐 Безопасность</a>
+                <a href="/trusted-devices" class="nav-link">📱 Устройства</a>
+                <a href="/profile" class="nav-link">👤 Профиль</a>
+            </div>
+        </div>
+        
+        <!-- Быстрый доступ к функциям -->
+        <div class="quick-access">
+            <a href="/ai" class="quick-link">🤖 AI ассистент</a>
+            <a href="/dashboard-stats" class="quick-link">📊 Моя статистика</a>
+            <a href="/security" class="quick-link">🔐 Безопасность</a>
+            <a href="/trusted-devices" class="quick-link">📱 Устройства</a>
+        </div>
+        
+        <h1>💰 Выберите тариф</h1>
+        <div class="subtitle">Прозрачные цены, никаких скрытых платежей. Все тарифы включают полный доступ к платформе.</div>
+        
+        <div class="plans">
+            <!-- Базовый тариф -->
+            <div class="plan" onclick="location.href='/payment?plan=basic&period=monthly'">
+                <div class="plan-name">Базовый</div>
+                <div class="plan-price">990 <span>₽/мес</span></div>
+                <div class="yearly-note">9 900 ₽/год</div>
+                <ul class="features">
+                    <li>👤 1 пользователь</li>
+                    <li>📊 Базовая аналитика</li>
+                    <li>📧 Email поддержка</li>
+                    <li>🤖 10 AI-запросов/день</li>
+                    <li>📝 Базовая модель AI</li>
+                </ul>
+                <button class="btn" onclick="event.stopPropagation(); location.href='/payment?plan=basic&period=monthly'">Выбрать</button>
+            </div>
+
+            <!-- Семейный -->
+            <div class="plan" onclick="location.href='/payment?plan=family&period=monthly'">
+                <div class="family-badge">👪 Для семьи</div>
+                <div class="plan-name">Семейный</div>
+                <div class="plan-price">2 490 <span>₽/мес</span></div>
+                <div class="yearly-note">24 900 ₽/год</div>
+                <ul class="features">
+                    <li>👥 До 5 пользователей</li>
+                    <li>📊 Продвинутая аналитика</li>
+                    <li>📧 Приоритетная поддержка</li>
+                    <li>🤖 50 AI-запросов/день</li>
+                    <li>📝 Продвинутая модель AI</li>
+                    <li>👶 Детский режим</li>
+                    <li>📚 Общая библиотека</li>
+                </ul>
+                <button class="btn" onclick="event.stopPropagation(); location.href='/payment?plan=family&period=monthly'">Выбрать</button>
+            </div>
+
+            <!-- Профессиональный -->
+            <div class="plan" onclick="location.href='/payment?plan=pro&period=monthly'">
+                <div class="popular-badge">🔥 Популярный</div>
+                <div class="plan-name">Профессиональный</div>
+                <div class="plan-price">2 990 <span>₽/мес</span></div>
+                <div class="yearly-note">29 900 ₽/год</div>
+                <ul class="features">
+                    <li>👥 До 1000 пользователей</li>
+                    <li>📊 Продвинутая аналитика</li>
+                    <li>⚡ Приоритетная поддержка</li>
+                    <li>📊 CRM</li>
+                    <li>🤖 100 AI-запросов/день</li>
+                    <li>🚀 Продвинутая модель AI</li>
+                    <li>📎 Загрузка файлов</li>
+                </ul>
+                <button class="btn" onclick="event.stopPropagation(); location.href='/payment?plan=pro&period=monthly'">Выбрать</button>
+            </div>
+
+            <!-- Корпоративный -->
+            <div class="plan" onclick="location.href='/payment?plan=enterprise&period=monthly'">
+                <div class="plan-name">Корпоративный</div>
+                <div class="plan-price">9 990 <span>₽/мес</span></div>
+                <div class="yearly-note">99 900 ₽/год</div>
+                <ul class="features">
+                    <li>👥 Неограниченно</li>
+                    <li>📊 Полная аналитика</li>
+                    <li>🕐 24/7 поддержка</li>
+                    <li>🔌 Все интеграции</li>
+                    <li>🤖 1000 AI-запросов/день</li>
+                    <li>🧠 Экспертная модель AI</li>
+                    <li>📎 Загрузка файлов</li>
+                    <li>🎤 Голосовой ввод</li>
+                </ul>
+                <button class="btn" onclick="event.stopPropagation(); location.href='/payment?plan=enterprise&period=monthly'">Выбрать</button>
+            </div>
+        </div>
+
+        <!-- Блок "Почему выбирают нас" -->
+        <div class="why-us">
+            <div class="why-item">
+                <div class="why-icon">🚀</div>
+                <div class="why-title">Мгновенная активация</div>
+                <div class="why-text">После оплаты доступ открывается автоматически</div>
+            </div>
+            <div class="why-item">
+                <div class="why-icon">💳</div>
+                <div class="why-title">5 способов оплаты</div>
+                <div class="why-text">Карты, СБП, USDT, Bitcoin, CryptoBot</div>
+            </div>
+            <div class="why-item">
+                <div class="why-icon">🤖</div>
+                <div class="why-title">AI разных уровней</div>
+                <div class="why-text">Выбирайте модель под свои задачи</div>
+            </div>
+            <div class="why-item">
+                <div class="why-icon">🔐</div>
+                <div class="why-title">Безопасность</div>
+                <div class="why-text">2FA, доверенные устройства, контроль доступа</div>
+            </div>
+        </div>
+
+        <div class="note">
+            💳 Принимаем: карты РФ, СБП, USDT, Bitcoin, CryptoBot · 
+            <a href="/payment">Все способы оплаты</a>
+            <br>
+            <small>✨ Все тарифы включают 14 дней бесплатного тестового периода</small>
+        </div>
+    </div>
+
+    <script>
+        // Чтобы кнопки работали правильно и не было двойного срабатывания
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    </script>
+<style>
+</style>
+
+<!-- Овальная кнопка назад -->
+<a href="javascript:history.back()" class="back-button" title="Назад">
+    <i class="fas fa-arrow-left"></i> Назад
+</a>
+
+<style>
+.back-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 40px !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+    z-index: 9999;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    width: auto;
+    height: auto;
+}
+.back-button:hover {
+    transform: translateY(-3px);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    color: white;
+    box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+    text-decoration: none;
+}
+@media (max-width: 768px) {
+    .back-button {
+        padding: 10px 20px;
+        font-size: 14px;
+        bottom: 20px;
+        right: 20px;
+    }
+}
+</style>
+</body>
+</html>
+
+
+
