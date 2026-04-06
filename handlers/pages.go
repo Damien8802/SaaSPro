@@ -196,3 +196,10 @@ func IntegrationsPageHandler(c *gin.Context) {
         "active": "integrations",
     })
 }
+
+// PricingPageHandler отображает страницу тарифов
+func PricingPageHandler(c *gin.Context) {
+    c.HTML(http.StatusOK, "pricing.html", gin.H{
+        "Title": "Тарифы - SaaSPro",
+    })
+}

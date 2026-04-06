@@ -329,7 +329,9 @@ admin.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), handl
     r.DELETE("/api/journal-entries/:id", handlers.DeleteJournalEntry)
 
 
-   
+
+   r.GET("/api/backup", handlers.CreateBackup)
+   r.POST("/api/restore", handlers.RestoreBackup)
     // Страница поставщиков
     r.GET("/suppliers", func(c *gin.Context) {
         c.HTML(http.StatusOK, "suppliers.html", gin.H{
@@ -978,19 +980,22 @@ r.GET("/analytics-center", func(c *gin.Context) {
         "title": "Analytics Center | SaaSPro",
     })
 })
+
    r.Run(port)
 }
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 }
-
-
-
-
-
-
-
-
-

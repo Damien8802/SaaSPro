@@ -47,10 +47,17 @@ type Config struct {
     SMTPUser     string
     SMTPPassword string
     EmailFrom    string
+    NotifyEmail string `env:"NOTIFY_EMAIL"`
+
+    SMTPFrom     string
+    SMTPFromName string
+    SMTPTLS      bool
+
 
     // Telegram для уведомлений
     TelegramBotToken string // Токен бота (получаем у @BotFather)
     TelegramChatID   string // ID чата или пользователя, куда отправлять уведомления (можно числом или строкой)
+  
 }
 
 func Load() *Config {

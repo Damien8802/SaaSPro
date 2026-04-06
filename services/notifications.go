@@ -55,12 +55,44 @@ func (ns *NotificationService) SendEmail(to, subject, body string) error {
     auth := smtp.PlainAuth("", ns.cfg.SMTPUser, ns.cfg.SMTPPassword, ns.cfg.SMTPHost)
     addr := fmt.Sprintf("%s:%d", ns.cfg.SMTPHost, ns.cfg.SMTPPort)
 
+    // HTML письмо с красивым оформлением
+    htmlBody := fmt.Sprintf(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }
+                .field { margin-bottom: 10px; }
+                .label { font-weight: bold; color: #333; }
+                .value { color: #666; }
+                .footer { text-align: center; padding: 20px; font-size: 12px; color: #999; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>📧 %s</h2>
+                </div>
+                <div class="content">
+                    %s
+                </div>
+                <div class="footer">
+                    SaaSPro CRM • Автоматическое уведомление
+                </div>
+            </div>
+        </body>
+        </html>
+    `, subject, body)
+
     msg := []byte("To: " + to + "\r\n" +
         "From: " + ns.cfg.EmailFrom + "\r\n" +
         "Subject: " + subject + "\r\n" +
         "Content-Type: text/html; charset=UTF-8\r\n" +
         "\r\n" +
-        body + "\r\n")
+        htmlBody + "\r\n")
 
     err := smtp.SendMail(addr, auth, ns.cfg.EmailFrom, []string{to}, msg)
     if err != nil {
@@ -71,12 +103,36 @@ func (ns *NotificationService) SendEmail(to, subject, body string) error {
 
 // NotifyCustomerCreated уведомление о создании клиента
 func (ns *NotificationService) NotifyCustomerCreated(name, email, phone, company, responsible string) {
-    msg := fmt.Sprintf("🆕 Новый клиент создан:\n<b>Имя:</b> %s\n<b>Email:</b> %s\n<b>Телефон:</b> %s\n<b>Компания:</b> %s\n<b>Ответственный:</b> %s",
+    // Telegram
+    msgTelegram := fmt.Sprintf("🆕 Новый клиент создан:\n<b>Имя:</b> %s\n<b>Email:</b> %s\n<b>Телефон:</b> %s\n<b>Компания:</b> %s\n<b>Ответственный:</b> %s",
         name, email, phone, company, responsible)
-    ns.SendTelegram(msg)
+    ns.SendTelegram(msgTelegram)
 
-    // Можно также отправить email, если нужен
-    // ns.SendEmail("manager@example.com", "Новый клиент в CRM", msg)
+    // Email
+    msgEmail := fmt.Sprintf(`
+        <div class="field">
+            <span class="label">👤 Имя:</span>
+            <span class="value">%s</span>
+        </div>
+        <div class="field">
+            <span class="label">📧 Email:</span>
+            <span class="value">%s</span>
+        </div>
+        <div class="field">
+            <span class="label">📞 Телефон:</span>
+            <span class="value">%s</span>
+        </div>
+        <div class="field">
+            <span class="label">🏢 Компания:</span>
+            <span class="value">%s</span>
+        </div>
+        <div class="field">
+            <span class="label">👔 Ответственный:</span>
+            <span class="value">%s</span>
+        </div>
+    `, name, email, phone, company, responsible)
+    
+    go ns.SendEmail(ns.cfg.NotifyEmail, "🆕 Новый клиент в CRM", msgEmail)
 }
 
 // NotifyCustomerUpdated уведомление об изменении клиента
@@ -88,9 +144,36 @@ func (ns *NotificationService) NotifyCustomerUpdated(id, name, email, phone stri
 
 // NotifyDealCreated уведомление о создании сделки
 func (ns *NotificationService) NotifyDealCreated(title string, value float64, stage, responsible, customerID string) {
-    msg := fmt.Sprintf("💰 Новая сделка:\n<b>Название:</b> %s\n<b>Сумма:</b> %.2f\n<b>Стадия:</b> %s\n<b>Ответственный:</b> %s\n<b>Клиент ID:</b> %s",
+    // Telegram
+    msgTelegram := fmt.Sprintf("💰 Новая сделка:\n<b>Название:</b> %s\n<b>Сумма:</b> %.2f\n<b>Стадия:</b> %s\n<b>Ответственный:</b> %s\n<b>Клиент ID:</b> %s",
         title, value, stage, responsible, customerID)
-    ns.SendTelegram(msg)
+    ns.SendTelegram(msgTelegram)
+
+    // Email
+    msgEmail := fmt.Sprintf(`
+        <div class="field">
+            <span class="label">📋 Название:</span>
+            <span class="value">%s</span>
+        </div>
+        <div class="field">
+            <span class="label">💰 Сумма:</span>
+            <span class="value">%.2f ₽</span>
+        </div>
+        <div class="field">
+            <span class="label">📊 Стадия:</span>
+            <span class="value">%s</span>
+        </div>
+        <div class="field">
+            <span class="label">👔 Ответственный:</span>
+            <span class="value">%s</span>
+        </div>
+        <div class="field">
+            <span class="label">🆔 Клиент ID:</span>
+            <span class="value">%s</span>
+        </div>
+    `, title, value, stage, responsible, customerID)
+    
+    go ns.SendEmail(ns.cfg.NotifyEmail, "💰 Новая сделка в CRM", msgEmail)
 }
 
 // NotifyDealUpdated уведомление об изменении сделки
@@ -99,4 +182,3 @@ func (ns *NotificationService) NotifyDealUpdated(id, title string, value float64
         id, title, value, stage)
     ns.SendTelegram(msg)
 }
-
