@@ -9,6 +9,10 @@ import (
     "net/http"
     "strings"
     "time"
+    "io"
+    "net"
+    "strconv"
+
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
@@ -112,6 +116,9 @@ func main() {
     }
     
     handlers.InitVPNWithDB(database.Pool)
+    // Инициализация Stealth VPN сервиса
+    handlers.InitStealthVPN(database.Pool)
+    log.Println("✅ Stealth VPN сервис инициализирован")
 
     handlers.InitAuthHandler(cfg)
     handlers.InitNotifier(cfg)
@@ -331,6 +338,8 @@ admin.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), handl
     r.GET("/api/admin/create-inventory-tables", handlers.CreateInventoryTables)
     r.GET("/api/current-user", handlers.GetCurrentUserID)
 
+    r.GET("/api/admin/create-vpn-tables", handlers.CreateVPNTables)
+
    r.GET("/api/backup", handlers.CreateBackup)
    r.POST("/api/restore", handlers.RestoreBackup)
     // Страница поставщиков
@@ -532,6 +541,26 @@ crmArchive.Use(middleware.AuthMiddleware(cfg))
     r.GET("/api/vpn/status/:client", handlers.CheckVPNKey)
     r.GET("/api/vpn/stats", handlers.GetVPNStats)
     r.POST("/api/vpn/renew/:client", handlers.RenewVPNKey)
+
+    // ========== STEALTH VPN (НЕВИДИМЫЙ VPN) ==========
+    // Stealth VPN API - не конфликтует с существующими VPN роутами
+    stealthVPN := r.Group("/api/vpn/stealth")
+    stealthVPN.Use(middleware.AuthMiddleware(cfg))
+    {
+        // Получить VLESS конфигурацию
+        stealthVPN.GET("/config/vless", handlers.GetVLessConfigHandler)
+        
+        // Умный роутинг
+        stealthVPN.GET("/routing", handlers.GetSmartRulesHandler)
+        stealthVPN.POST("/routing", handlers.AddSmartRuleHandler)
+        stealthVPN.DELETE("/routing/:id", handlers.DeleteSmartRuleHandler)
+        
+        // Получить stealth тарифы
+        stealthVPN.GET("/plans", handlers.GetStealthPlansHandler)
+    }
+    
+    // Страница Stealth VPN
+    r.GET("/vpn/stealth", handlers.StealthVPNPageHandler)
 
     // Админ маршруты для VPN
     adminVPN := r.Group("/admin/vpn")
@@ -980,22 +1009,68 @@ r.GET("/analytics-center", func(c *gin.Context) {
         "title": "Analytics Center | SaaSPro",
     })
 })
-
-   r.Run(port)
+	r.Run(port)
 }
 
+}  // <-- ЭТО ЗАКРЫВАЕТ ФУНКЦИЮ main!
 
+// ========== ВСЕ ФУНКЦИИ ПОСЛЕ main ==========
 
+// SOCKS5 прокси сервер
+func startSOCKS5Proxy(addr string) error {
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
 
+	log.Printf("✅ SOCKS5 прокси запущен на %s", addr)
 
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Printf("SOCKS5 accept error: %v", err)
+			continue
+		}
+		go handleSocks5Connection(conn)
+	}
+}
 
+func handleSocks5Connection(client net.Conn) {
+	defer client.Close()
 
+	buf := make([]byte, 256)
+	_, err := client.Read(buf)
+	if err != nil {
+		return
+	}
 
+	client.Write([]byte{0x05, 0x00})
 
+	_, err = client.Read(buf)
+	if err != nil {
+		return
+	}
 
+	var host string
+	var port int
 
+	if buf[3] == 0x03 {
+		domainLen := int(buf[4])
+		host = string(buf[5 : 5+domainLen])
+		port = int(buf[5+domainLen])<<8 | int(buf[6+domainLen])
+	}
 
+	log.Printf("SOCKS5: %s -> %s:%d", client.RemoteAddr(), host, port)
 
+	target, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
+	if err != nil {
+		client.Write([]byte{0x05, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
+		return
+	}
+	defer target.Close()
 
+	client.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 
+	go func() { io.Copy(target, client) }()
+	io.Copy(client, target)
 }
