@@ -844,6 +844,24 @@ api.POST("/2fa/verify-backup", handlers.VerifyWithBackupCode)
     {
         secureAPI.GET("/user/profile", handlers.GetUserProfile)
         secureAPI.GET("/user/ai-history", handlers.GetUserAIHistoryHandler)
+
+// ========== NEBULA CLOUD - ОБЛАЧНОЕ ХРАНИЛИЩЕ ==========
+cloudAPI := r.Group("/api/cloud")
+cloudAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    cloudAPI.GET("/files", handlers.GetCloudFiles)
+    cloudAPI.POST("/upload", handlers.UploadCloudFile)
+    cloudAPI.DELETE("/files/:id", handlers.DeleteCloudFile)
+    cloudAPI.POST("/folder", handlers.CreateCloudFolder)
+    cloudAPI.GET("/stats", handlers.GetCloudStats)
+    cloudAPI.GET("/plans", handlers.GetCloudPlans)
+    cloudAPI.POST("/create", handlers.CreateCloudBucket) 
+    cloudAPI.POST("/upgrade", handlers.UpgradeCloudPlan)  
+}
+
+
+// Страница облачного хранилища
+r.GET("/cloud", middleware.AuthMiddleware(cfg), handlers.NebulaCloudPage)
     }
 
 // ========== FUSIONAPI - Брендовый API продукт с AI ==========

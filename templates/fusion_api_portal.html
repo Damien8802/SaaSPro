@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FusionAPI — Портал разработчика</title>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -746,5 +748,39 @@
             if (event.target === modal) closeAgentModal();
         }
     </script>
+    <!-- Кнопка "Назад" в дашборд -->
+    <style>
+        .back-button-oval {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: none;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
+        }
+        
+        .back-button-oval:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+    </style>
+    
+    <button onclick="window.location.href='/dashboard-improved'" class="back-button-oval">
+        <i class="fas fa-arrow-left"></i>
+        <span>Назад</span>
+    </button>
 </body>
 </html>
