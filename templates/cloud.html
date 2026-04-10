@@ -7,12 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #0a0a1a 0%, #0f0f23 50%, #1a1a2e 100%);
@@ -30,7 +25,6 @@
             z-index: 0;
             overflow: hidden;
         }
-        
         .nebula-bg::before {
             content: '';
             position: absolute;
@@ -39,7 +33,6 @@
             background: radial-gradient(circle at 20% 30%, rgba(102,126,234,0.15) 0%, transparent 60%);
             animation: float1 20s ease-in-out infinite;
         }
-        
         .nebula-bg::after {
             content: '';
             position: absolute;
@@ -48,276 +41,106 @@
             background: radial-gradient(circle at 80% 70%, rgba(118,75,162,0.1) 0%, transparent 60%);
             animation: float2 25s ease-in-out infinite;
         }
+        @keyframes float1 { 0%,100% { transform: translate(-25%,-25%) scale(1); } 50% { transform: translate(-25%,-25%) scale(1.2); } }
+        @keyframes float2 { 0%,100% { transform: translate(-25%,-25%) scale(1.2); } 50% { transform: translate(-25%,-25%) scale(1); } }
         
-        @keyframes float1 {
-            0%, 100% { transform: translate(-25%, -25%) scale(1); }
-            50% { transform: translate(-25%, -25%) scale(1.2); }
-        }
-        
-        @keyframes float2 {
-            0%, 100% { transform: translate(-25%, -25%) scale(1.2); }
-            50% { transform: translate(-25%, -25%) scale(1); }
-        }
-        
-        /* Контейнер */
-        .cloud-container {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 60px 24px;
-        }
+        .cloud-container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 40px 24px; }
         
         /* Hero секция */
-        .hero-section {
-            text-align: center;
-            margin-bottom: 60px;
-        }
+        .hero-section { text-align: center; margin-bottom: 40px; }
+        .hero-icon { font-size: 64px; background: linear-gradient(135deg, #667eea, #a78bfa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+        .hero-title { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #a78bfa, #667eea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-subtitle { color: rgba(255,255,255,0.5); font-size: 16px; margin-top: 8px; }
         
-        .hero-icon {
-            font-size: 80px;
-            background: linear-gradient(135deg, #667eea, #a78bfa, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
-        }
-        
-        .hero-title {
-            font-size: 64px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #ffffff, #a78bfa, #667eea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
-            letter-spacing: -1px;
-        }
-        
-        .hero-subtitle {
-            color: rgba(255,255,255,0.5);
-            font-size: 18px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        /* Карточка хранилища */
-        .storage-card {
-            background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+        /* Карточки */
+        .card {
+            background: rgba(255,255,255,0.03);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(102,126,234,0.3);
-            border-radius: 32px;
-            padding: 40px;
-            margin-bottom: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 24px;
         }
         
-        .storage-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+        .stat-item { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #a78bfa; }
+        .stat-label { color: rgba(255,255,255,0.5); font-size: 13px; margin-top: 8px; }
+        .progress-bar { background: rgba(255,255,255,0.1); border-radius: 30px; height: 8px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #667eea, #a78bfa); border-radius: 30px; height: 100%; width: 0%; transition: width 0.5s; }
         
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin: 30px 0;
-        }
-        
-        .stat-item {
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 20px;
+        /* Файлы */
+        .files-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
+        .upload-area {
+            border: 2px dashed rgba(102,126,234,0.5);
+            border-radius: 16px;
+            padding: 30px;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 24px;
         }
-        
-        .stat-value {
-            font-size: 32px;
-            font-weight: 800;
-            color: #a78bfa;
+        .upload-area:hover { border-color: #667eea; background: rgba(102,126,234,0.05); }
+        .file-list { max-height: 400px; overflow-y: auto; }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
         }
-        
-        .stat-label {
-            color: rgba(255,255,255,0.5);
-            font-size: 14px;
-            margin-top: 8px;
-        }
-        
-        .progress-bar {
-            background: rgba(255,255,255,0.1);
-            border-radius: 30px;
-            height: 12px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-        
-        .progress-fill {
-            background: linear-gradient(90deg, #667eea, #a78bfa);
-            border-radius: 30px;
-            height: 100%;
-            width: 0%;
-            transition: width 0.5s;
-        }
+        .file-item:hover { background: rgba(255,255,255,0.03); }
+        .file-info { display: flex; align-items: center; gap: 12px; }
+        .file-icon { font-size: 24px; color: #a78bfa; }
+        .file-name { font-weight: 500; }
+        .file-size { font-size: 12px; color: rgba(255,255,255,0.4); margin-left: 12px; }
+        .file-actions { display: flex; gap: 8px; }
+        .file-actions button { background: transparent; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 8px; transition: all 0.3s; }
+        .file-actions .download-btn { color: #10b981; }
+        .file-actions .download-btn:hover { background: rgba(16,185,129,0.2); }
+        .file-actions .delete-btn { color: #ef4444; }
+        .file-actions .delete-btn:hover { background: rgba(239,68,68,0.2); }
+        .file-actions .star-btn { color: #f59e0b; }
+        .file-actions .star-btn.active { color: #f59e0b; text-shadow: 0 0 5px #f59e0b; }
         
         /* Тарифы */
-        .section-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 50px 0 30px;
-            text-align: center;
-        }
-        
-        .plans-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-        
+        .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 30px 0; }
         .plan-card {
             background: rgba(255,255,255,0.03);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 28px;
-            padding: 32px;
+            border-radius: 20px;
+            padding: 24px;
             transition: all 0.3s;
             cursor: pointer;
         }
+        .plan-card:hover { transform: translateY(-5px); border-color: #667eea; background: rgba(255,255,255,0.05); }
+        .plan-card.popular { border: 1px solid #f59e0b; }
+        .free-badge, .popular-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-bottom: 12px; }
+        .free-badge { background: linear-gradient(135deg, #10b981, #059669); }
+        .popular-badge { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        .plan-name { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .plan-price { font-size: 28px; font-weight: 800; margin-bottom: 16px; }
+        .plan-price small { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.5); }
+        .plan-features { list-style: none; margin: 20px 0; }
+        .plan-features li { padding: 8px 0; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        .plan-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(102,126,234,0.5);
-            background: rgba(255,255,255,0.05);
-        }
-        
-        .plan-card.popular {
-            border: 1px solid #f59e0b;
-        }
-        
-        .popular-badge {
-            background: linear-gradient(135deg, #f59e0b, #ef4444);
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 16px;
-        }
-        
-        .free-badge {
-            background: linear-gradient(135deg, #10b981, #059669);
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 16px;
-        }
-        
-        .plan-name {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-        
-        .plan-price {
-            font-size: 36px;
-            font-weight: 800;
-            margin-bottom: 8px;
-        }
-        
-        .plan-price small {
-            font-size: 14px;
-            font-weight: 400;
-            color: rgba(255,255,255,0.5);
-        }
-        
-        .plan-features {
-            list-style: none;
-            margin: 24px 0;
-        }
-        
-        .plan-features li {
-            padding: 10px 0;
-            color: rgba(255,255,255,0.7);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        
-        /* Кнопки */
         .btn {
-            padding: 12px 28px;
-            border-radius: 40px;
+            padding: 10px 24px;
+            border-radius: 30px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             border: none;
             font-size: 14px;
         }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; }
+        .btn-outline:hover { border-color: #667eea; background: rgba(102,126,234,0.1); }
+        .btn-sm { padding: 6px 16px; font-size: 12px; }
         
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-        }
-        
-        .btn-outline:hover {
-            border-color: #667eea;
-            background: rgba(102,126,234,0.1);
-        }
-        
-        /* Учётные данные */
-        .credentials-card {
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 28px;
-            padding: 32px;
-            margin-top: 40px;
-        }
-        
-        .credentials-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 24px;
-        }
-        
-        .credential-row {
-            background: rgba(0,0,0,0.3);
-            border-radius: 16px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        
-        .credential-label {
-            color: rgba(255,255,255,0.6);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .credential-value {
-            font-family: monospace;
-            color: #a78bfa;
-            word-break: break-all;
-        }
-        
-        /* Модальное окно */
         .modal {
             display: none;
             position: fixed;
@@ -331,40 +154,18 @@
             justify-content: center;
             align-items: center;
         }
-        
         .modal-content {
             background: linear-gradient(135deg, #1a1a2e, #0f0f23);
             border: 1px solid rgba(102,126,234,0.3);
-            border-radius: 32px;
-            padding: 40px;
+            border-radius: 24px;
+            padding: 32px;
             max-width: 500px;
             width: 90%;
         }
+        .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; }
+        .modal-select { width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: white; margin: 20px 0; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
         
-        .modal-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-        
-        .modal-select {
-            width: 100%;
-            padding: 14px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 16px;
-            color: white;
-            font-size: 16px;
-            margin: 20px 0;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        /* Кнопка назад */
         .back-button {
             position: fixed;
             bottom: 30px;
@@ -373,25 +174,20 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(102,126,234,0.3);
             color: white;
-            padding: 14px 28px;
-            border-radius: 60px;
+            padding: 12px 24px;
+            border-radius: 40px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             cursor: pointer;
             transition: all 0.3s;
             z-index: 100;
         }
-        
-        .back-button:hover {
-            background: rgba(102,126,234,0.4);
-            transform: scale(1.05);
-        }
+        .back-button:hover { background: rgba(102,126,234,0.4); transform: scale(1.05); }
         
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .hero-title { font-size: 36px; }
-            .hero-icon { font-size: 50px; }
+            .hero-title { font-size: 32px; }
         }
     </style>
 </head>
@@ -399,118 +195,61 @@
     <div class="nebula-bg"></div>
     
     <div class="cloud-container">
-        <!-- Hero секция -->
         <div class="hero-section">
-            <div class="hero-icon">
-                <i class="bi bi-cloud-upload"></i>
-            </div>
+            <div class="hero-icon"><i class="bi bi-cloud-upload"></i></div>
             <h1 class="hero-title">Nebula Cloud</h1>
             <p class="hero-subtitle">Ваше персональное облачное пространство</p>
         </div>
         
-        <!-- Карточка хранилища -->
-        <div class="storage-card" id="storageCard" style="display: none;">
-            <div class="storage-title">📊 Статистика хранилища</div>
+        <!-- Статистика -->
+        <div id="storageCard" class="card" style="display: none;">
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="usedGB">0</div>
-                    <div class="stat-label">Использовано (ГБ)</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="totalGB">10</div>
-                    <div class="stat-label">Всего (ГБ)</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="usedPercent">0%</div>
-                    <div class="stat-label">Заполнено</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="filesCount">0</div>
-                    <div class="stat-label">Файлов</div>
-                </div>
+                <div class="stat-item"><div class="stat-value" id="usedGB">0</div><div class="stat-label">Использовано (ГБ)</div></div>
+                <div class="stat-item"><div class="stat-value" id="totalGB">0</div><div class="stat-label">Всего (ГБ)</div></div>
+                <div class="stat-item"><div class="stat-value" id="usedPercent">0%</div><div class="stat-label">Заполнено</div></div>
+                <div class="stat-item"><div class="stat-value" id="filesCount">0</div><div class="stat-label">Файлов</div></div>
             </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="usageFill"></div>
-            </div>
-            <button class="btn btn-outline" onclick="showUpgradeModal()">📈 Расширить хранилище</button>
+            <div class="progress-bar"><div class="progress-fill" id="usageFill"></div></div>
+            <div style="margin-top: 16px; text-align: center;"><button class="btn btn-outline btn-sm" onclick="showUpgradeModal()">📈 Расширить хранилище</button></div>
         </div>
         
-        <!-- Создание бакета -->
-        <div class="storage-card" id="createCard" style="background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1)); text-align: center;">
-            <div class="hero-icon" style="font-size: 48px;">
-                <i class="bi bi-cloud-plus"></i>
+        <!-- Управление файлами -->
+        <div id="filesCard" class="card" style="display: none;">
+            <div class="files-header">
+                <h3 style="font-size: 20px;">📁 Мои файлы</h3>
+                <button class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()">📤 Загрузить файл</button>
+                <input type="file" id="fileInput" style="display: none;" multiple onchange="uploadFiles(this.files)">
             </div>
-            <div class="storage-title" style="margin-bottom: 12px;">Активация облака</div>
-            <p style="color: rgba(255,255,255,0.6); margin-bottom: 24px;">Создайте ваше персональное облачное хранилище</p>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <i class="bi bi-cloud-upload" style="font-size: 32px; color: #a78bfa;"></i>
+                <p style="margin-top: 8px;">Нажмите или перетащите файлы для загрузки</p>
+            </div>
+            <div id="fileList" class="file-list">
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">Загрузка файлов...</div>
+            </div>
+        </div>
+        
+        <!-- Создание хранилища -->
+        <div id="createCard" class="card" style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;"><i class="bi bi-cloud-plus"></i></div>
+            <h3 style="margin-bottom: 8px;">Активация облака</h3>
+            <p style="color: rgba(255,255,255,0.5); margin-bottom: 20px;">Создайте ваше персональное облачное хранилище</p>
             <button class="btn btn-primary" onclick="showCreateModal()">✨ Активировать</button>
         </div>
         
         <!-- Тарифы -->
-        <div class="section-title">💎 Тарифы Nebula Cloud</div>
-        <div class="plans-grid" id="plansGrid"></div>
-        
-        <!-- Учётные данные -->
-        <div class="credentials-card" id="credentialsCard" style="display: none;">
-            <div class="credentials-title">🔐 Данные доступа</div>
-            <div class="credential-row">
-                <span class="credential-label"><i class="bi bi-folder"></i> Бакет:</span>
-                <code class="credential-value" id="bucketName">-</code>
-                <button class="btn btn-outline btn-sm" onclick="copyText('bucketName')">Копировать</button>
-            </div>
-            <div class="credential-row">
-                <span class="credential-label"><i class="bi bi-key"></i> Access Key:</span>
-                <code class="credential-value" id="accessKey">-</code>
-                <button class="btn btn-outline btn-sm" onclick="copyText('accessKey')">Копировать</button>
-            </div>
-            <div class="credential-row">
-                <span class="credential-label"><i class="bi bi-shield-lock"></i> Secret Key:</span>
-                <code class="credential-value" id="secretKey">-</code>
-                <button class="btn btn-outline btn-sm" onclick="copyText('secretKey')">Копировать</button>
-            </div>
-            <div class="credential-row">
-                <span class="credential-label"><i class="bi bi-cloud"></i> Эндпоинт:</span>
-                <code class="credential-value" id="endpoint">http://localhost:9000</code>
-                <button class="btn btn-outline btn-sm" onclick="copyText('endpoint')">Копировать</button>
-            </div>
+        <div id="plansSection" style="display: none;">
+            <h2 style="margin: 30px 0 20px;">💎 Тарифы Nebula Cloud</h2>
+            <div class="plans-grid" id="plansGrid"></div>
         </div>
     </div>
     
-    <!-- Кнопка назад -->
-    <button class="back-button" onclick="window.location.href='/dashboard-improved'">
-        <i class="bi bi-arrow-left"></i> На главную
-    </button>
+    <button class="back-button" onclick="window.location.href='/dashboard-improved'"><i class="bi bi-arrow-left"></i> На главную</button>
     
-    <!-- Модальное окно создания -->
-    <div id="createModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">✨ Создание хранилища</div>
-            <p style="color: rgba(255,255,255,0.6);">Выберите подходящий тариф</p>
-            <select id="planSelect" class="modal-select">
-                <option value="">Загрузка тарифов...</option>
-            </select>
-            <div class="modal-buttons">
-                <button class="btn btn-outline" onclick="closeCreateModal()">Отмена</button>
-                <button class="btn btn-primary" onclick="createBucket()">Создать</button>
-            </div>
-        </div>
-    </div>
+    <!-- Модальные окна -->
+    <div id="createModal" class="modal"><div class="modal-content"><div class="modal-title">✨ Создание хранилища</div><p>Выберите тариф</p><select id="planSelect" class="modal-select"><option value="">Загрузка...</option></select><div class="modal-buttons"><button class="btn btn-outline" onclick="closeCreateModal()">Отмена</button><button class="btn btn-primary" onclick="createBucket()">Создать</button></div></div></div>
+    <div id="upgradeModal" class="modal"><div class="modal-content"><div class="modal-title">📈 Расширение хранилища</div><p>Выберите новый тариф</p><select id="upgradePlanSelect" class="modal-select"><option value="">Загрузка...</option></select><div class="modal-buttons"><button class="btn btn-outline" onclick="closeUpgradeModal()">Отмена</button><button class="btn btn-primary" onclick="upgradePlan()">Обновить</button></div></div></div>
     
-    <!-- Модальное окно апгрейда -->
-    <div id="upgradeModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">📈 Расширение хранилища</div>
-            <p style="color: rgba(255,255,255,0.6);">Выберите новый тариф</p>
-            <select id="upgradePlanSelect" class="modal-select">
-                <option value="">Загрузка тарифов...</option>
-            </select>
-            <div class="modal-buttons">
-                <button class="btn btn-outline" onclick="closeUpgradeModal()">Отмена</button>
-                <button class="btn btn-primary" onclick="upgradePlan()">Обновить</button>
-            </div>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let currentPlans = [];
         let hasStorage = false;
@@ -520,160 +259,145 @@
                 const res = await fetch('/api/cloud/plans');
                 const plans = await res.json();
                 currentPlans = plans;
-                
                 const select = document.getElementById('planSelect');
                 const upgradeSelect = document.getElementById('upgradePlanSelect');
                 const plansGrid = document.getElementById('plansGrid');
-                
                 select.innerHTML = '<option value="">Выберите тариф</option>';
                 upgradeSelect.innerHTML = '<option value="">Выберите тариф</option>';
-                
                 plansGrid.innerHTML = plans.map(p => `
-                    <div class="plan-card ${p.name === 'Cloud 100 ГБ' ? 'popular' : ''}" onclick="selectPlan('${p.id}')">
-                        ${p.is_free_for_dev ? '<div class="free-badge">🧑‍💻 Бесплатно для разработчика</div>' : ''}
-                        ${p.name === 'Cloud 100 ГБ' ? '<div class="popular-badge">⭐ Популярный</div>' : ''}
+                    <div class="plan-card ${p.name === 'Nebula Pro' ? 'popular' : ''}" onclick="selectPlan('${p.id}')">
+                       ${p.is_free_for_dev && p.price_monthly === 0 ? '<div class="free-badge">🧑‍💻 Бесплатно для разработчика</div>' : ''}
+                        ${p.name === 'Nebula Pro' ? '<div class="popular-badge">⭐ Популярный</div>' : ''}
                         <div class="plan-name">${p.name}</div>
                         <div class="plan-price">${p.price_monthly === 0 ? '0 ₽' : p.price_monthly + ' ₽'}<small>/мес</small></div>
-                        <ul class="plan-features">
-                            <li><i class="bi bi-hdd-stack"></i> ${p.quota_gb} ГБ пространства</li>
-                            <li><i class="bi bi-shield-check"></i> Надёжная защита</li>
-                            <li><i class="bi bi-arrow-repeat"></i> 99.99% доступности</li>
-                            <li><i class="bi bi-headset"></i> Круглосуточная поддержка</li>
-                        </ul>
-                        <button class="btn btn-primary" style="width: 100%;" onclick="event.stopPropagation();selectPlan('${p.id}')">Выбрать</button>
+                        <ul class="plan-features"><li><i class="bi bi-hdd-stack"></i> ${p.quota_gb} ГБ пространства</li><li><i class="bi bi-shield-check"></i> Надёжная защита</li><li><i class="bi bi-arrow-repeat"></i> 99.99% доступности</li></ul>
+                        <button class="btn btn-primary" style="width:100%;" onclick="event.stopPropagation();selectPlan('${p.id}')">Выбрать</button>
                     </div>
                 `).join('');
-                
-                plans.forEach(p => {
-                    const option = `<option value="${p.id}">${p.name} - ${p.quota_gb} ГБ - ${p.price_monthly} ₽/мес</option>`;
-                    select.innerHTML += option;
-                    upgradeSelect.innerHTML += option;
-                });
-            } catch(err) {
-                console.error('Ошибка загрузки тарифов:', err);
-            }
+                plans.forEach(p => { select.innerHTML += `<option value="${p.id}">${p.name} - ${p.quota_gb} ГБ - ${p.price_monthly} ₽/мес</option>`; upgradeSelect.innerHTML += `<option value="${p.id}">${p.name} - ${p.quota_gb} ГБ - ${p.price_monthly} ₽/мес</option>`; });
+            } catch(err) { console.error('Ошибка загрузки тарифов:', err); }
         }
         
-        function selectPlan(planId) {
-            document.getElementById('planSelect').value = planId;
-            showCreateModal();
-        }
+        function selectPlan(planId) { document.getElementById('planSelect').value = planId; showCreateModal(); }
         
         async function loadStats() {
             try {
                 const res = await fetch('/api/cloud/stats');
                 const data = await res.json();
-                
                 if (data.has_storage) {
                     hasStorage = true;
                     document.getElementById('storageCard').style.display = 'block';
+                    document.getElementById('filesCard').style.display = 'block';
                     document.getElementById('createCard').style.display = 'none';
-                    document.getElementById('credentialsCard').style.display = 'block';
-                    
+                    document.getElementById('plansSection').style.display = 'block';
                     document.getElementById('usedGB').textContent = data.used_gb;
                     document.getElementById('totalGB').textContent = data.total_gb;
                     document.getElementById('usedPercent').textContent = data.used_percent + '%';
                     document.getElementById('filesCount').textContent = data.files_count;
                     document.getElementById('usageFill').style.width = data.used_percent + '%';
-                    
-                    if (data.bucket_name) {
-                        document.getElementById('bucketName').textContent = data.bucket_name;
-                        document.getElementById('accessKey').textContent = data.access_key || '••••••••';
-                        document.getElementById('secretKey').textContent = data.secret_key || '••••••••';
-                    }
+                    loadFiles();
                 } else {
                     hasStorage = false;
                     document.getElementById('storageCard').style.display = 'none';
+                    document.getElementById('filesCard').style.display = 'none';
                     document.getElementById('createCard').style.display = 'block';
-                    document.getElementById('credentialsCard').style.display = 'none';
+                    document.getElementById('plansSection').style.display = 'block';
                 }
-            } catch(err) {
-                console.error('Ошибка загрузки статистики:', err);
+            } catch(err) { console.error('Ошибка загрузки статистики:', err); }
+        }
+        
+        async function loadFiles() {
+            try {
+                const res = await fetch('/api/cloud/files');
+                const data = await res.json();
+                const fileList = document.getElementById('fileList');
+                if (!data.files || data.files.length === 0) {
+                    fileList.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">📭 У вас пока нет файлов</div>';
+                    return;
+                }
+                fileList.innerHTML = data.files.map(f => `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <i class="bi ${f.icon} file-icon"></i>
+                            <div><div class="file-name">${escapeHtml(f.name)}</div><div class="file-size">${f.size_mb.toFixed(2)} МБ</div></div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="download-btn" onclick="downloadFile('${f.id}')" title="Скачать"><i class="bi bi-download"></i></button>
+                            <button class="delete-btn" onclick="deleteFile('${f.id}')" title="Удалить"><i class="bi bi-trash"></i></button>
+                            <button class="star-btn ${f.is_starred ? 'active' : ''}" onclick="toggleStar('${f.id}')" title="В избранное"><i class="bi bi-star${f.is_starred ? '-fill' : ''}"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(err) { console.error('Ошибка загрузки файлов:', err); }
+        }
+        
+        async function uploadFiles(files) {
+            for (let file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+                try {
+                    const res = await fetch('/api/cloud/upload', { method: 'POST', body: formData });
+                    if (res.ok) { loadFiles(); loadStats(); showNotification(`✅ ${file.name} загружен`, 'success'); }
+                    else { showNotification(`❌ Ошибка загрузки ${file.name}`, 'error'); }
+                } catch(err) { showNotification(`❌ Ошибка загрузки ${file.name}`, 'error'); }
             }
         }
         
-        function showCreateModal() {
-            document.getElementById('createModal').style.display = 'flex';
+        async function deleteFile(id) {
+            if (confirm('Удалить файл?')) {
+                const res = await fetch(`/api/cloud/files/${id}`, { method: 'DELETE' });
+                if (res.ok) { loadFiles(); loadStats(); showNotification('✅ Файл удалён', 'success'); }
+                else { showNotification('❌ Ошибка удаления', 'error'); }
+            }
         }
         
-        function closeCreateModal() {
-            document.getElementById('createModal').style.display = 'none';
+        async function downloadFile(id) {
+            window.open(`/api/cloud/files/${id}/download`, '_blank');
         }
         
-        function showUpgradeModal() {
-            document.getElementById('upgradeModal').style.display = 'flex';
+        async function toggleStar(id) {
+            const res = await fetch(`/api/cloud/files/${id}/star`, { method: 'POST' });
+            if (res.ok) loadFiles();
         }
         
-        function closeUpgradeModal() {
-            document.getElementById('upgradeModal').style.display = 'none';
-        }
+        function showCreateModal() { document.getElementById('createModal').style.display = 'flex'; }
+        function closeCreateModal() { document.getElementById('createModal').style.display = 'none'; }
+        function showUpgradeModal() { document.getElementById('upgradeModal').style.display = 'flex'; }
+        function closeUpgradeModal() { document.getElementById('upgradeModal').style.display = 'none'; }
         
         async function createBucket() {
             const planId = document.getElementById('planSelect').value;
-            if (!planId) {
-                alert('Выберите тариф');
-                return;
-            }
-            
+            if (!planId) { alert('Выберите тариф'); return; }
             try {
-                const res = await fetch('/api/cloud/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan_id: planId })
-                });
+                const res = await fetch('/api/cloud/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan_id: planId }) });
                 const data = await res.json();
-                
-                if (res.ok) {
-                    alert(`✅ Хранилище создано!\n\n🔹 Бакет: ${data.bucket_name}\n🔹 Access Key: ${data.access_key}\n🔹 Secret Key: ${data.secret_key}\n\n⚠️ Сохраните эти данные!`);
-                    closeCreateModal();
-                    loadStats();
-                } else {
-                    alert('Ошибка: ' + (data.error || 'Не удалось создать хранилище'));
-                }
-            } catch(err) {
-                alert('Ошибка при создании хранилища');
-            }
+                if (res.ok) { alert(`✅ Хранилище создано!\n\nБакет: ${data.bucket_name}\nAccess Key: ${data.access_key}\nSecret Key: ${data.secret_key}\n\nСохраните эти данные!`); closeCreateModal(); loadStats(); }
+                else { alert('Ошибка: ' + (data.error || 'Не удалось создать хранилище')); }
+            } catch(err) { alert('Ошибка при создании хранилища'); }
         }
         
         async function upgradePlan() {
             const planId = document.getElementById('upgradePlanSelect').value;
-            if (!planId) {
-                alert('Выберите тариф');
-                return;
-            }
-            
+            if (!planId) { alert('Выберите тариф'); return; }
             try {
-                const res = await fetch('/api/cloud/upgrade', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan_id: planId })
-                });
+                const res = await fetch('/api/cloud/upgrade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan_id: planId }) });
                 const data = await res.json();
-                
-                if (res.ok) {
-                    alert(`✅ Тариф обновлён до ${data.plan_name}!`);
-                    closeUpgradeModal();
-                    loadStats();
-                } else {
-                    alert('Ошибка: ' + (data.error || 'Не удалось обновить тариф'));
-                }
-            } catch(err) {
-                alert('Ошибка при обновлении тарифа');
-            }
+                if (res.ok) { alert(`✅ Тариф обновлён до ${data.plan_name}!`); closeUpgradeModal(); loadStats(); }
+                else { alert('Ошибка: ' + (data.error || 'Не удалось обновить тариф')); }
+            } catch(err) { alert('Ошибка при обновлении тарифа'); }
         }
         
-        function copyText(elementId) {
-            const element = document.getElementById(elementId);
-            const text = element.textContent;
-            navigator.clipboard.writeText(text);
-            alert(`📋 Скопировано: ${text}`);
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `position:fixed;bottom:20px;right:20px;background:${type === 'success' ? '#10b981' : '#ef4444'};color:white;padding:12px 24px;border-radius:12px;z-index:2000;animation:fadeIn 0.3s ease;`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
         }
         
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
+        window.onclick = function(event) { if (event.target.classList.contains('modal')) event.target.style.display = 'none'; }
         
         loadPlans();
         loadStats();

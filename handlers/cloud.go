@@ -254,12 +254,28 @@ func GetCloudStats(c *gin.Context) {
     })
 }
 
-// GetCloudPlans - получить тарифы
+// GetCloudPlans - получить тарифы (безлимитный показываем только разработчикам)
 func GetCloudPlans(c *gin.Context) {
-    rows, err := database.Pool.Query(c.Request.Context(), `
-        SELECT id, name, quota_gb, price_monthly, price_yearly, is_free_for_dev, sort_order
-        FROM cloud_plans WHERE is_active = true ORDER BY sort_order
-    `)
+    userID := c.GetString("user_id")
+    if userID == "" {
+        userID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+    
+    // Проверяем, разработчик ли это
+    isDev := isUserDeveloper(c, userID)
+    
+    var query string
+    if isDev {
+        // Разработчикам показываем все тарифы
+        query = `SELECT id, name, quota_gb, price_monthly, price_yearly, is_free_for_dev, sort_order 
+                 FROM cloud_plans WHERE is_active = true ORDER BY sort_order`
+    } else {
+        // Обычным пользователям скрываем тариф Nebula Dev
+        query = `SELECT id, name, quota_gb, price_monthly, price_yearly, is_free_for_dev, sort_order 
+                 FROM cloud_plans WHERE is_active = true AND name != 'Nebula Dev' ORDER BY sort_order`
+    }
+    
+    rows, err := database.Pool.Query(c.Request.Context(), query)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load plans"})
         return
@@ -289,7 +305,6 @@ func GetCloudPlans(c *gin.Context) {
     
     c.JSON(http.StatusOK, plans)
 }
-
 // CreateCloudBucket - создать бакет для клиента
 func CreateCloudBucket(c *gin.Context) {
     userID := c.GetString("user_id")
@@ -305,13 +320,29 @@ func CreateCloudBucket(c *gin.Context) {
         return
     }
     
-    // Получаем тариф
+    // Проверяем, разработчик ли это
+    isDev := isUserDeveloper(c, userID)
+    
     var planID uuid.UUID
     var quotaGB int
     var planName string
     var priceMonthly float64
     var isFreeForDev bool
     
+    // Если не разработчик - проверяем что выбран не Dev тариф
+    if !isDev {
+        var planNameCheck string
+        database.Pool.QueryRow(c.Request.Context(), `
+            SELECT name FROM cloud_plans WHERE id = $1
+        `, req.PlanID).Scan(&planNameCheck)
+        
+        if planNameCheck == "Nebula Dev" {
+            c.JSON(http.StatusForbidden, gin.H{"error": "This plan is not available for regular users"})
+            return
+        }
+    }
+    
+    // Получаем тариф
     err := database.Pool.QueryRow(c.Request.Context(), `
         SELECT id, name, quota_gb, price_monthly, is_free_for_dev
         FROM cloud_plans WHERE id = $1 AND is_active = true
@@ -322,10 +353,8 @@ func CreateCloudBucket(c *gin.Context) {
         return
     }
     
-    // Проверяем, разработчик ли это
-    isDev := isUserDeveloper(c, userID)
-    
     var finalPrice float64
+    
     if isDev && isFreeForDev {
         finalPrice = 0
     } else {
@@ -335,12 +364,9 @@ func CreateCloudBucket(c *gin.Context) {
     // Генерируем имя бакета
     bucketName := fmt.Sprintf("nebula-%s-%s", userID[:8], uuid.New().String()[:8])
     
-    // Генерируем ключи доступа для MinIO
+    // Генерируем ключи
     accessKey := generateAccessKey()
     secretKey := generateSecretKey()
-    
-    // TODO: Создать бакет в MinIO через API
-    // Пока используем локальное хранилище
     
     // Создаём директорию
     dirPath := fmt.Sprintf("./cloud_storage/%s", userID)
@@ -368,13 +394,13 @@ func CreateCloudBucket(c *gin.Context) {
         "access_key":  accessKey,
         "secret_key":  secretKey,
         "endpoint":    "http://localhost:9000",
-        "console_url": "http://localhost:9001",
         "quota_gb":    quotaGB,
         "price":       finalPrice,
         "is_free":     finalPrice == 0,
         "plan_name":   planName,
     })
-}// UpgradeCloudPlan - обновить тариф
+}
+// UpgradeCloudPlan - обновить тариф
 func UpgradeCloudPlan(c *gin.Context) {
     userID := c.GetString("user_id")
     if userID == "" {
@@ -385,9 +411,12 @@ func UpgradeCloudPlan(c *gin.Context) {
         PlanID string `json:"plan_id" binding:"required"`
     }
     if err := c.ShouldBindJSON(&req); err != nil {
+        log.Printf("❌ Ошибка парсинга JSON: %v", err)
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
+    
+    log.Printf("🔄 UpgradeCloudPlan: userID=%s, planID=%s", userID, req.PlanID)
     
     // Получаем новый тариф
     var newPlanID uuid.UUID
@@ -402,9 +431,12 @@ func UpgradeCloudPlan(c *gin.Context) {
     `, req.PlanID).Scan(&newPlanID, &newPlanName, &newQuotaGB, &newPriceMonthly, &isFreeForDev)
     
     if err != nil {
+        log.Printf("❌ Тариф не найден: %v", err)
         c.JSON(http.StatusNotFound, gin.H{"error": "Plan not found"})
         return
     }
+    
+    log.Printf("✅ Найден тариф: %s, квота: %d ГБ, цена: %.2f", newPlanName, newQuotaGB, newPriceMonthly)
     
     // Проверяем, разработчик ли это
     isDev := isUserDeveloper(c, userID)
@@ -416,14 +448,25 @@ func UpgradeCloudPlan(c *gin.Context) {
         newPrice = newPriceMonthly
     }
     
-    _, err = database.Pool.Exec(c.Request.Context(), `
+    log.Printf("💰 Итоговая цена: %.2f (isDev=%v, isFreeForDev=%v)", newPrice, isDev, isFreeForDev)
+    
+    result, err := database.Pool.Exec(c.Request.Context(), `
         UPDATE cloud_buckets 
         SET plan_id = $1, price_paid = $2, updated_at = NOW()
         WHERE user_id = $3 AND is_active = true
     `, newPlanID, newPrice, userID)
     
     if err != nil {
+        log.Printf("❌ Ошибка обновления БД: %v", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upgrade plan"})
+        return
+    }
+    
+    rowsAffected := result.RowsAffected()
+    log.Printf("✅ Обновлено строк: %d", rowsAffected)
+    
+    if rowsAffected == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"error": "No active bucket found for this user"})
         return
     }
     
@@ -435,7 +478,6 @@ func UpgradeCloudPlan(c *gin.Context) {
         "is_free":   newPrice == 0,
     })
 }
-
 // getFileIcon - иконка файла
 func getFileIcon(mimeType, filename string) string {
     if strings.Contains(mimeType, "image") {
@@ -491,4 +533,48 @@ func isUserDeveloper(c *gin.Context, userID string) bool {
         return true
     }
     return false
+}
+
+// DownloadCloudFile - скачать файл
+func DownloadCloudFile(c *gin.Context) {
+    userID := c.GetString("user_id")
+    if userID == "" {
+        userID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+    
+    fileID := c.Param("id")
+    
+    var filePath, fileName string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT path, name FROM cloud_files WHERE id = $1 AND user_id = $2
+    `, fileID, userID).Scan(&filePath, &fileName)
+    
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+        return
+    }
+    
+    c.FileAttachment(filePath, fileName)
+}
+
+// ToggleStarFile - добавить/убрать из избранного
+func ToggleStarFile(c *gin.Context) {
+    userID := c.GetString("user_id")
+    if userID == "" {
+        userID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+    
+    fileID := c.Param("id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE cloud_files SET is_starred = NOT is_starred
+        WHERE id = $1 AND user_id = $2
+    `, fileID, userID)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"message": "Updated"})
 }
