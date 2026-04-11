@@ -1,165 +1,542 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Чат - ServerAgent</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🤖 AI Мега-Чат | SaaSPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+<div style="background: #dc3545; color: white; padding: 10px; text-align: center; margin-bottom: 20px; border-radius: 10px;">
+    ⚠️ РЕЖИМ РАЗРАБОТЧИКА - ТОЛЬКО ДЛЯ АДМИНОВ ⚠️
+    <br>Для пользователей используйте <a href="/ai" style="color: white; text-decoration: underline;">новый AI Мега-Чат</a>
+</div>
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #0f0f23 50%, #1a1a2e 100%);
             min-height: 100vh;
+            color: #ffffff;
+        }
+        .container { max-width: 1600px; margin: 0 auto; padding: 20px; height: 100vh; display: flex; gap: 20px; }
+        
+        /* Боковая панель */
+        .sidebar {
+            width: 280px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .new-chat-btn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none; border-radius: 12px; color: white;
+            font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .chats-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .chat-item {
+            padding: 12px; border-radius: 12px; margin-bottom: 8px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .chat-item:hover { background: rgba(102,126,234,0.2); }
+        .chat-item.active { background: rgba(102,126,234,0.3); border-left: 3px solid #667eea; }
+        .chat-title { font-weight: 500; font-size: 14px; margin-bottom: 4px; }
+        .chat-date { font-size: 11px; color: rgba(255,255,255,0.4); }
+        .chat-delete { float: right; opacity: 0; transition: opacity 0.3s; cursor: pointer; }
+        .chat-item:hover .chat-delete { opacity: 1; }
+        
+        /* Основной чат */
+        .chat-main {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
             padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        h1 {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-        .chat-container {
-            background: white;
+        .model-selector {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(102,126,234,0.3);
             border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            height: 500px;
-            display: flex;
-            flex-direction: column;
-        }
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .message {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            word-wrap: break-word;
-        }
-        .user-message {
-            background: #667eea;
+            padding: 8px 16px;
             color: white;
-            align-self: flex-end;
-        }
-        .bot-message {
-            background: #f0f0f0;
-            color: #333;
-            align-self: flex-start;
-        }
-        .input-area {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-        button {
-            padding: 12px 24px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
             cursor: pointer;
         }
-        button:hover {
-            opacity: 0.9;
+        .messages-area { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        .message {
+            display: flex; gap: 12px; margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
         }
-        .typing {
-            color: #999;
-            font-style: italic;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .user-avatar { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .bot-avatar { background: rgba(16,185,129,0.2); border: 1px solid #10b981; }
+        .message-content {
+            flex: 1; background: rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 12px 16px;
+            line-height: 1.5;
+        }
+        .message-content pre {
+            background: #1a1a2e; border-radius: 8px;
+            padding: 12px; overflow-x: auto; margin: 10px 0;
+        }
+        .message-content code { font-family: monospace; font-size: 13px; }
+        .message-content p { margin-bottom: 8px; }
+        .message-content ul, .message-content ol { margin-left: 20px; margin-bottom: 8px; }
+        
+        .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; }
+        .typing-dot {
+            width: 8px; height: 8px; background: rgba(255,255,255,0.5);
+            border-radius: 50%; animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%,60%,100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+        
+        /* Область ввода */
+        .input-area { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .input-wrapper { display: flex; gap: 12px; align-items: flex-end; }
+        .input-wrapper textarea {
+            flex: 1; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 20px; padding: 12px 16px;
+            color: white; font-family: inherit; font-size: 14px;
+            resize: none; min-height: 44px; max-height: 120px;
+        }
+        .input-wrapper textarea:focus { outline: none; border-color: #667eea; }
+        .input-actions { display: flex; gap: 8px; }
+        .action-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(102,126,234,0.2); border: none;
+            color: #a78bfa; cursor: pointer; transition: all 0.3s;
+        }
+        .action-btn:hover { background: rgba(102,126,234,0.4); }
+        .send-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        
+        /* Панель настроек */
+        .settings-panel {
+            width: 280px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .settings-section { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px; }
+        .settings-title { font-size: 14px; font-weight: 600; color: #a78bfa; margin-bottom: 12px; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .setting-label { font-size: 13px; }
+        
+        /* Переключатель */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.2); transition: 0.3s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%;
+        }
+        input:checked + .slider { background: linear-gradient(135deg, #667eea, #764ba2); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        
+        select, input[type="range"] {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 10px;
+            padding: 8px;
+            color: white;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar, .settings-panel { display: none; }
+        }
+        
+        .toast {
+            position: fixed; bottom: 30px; right: 30px;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);
+            border-left: 4px solid #10b981;
+            padding: 12px 20px; border-radius: 12px;
+            animation: slideIn 0.3s ease; z-index: 1000;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🤖 AI Помощник ServerAgent</h1>
-        <div class="chat-container">
-            <div class="messages" id="messages"></div>
-            <div class="input-area">
-                <input type="text" id="questionInput" placeholder="Задайте вопрос..." />
-                <button onclick="sendQuestion()">Отправить</button>
+<div class="container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <button class="new-chat-btn" onclick="newChat()">
+                <i class="bi bi-plus-lg"></i> Новый чат
+            </button>
+        </div>
+        <div class="chats-list" id="chatsList"></div>
+    </div>
+
+    <div class="chat-main">
+        <div class="chat-header">
+            <div>
+                <h3 style="display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-robot"></i> AI Мега-Ассистент
+                </h3>
+                <p style="font-size: 12px; color: rgba(255,255,255,0.5);">YandexGPT | OpenRouter</p>
             </div>
+            <div style="display: flex; gap: 10px;">
+                <select id="modelSelect" class="model-selector" onchange="changeModel()">
+                    <option value="yandex">🚀 YandexGPT Lite</option>
+                    <option value="yandex-pro">⭐ YandexGPT Pro</option>
+                    <option value="openrouter">🌐 OpenRouter (GPT-4)</option>
+                </select>
+                <button class="action-btn" onclick="exportChat()" title="Экспорт чата">
+                    <i class="bi bi-download"></i>
+                </button>
+                <button class="action-btn" onclick="clearChat()" title="Очистить чат">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="messages-area" id="messagesArea">
+            <div class="message">
+                <div class="message-avatar bot-avatar">🤖</div>
+                <div class="message-content">
+                    Привет! Я AI-ассистент. <br>
+                    Могу помочь с:<br>
+                    📊 Аналитикой данных<br>
+                    📝 Написанием текстов<br>
+                    💻 Помощью с кодом<br>
+                    📚 Ответами на вопросы<br><br>
+                    <strong>Задайте мне любой вопрос!</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="questionInput" placeholder="Напишите сообщение... (Enter - отправить, Shift+Enter - новая строка)" rows="1"></textarea>
+                <div class="input-actions">
+                    <button class="action-btn" onclick="attachFile()" title="Прикрепить файл">
+                        <i class="bi bi-paperclip"></i>
+                    </button>
+                    <button class="action-btn" onclick="startVoiceInput()" title="Голосовой ввод">
+                        <i class="bi bi-mic"></i>
+                    </button>
+                    <button class="action-btn send-btn" onclick="sendQuestion()">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
+            </div>
+            <input type="file" id="fileInput" style="display: none;" accept=".txt,.pdf,.docx,.md" onchange="uploadFile(this)">
         </div>
     </div>
 
-    <script>
-        const messagesDiv = document.getElementById('messages');
+    <div class="settings-panel">
+        <div class="settings-section">
+            <div class="settings-title"><i class="bi bi-sliders2"></i> Параметры AI</div>
+            <div class="setting-item">
+                <span class="setting-label">🌡️ Температура</span>
+                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" onchange="saveSettings()">
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">📏 Max токенов</span>
+                <select id="maxTokens" onchange="saveSettings()">
+                    <option value="500">500</option>
+                    <option value="1000" selected>1000</option>
+                    <option value="2000">2000</option>
+                    <option value="4000">4000</option>
+                </select>
+            </div>
+        </div>
         
-        function addMessage(text, isUser) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            messageDiv.textContent = text;
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        <div class="settings-section">
+            <div class="settings-title"><i class="bi bi-chat-dots"></i> Функции</div>
+            <div class="setting-item">
+                <span class="setting-label">💾 Сохранять историю</span>
+                <label class="switch">
+                    <input type="checkbox" id="saveHistory" checked onchange="saveSettings()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">🎨 Markdown</span>
+                <label class="switch">
+                    <input type="checkbox" id="enableMarkdown" checked onchange="saveSettings()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">🔊 Звук уведомлений</span>
+                <label class="switch">
+                    <input type="checkbox" id="soundEnabled" onchange="saveSettings()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <div class="settings-title"><i class="bi bi-info-circle"></i> Статистика</div>
+            <div class="setting-item">
+                <span class="setting-label">💬 Сообщений</span>
+                <span id="msgCount">0</span>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">📅 Чатов создано</span>
+                <span id="chatCount">0</span>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <button class="new-chat-btn" onclick="exportAllChats()" style="background: rgba(102,126,234,0.3);">
+                <i class="bi bi-archive"></i> Экспорт всех чатов
+            </button>
+            <button class="new-chat-btn" onclick="clearAllHistory()" style="background: rgba(239,68,68,0.3); margin-top: 10px;">
+                <i class="bi bi-trash3"></i> Очистить всю историю
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== ФИКС: СОХРАНЯЕМ СЕССИЮ ==========
+    let sessionId = localStorage.getItem('ai_session_id');
+    if (!sessionId) {
+        sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('ai_session_id', sessionId);
+    }
+    console.log('✅ Session ID:', sessionId);
+    
+    let currentChatId = null;
+    let chats = {};
+    let isTyping = false;
+    
+    // Загрузка чатов из localStorage
+    function loadChats() {
+        const saved = localStorage.getItem('ai_chats');
+        if (saved) {
+            chats = JSON.parse(saved);
+        } else {
+            const chatId = 'chat_' + Date.now();
+            chats[chatId] = {
+                id: chatId,
+                title: 'Новый чат',
+                created: new Date().toISOString(),
+                messages: []
+            };
         }
-
-        async function sendQuestion() {
-            const input = document.getElementById('questionInput');
-            const question = input.value.trim();
-            if (!question) return;
-
-            addMessage(question, true);
-            input.value = '';
-
-            try {
-                const response = await fetch('/api/ai/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: question })
-                });
-
-                const data = await response.json();
-                addMessage(data.answer || 'Ошибка получения ответа', false);
-            } catch (error) {
-                addMessage('Ошибка: ' + error.message, false);
+        currentChatId = Object.keys(chats)[0];
+        renderChatsList();
+        loadChat(currentChatId);
+    }
+    
+    function saveChats() {
+        localStorage.setItem('ai_chats', JSON.stringify(chats));
+        renderChatsList();
+    }
+    
+    function renderChatsList() {
+        const container = document.getElementById('chatsList');
+        if (!container) return;
+        container.innerHTML = '';
+        Object.values(chats).forEach(chat => {
+            const div = document.createElement('div');
+            div.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '');
+            div.innerHTML = '<div class="chat-title">' + escapeHtml(chat.title) + '</div>' +
+                           '<div class="chat-date">' + new Date(chat.created).toLocaleString() + '</div>';
+            div.onclick = function() { switchChat(chat.id); };
+            container.appendChild(div);
+        });
+    }
+    
+    function newChat() {
+        const newId = 'chat_' + Date.now();
+        chats[newId] = {
+            id: newId,
+            title: 'Новый чат',
+            created: new Date().toISOString(),
+            messages: []
+        };
+        saveChats();
+        switchChat(newId);
+    }
+    
+    function switchChat(chatId) {
+        currentChatId = chatId;
+        renderChatsList();
+        loadChat(chatId);
+    }
+    
+    function loadChat(chatId) {
+        const messagesArea = document.getElementById('messagesArea');
+        if (!messagesArea) return;
+        messagesArea.innerHTML = '';
+        const chat = chats[chatId];
+        if (chat && chat.messages) {
+            chat.messages.forEach(msg => {
+                addMessageToUI(msg.text, msg.isUser);
+            });
+        }
+        if (messagesArea.children.length === 0) {
+            addMessageToUI('Привет! Я AI-ассистент SaaSPro. Чем могу помочь?', false);
+        }
+    }
+    
+    function addMessageToUI(text, isUser) {
+        const messagesArea = document.getElementById('messagesArea');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ' + (isUser ? 'user-message' : 'bot-message');
+        messageDiv.innerHTML = '<div class="message-avatar ' + (isUser ? 'user-avatar' : 'bot-avatar') + '">' + (isUser ? '👤' : '🤖') + '</div>' +
+                               '<div class="message-content">' + formatMessage(text) + '</div>';
+        messagesArea.appendChild(messageDiv);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+        
+        if (currentChatId && chats[currentChatId]) {
+            chats[currentChatId].messages.push({ text, isUser, timestamp: new Date().toISOString() });
+            if (chats[currentChatId].messages.length === 1 && !isUser) {
+                chats[currentChatId].title = text.substring(0, 30) + (text.length > 30 ? '...' : '');
             }
+            saveChats();
         }
-
-        // Приветственное сообщение
-        addMessage('Здравствуйте! Я AI-помощник ServerAgent. Чем могу помочь?', false);
-    </script>
-<style>
-.back-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s;
-    z-index: 1000;
-    cursor: pointer;
-}
-.back-button:hover {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, #764ba2, #667eea);
-    color: white;
-}
-</style>
-<a href="javascript:history.back()" class="back-button" title="Go Back">
-    <i class="fas fa-arrow-left fa-lg"></i>
-</a>
+    }
+    
+    function formatMessage(text) {
+        return text.replace(/\n/g, '<br>');
+    }
+    
+    function showTyping() {
+        if (isTyping) return;
+        isTyping = true;
+        const messagesArea = document.getElementById('messagesArea');
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot-message';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = '<div class="message-avatar bot-avatar">🤖</div>' +
+                              '<div class="message-content"><div class="typing-indicator">' +
+                              '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>' +
+                              '</div></div>';
+        messagesArea.appendChild(typingDiv);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+    
+    function hideTyping() {
+        isTyping = false;
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.remove();
+    }
+    
+    // ========== ГЛАВНАЯ ФУНКЦИЯ ОТПРАВКИ ==========
+    async function sendQuestion() {
+        const input = document.getElementById('questionInput');
+        const question = input.value.trim();
+        if (!question) return;
+        
+        input.value = '';
+        addMessageToUI(question, true);
+        showTyping();
+        
+        try {
+            // ОТПРАВЛЯЕМ СЕССИЮ!
+            const response = await fetch('/api/ai/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    question: question,
+                    session_id: sessionId  // ← КЛЮЧЕВОЕ! БЕЗ ЭТОГО AI НЕ ЗАПОМИНАЕТ
+                })
+            });
+            
+            const data = await response.json();
+            hideTyping();
+            
+            if (data.answer) {
+                addMessageToUI(data.answer, false);
+            } else {
+                addMessageToUI('Извините, произошла ошибка. Попробуйте позже.', false);
+            }
+        } catch (error) {
+            hideTyping();
+            addMessageToUI('Ошибка соединения: ' + error.message, false);
+        }
+    }
+    
+    function clearChat() {
+        if (confirm('Очистить текущий чат?')) {
+            chats[currentChatId].messages = [];
+            loadChat(currentChatId);
+            saveChats();
+        }
+    }
+    
+    function exportChat() {
+        const chat = chats[currentChatId];
+        const data = JSON.stringify(chat, null, 2);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'chat_' + currentChatId + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('Чат экспортирован!');
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Обработка Enter
+    const textarea = document.getElementById('questionInput');
+    if (textarea) {
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendQuestion();
+            }
+        });
+    }
+    
+    // Инициализация
+    loadChats();
+</script>
 </body>
 </html>
-

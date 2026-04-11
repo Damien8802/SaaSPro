@@ -268,7 +268,7 @@ admin.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), handl
     r.GET("/ai-agents", handlers.AIAgentsPage)
     r.GET("/advanced-analytics", handlers.AdvancedAnalyticsPage)
 
-r.GET("/marketplace", handlers.MarketplacePageHandler)
+    r.GET("/marketplace", handlers.MarketplacePageHandler)
 
     // QR код авторизация
     r.GET("/qr-login", handlers.QRLoginPageHandler)
@@ -532,14 +532,43 @@ bankAPI.Use(middleware.AuthMiddleware(cfg))
 whatsappAPI := r.Group("/api/whatsapp")
 whatsappAPI.Use(middleware.AuthMiddleware(cfg))
 {
+    // Подключение и статус
     whatsappAPI.POST("/connect", handlers.ConnectWhatsApp)
+    whatsappAPI.GET("/status", handlers.GetWhatsAppStatus)
+    whatsappAPI.POST("/disconnect", handlers.DisconnectWhatsApp)
+    
+    // Отправка сообщений
     whatsappAPI.POST("/send", handlers.SendWhatsAppMessage)
+    whatsappAPI.GET("/messages", handlers.GetWhatsAppMessages)
+    whatsappAPI.GET("/messages/stats", handlers.GetWhatsAppMessageStats)
+    
+    // Шаблоны
     whatsappAPI.GET("/templates", handlers.GetWhatsAppTemplates)
     whatsappAPI.POST("/templates", handlers.CreateWhatsAppTemplate)
+    whatsappAPI.PUT("/templates/:id", handlers.UpdateWhatsAppTemplate)
+    whatsappAPI.DELETE("/templates/:id", handlers.DeleteWhatsAppTemplate)
+    
+    // Рассылки
     whatsappAPI.POST("/broadcast", handlers.CreateWhatsAppBroadcast)
+    whatsappAPI.GET("/broadcasts", handlers.GetWhatsAppBroadcasts)
     whatsappAPI.POST("/broadcast/:id/send", handlers.SendWhatsAppBroadcast)
+    whatsappAPI.DELETE("/broadcasts/:id", handlers.DeleteWhatsAppBroadcast)
+    
+    // Контакты и статистика
+    whatsappAPI.GET("/contacts", handlers.GetWhatsAppContacts)
+    whatsappAPI.GET("/stats", handlers.GetWhatsAppStats)
 }
 
+// Webhook для WhatsApp (публичный, без авторизации)
+r.POST("/webhook/whatsapp", handlers.WhatsAppWebhook)
+r.GET("/webhook/whatsapp", handlers.WhatsAppWebhook)
+
+// Страница WhatsApp
+r.GET("/whatsapp", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "whatsapp.html", gin.H{
+        "title": "WhatsApp Business | SaaSPro",
+    })
+})
 
 // ========== РЕЗЕРВНОЕ КОПИРОВАНИЕ ==========
 backupAPI := r.Group("/api/backup")
@@ -570,13 +599,12 @@ chatbotAPI.Use(middleware.AuthMiddleware(cfg))
 r.POST("/api/chatbot/message", handlers.SendChatbotMessage)
 r.GET("/chatbot-widget", handlers.ChatbotWidget)
 
-// Страница управления чат-ботом
-r.GET("/chatbot", func(c *gin.Context) {
+// Страница управления чат-ботом (ТОЛЬКО ДЛЯ АДМИНОВ И РАЗРАБОТЧИКОВ)
+r.GET("/chatbot", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
     c.HTML(http.StatusOK, "chatbot.html", gin.H{
-        "title": "AI Чат-бот | SaaSPro",
+        "title": "AI Чат-бот (Dev Mode) | SaaSPro",
     })
 })
-
 // ========== ПАРТНЁРСКАЯ ПРОГРАММА ==========
 partnerAPI := r.Group("/api/partner")
 partnerAPI.Use(middleware.AuthMiddleware(cfg))
@@ -591,16 +619,6 @@ partnerAPI.Use(middleware.AuthMiddleware(cfg))
 r.GET("/backup", func(c *gin.Context) {
     c.HTML(http.StatusOK, "backup.html", gin.H{
         "title": "Резервное копирование | SaaSPro",
-    })
-})
-// Webhook для WhatsApp (публичный)
-r.POST("/webhook/whatsapp", handlers.WhatsAppWebhook)
-r.GET("/webhook/whatsapp", handlers.WhatsAppWebhook)
-
-// Страница WhatsApp
-r.GET("/whatsapp", func(c *gin.Context) {
-    c.HTML(http.StatusOK, "whatsapp.html", gin.H{
-        "title": "WhatsApp Business | SaaSPro",
     })
 })
 
