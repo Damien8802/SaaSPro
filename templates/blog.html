@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Блог | SaaSPro - новости и статьи</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, #ffd89b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .blog-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .blog-header h1 {
+            font-size: 52px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .blog-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .search-bar {
+            max-width: 500px;
+            margin: 40px auto 0;
+            position: relative;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .search-bar input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        .search-bar input:focus {
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+        .search-bar button {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            color: #333;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+        .blog-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.4s;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .blog-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255,255,255,0.15);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+        }
+        .blog-card-image {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+        }
+        .blog-card-content {
+            padding: 25px;
+        }
+        .blog-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(255,215,0,0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+        .blog-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        .blog-card p {
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .blog-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .back-button:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+        .categories {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        .category-btn {
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            text-decoration: none;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .category-btn:hover, .category-btn.active {
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .blog-grid { grid-template-columns: 1fr; }
+            .blog-header h1 { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">✨ SaaSPro</div>
+        <div class="nav-links">
+            <a href="/">Главная</a>
+            <a href="/dashboard-improved">Дашборд</a>
+            <a href="/vpn">VPN</a>
+            <a href="/ai">AI Чат</a>
+            <a href="/crm">CRM</a>
+            <a href="/analytics">Аналитика</a>
+            <a href="/pricing">Тарифы</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="blog-header">
+            <h1>📝 Блог SaaSPro</h1>
+            <p>Новости, статьи, кейсы и полезные материалы</p>
+            <div class="search-bar">
+                <input type="text" placeholder="Поиск по блогу...">
+                <button onclick="searchBlog()">🔍 Найти</button>
+            </div>
+        </div>
+
+        <div class="categories">
+            <a href="#" class="category-btn active" data-cat="all">Все</a>
+            <a href="#" class="category-btn" data-cat="news">Новости</a>
+            <a href="#" class="category-btn" data-cat="guides">Руководства</a>
+            <a href="#" class="category-btn" data-cat="cases">Кейсы</a>
+            <a href="#" class="category-btn" data-cat="updates">Обновления</a>
+        </div>
+
+        <div class="blog-grid" id="blogGrid">
+            <!-- Статья 1 -->
+            <div class="blog-card" data-category="news" onclick="openArticle(1)">
+                <div class="blog-card-image">🎉</div>
+                <div class="blog-card-content">
+                    <span class="blog-category">Новости</span>
+                    <h3>SaaSPro получил премию "Лучший SaaS 2025"</h3>
+                    <p>Наша платформа признана лучшим решением для управления подписками по версии международной премии...</p>
+                    <div class="blog-meta">
+                        <span>📅 13 апреля 2025</span>
+                        <span>👁️ 2.5K просмотров</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статья 2 -->
+            <div class="blog-card" data-category="guides" onclick="openArticle(2)">
+                <div class="blog-card-image">🚀</div>
+                <div class="blog-card-content">
+                    <span class="blog-category">Руководства</span>
+                    <h3>Как увеличить продажи с помощью AI-ассистентов</h3>
+                    <p>Пошаговое руководство по настройке и использованию AI-ассистентов для автоматизации продаж...</p>
+                    <div class="blog-meta">
+                        <span>📅 10 апреля 2025</span>
+                        <span>👁️ 1.8K просмотров</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статья 3 -->
+            <div class="blog-card" data-category="cases" onclick="openArticle(3)">
+                <div class="blog-card-image">💼</div>
+                <div class="blog-card-content">
+                    <span class="blog-category">Кейсы</span>
+                    <h3>Как компания X увеличила выручку на 200% с SaaSPro</h3>
+                    <p>Реальный кейс внедрения нашей платформы и результаты, которых удалось достичь за 3 месяца...</p>
+                    <div class="blog-meta">
+                        <span>📅 5 апреля 2025</span>
+                        <span>👁️ 3.2K просмотров</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статья 4 -->
+            <div class="blog-card" data-category="updates" onclick="openArticle(4)">
+                <div class="blog-card-image">🔄</div>
+                <div class="blog-card-content">
+                    <span class="blog-category">Обновления</span>
+                    <h3>Что нового в версии 3.0: полный обзор</h3>
+                    <p>Рассказываем о всех нововведениях: новый дизайн, интеграции, API и многое другое...</p>
+                    <div class="blog-meta">
+                        <span>📅 1 апреля 2025</span>
+                        <span>👁️ 4.1K просмотров</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статья 5 -->
+            <div class="blog-card" data-category="guides" onclick="openArticle(5)">
+                <div class="blog-card-image">🔒</div>
+                <div class="blog-card-content">
+                    <span class="blog-category">Руководства</span>
+                    <h3>Настройка VPN за 5 минут: инструкция для начинающих</h3>
+                    <p>Простая инструкция по подключению и настройке VPN сервиса для безопасного интернета...</p>
+                    <div class="blog-meta">
+                        <span>📅 28 марта 2025</span>
+                        <span>👁️ 5.3K просмотров</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статья 6 -->
+            <div class="blog-card" data-category="news" onclick="openArticle(6)">
+                <div class="blog-card-image">🤝</div>
+                <div class="blog-card-content">
+                    <span class="blog-category">Новости</span>
+                    <h3>SaaSPro интегрируется с 1С и Битрикс24</h3>
+                    <p>Новые интеграции с популярными платформами для автоматизации бизнеса уже доступны...</p>
+                    <div class="blog-meta">
+                        <span>📅 25 марта 2025</span>
+                        <span>👁️ 1.2K просмотров</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 50px 0;">
+            <button class="category-btn" onclick="loadMore()" style="background: linear-gradient(135deg, #FFD700, #FF8C00); color: #333;">Загрузить еще →</button>
+        </div>
+    </div>
+
+    <a href="javascript:history.back()" class="back-button">
+        <i class="fas fa-arrow-left fa-lg"></i>
+    </a>
+
+    <script>
+        function searchBlog() {
+            let query = document.querySelector('.search-bar input').value.toLowerCase();
+            let cards = document.querySelectorAll('.blog-card');
+            cards.forEach(card => {
+                let text = card.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function openArticle(id) {
+            alert(`Статья ${id} откроется скоро! Следите за обновлениями.`);
+        }
+
+        function loadMore() {
+            alert('Новые статьи скоро появятся! Подпишитесь на рассылку.');
+        }
+
+        // Фильтрация по категориям
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                let cat = btn.getAttribute('data-cat');
+                
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                document.querySelectorAll('.blog-card').forEach(card => {
+                    if (cat === 'all' || card.getAttribute('data-category') === cat) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SaaSPro - Платформа управления подписками</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -83,20 +85,23 @@
             margin: 60px auto;
             padding: 0 20px;
             gap: 60px;
+            flex-direction: row;
         }
         .hero-content {
             flex: 1;
             text-align: left;
         }
         .hero-content h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: 52px;
+            margin-bottom: 25px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1.2;
         }
         .hero-content p {
             font-size: 18px;
-            opacity: 0.9;
-            line-height: 1.6;
+            opacity: 0.95;
+            line-height: 1.7;
+            margin-bottom: 20px;
         }
         .hero-image {
             flex: 1;
@@ -111,6 +116,7 @@
             height: 320px;
             box-shadow: 0 25px 40px -12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
             transition: transform 0.3s ease;
+            position: relative;
         }
         .hero-image:hover {
             transform: translateY(-8px);
@@ -122,7 +128,6 @@
             object-fit: contain;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
         }
-        
         .stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -286,217 +291,30 @@
             font-size: 18px;
         }
         .pricing-row {
-            display: grid;
-            grid-template-columns: 3fr 1.3fr;
-            gap: 30px;
-            align-items: start;
-        }
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-        .pricing-card {
-            background: white;
-            border-radius: 24px;
-            padding: 30px 20px;
-            color: #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            position: relative;
-            transition: all 0.3s;
-        }
-        .pricing-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-        .popular-tag {
-            position: absolute;
-            top: -12px;
-            right: 20px;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .price {
-            font-size: 42px;
-            font-weight: 800;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        .price small {
-            font-size: 14px;
-            color: #999;
-        }
-        .features-list {
-            list-style: none;
-            margin: 25px 0;
-        }
-        .features-list li {
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
-        .features-list li:before {
-            content: "✓ ";
-            color: #4caf50;
-            font-weight: 600;
-        }
-        .btn {
-            display: block;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
             text-align: center;
-            font-weight: 600;
-            border: none;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
         
-        .ai-chat-side {
-            background: white;
-            border-radius: 24px;
-            padding: 25px;
-            color: #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            height: fit-content;
-            position: sticky;
-            top: 20px;
-        }
-        .chat-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .chat-header h3 {
-            font-size: 22px;
-            color: #667eea;
-        }
-        .online-badge {
-            background: #4caf50;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 11px;
-        }
-        .chat-container {
-            height: 350px;
-            display: flex;
-            flex-direction: column;
-            background: #f8f9fa;
-            border-radius: 20px;
-            padding: 15px;
-        }
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .message {
-            max-width: 85%;
-            padding: 12px 15px;
-            border-radius: 18px;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-        .user-message {
-            background: #667eea;
-            color: white;
-            align-self: flex-end;
-            border-radius: 18px 18px 4px 18px;
-        }
-        .bot-message {
-            background: #e9ecef;
-            color: #333;
-            align-self: flex-start;
-            border-radius: 18px 18px 18px 4px;
-        }
-        .typing {
-            color: #999;
-            font-style: italic;
-            padding: 10px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .typing-dots {
-            display: inline-flex;
-            gap: 3px;
-        }
-        .typing-dots span {
-            width: 4px;
-            height: 4px;
-            background-color: #999;
-            border-radius: 50%;
-            display: inline-block;
-            animation: typingDot 1.4s infinite;
-        }
-        .typing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        .typing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        @keyframes typingDot {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
-            30% { transform: translateY(-4px); opacity: 1; }
-        }
-        .input-area {
-            display: flex;
-            gap: 10px;
-        }
-        .input-area input {
-            flex: 1;
-            padding: 14px 18px;
-            border: 2px solid #e0e0e0;
-            border-radius: 50px;
-            font-size: 14px;
-        }
-        .input-area input:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-        .input-area button {
-            padding: 14px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .input-area button:hover {
-            transform: scale(1.02);
-        }
-        
-        .footer {
-            background: rgba(0,0,0,0.2);
-            backdrop-filter: blur(10px);
-            padding: 60px 20px 20px;
-            margin-top: 0;
-        }
-        .footer-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1.5fr;
-            gap: 40px;
-        }
+      .footer {
+    background: linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%);
+    backdrop-filter: blur(20px);
+    padding: 70px 0 40px 0;
+    margin-top: 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+}
+.footer-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 50px;
+    padding: 0 20px;
+}
         .footer-col h4 {
             margin-bottom: 20px;
             font-size: 18px;
@@ -520,103 +338,237 @@
         }
         
         @media (max-width: 1000px) {
-            .pricing-row { grid-template-columns: 1fr; }
-            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
-            .hero { flex-direction: column; text-align: center; }
+            .pricing-row { flex-direction: column; }
+            .hero { flex-direction: column !important; text-align: center; }
             .hero-content { text-align: center; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
             .features-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 700px) {
-            .pricing-grid { grid-template-columns: 1fr; }
             .stats { grid-template-columns: repeat(2, 1fr); }
             .navbar { flex-direction: column; }
             .nav-links { justify-content: center; }
             .hero h1 { font-size: 36px; }
         }
 
-.user-menu {
-    position: relative;
-    display: inline-block;
-}
-.user-menu-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 8px 20px;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-}
-.user-menu-dropdown {
-    position: absolute;
-    right: 0;
-    top: 45px;
-    background: white;
-    min-width: 220px;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    display: none;
-    z-index: 1000;
-    overflow: hidden;
-}
-.user-menu-dropdown a {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.2s;
-    font-size: 14px;
-}
-.user-menu-dropdown a:hover {
-    background: #f5f5f5;
-}
-.user-menu-dropdown hr {
-    margin: 0;
-    border-color: #eee;
-}
-.logout-btn {
-    color: #dc3545 !important;
-}
-.user-info {
-    padding: 15px 20px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #eee;
-}
-.user-email {
-    font-size: 12px;
-    color: #666;
-    word-break: break-all;
-}
-.user-name {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 4px;
-}
-.storage-info {
-    font-size: 11px;
-    color: #999;
-    margin-top: 8px;
-}
-.storage-bar {
-    height: 4px;
-    background: #e0e0e0;
-    border-radius: 2px;
-    margin-top: 6px;
-    overflow: hidden;
-}
-.storage-used {
-    width: 32%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 2px;
-}
+        .user-menu {
+            position: relative;
+            display: inline-block;
+        }
+        .user-menu-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .user-menu-dropdown {
+            position: absolute;
+            right: 0;
+            top: 45px;
+            background: white;
+            min-width: 280px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            display: none;
+            z-index: 999999;
+            overflow: visible;
+        }
+        .user-menu-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+        .user-menu-dropdown a:hover {
+            background: #f5f5f5;
+        }
+        .user-menu-dropdown hr {
+            margin: 0;
+            border-color: #eee;
+        }
+        .logout-btn {
+            color: #dc3545 !important;
+        }
+        .user-info {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        .user-email {
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+        .user-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .storage-info {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+        }
+        .storage-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .storage-used {
+            width: 32%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .ai-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        .ai-fab:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+        .ai-chat-modal .modal-dialog {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            margin: 0;
+            width: 380px;
+        }
+        .ai-chat-modal .modal-content {
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .ai-chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ai-chat-header h5 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .ai-chat-body {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .ai-message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 85%;
+            font-size: 14px;
+        }
+        .ai-message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        .ai-message.assistant {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 18px 18px 18px 4px;
+        }
+        .ai-chat-footer {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        .ai-chat-footer input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+        }
+        .ai-chat-footer button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .pricing-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            width: auto;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 60px;
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+            transition: all 0.3s;
+            color: white;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+        }
+        .pricing-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102,126,234,0.5);
+        }
+
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            z-index: 1000;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -633,16 +585,20 @@
             <a href="/pricing">Тарифы</a>
             <a href="/partner">Партнеры</a>
         </div>
-       <div class="auth-buttons" id="authButtons"></div>
+        <div class="auth-buttons" id="authButtons"></div>
     </nav>
 
     <div class="hero">
-        <div class="hero-content">
-            <h1>Управляйте подписками легко</h1>
-            <p>Мощная платформа для управления SaaS подписками, платежами, аналитикой и автоматизацией. Все в одном месте.</p>
-        </div>
         <div class="hero-image">
             <img src="/static/img/tablet-20260226173920.svg" alt="Dashboard Preview">
+        </div>
+        <div class="hero-content">
+            <h1>Управляйте подписками <span style="background: linear-gradient(135deg, #FFD700, #FF8C00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">легко</span></h1>
+            <p>Мощная платформа для управления SaaS подписками, платежами, аналитикой и автоматизацией. Все в одном месте.</p>
+            <div style="margin-top: 40px; display: flex; gap: 20px; flex-wrap: wrap;">
+                <a href="/register" style="background: white; color: #667eea; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; transition: all 0.3s; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">🚀 Начать бесплатно</a>
+                <a href="/pricing" id="pricingBtn" style="background: rgba(255,255,255,0.2); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 16px; backdrop-filter: blur(10px); transition: all 0.3s; display: inline-block; position: relative; z-index: 5;">💰 Смотреть тарифы</a>
+            </div>
         </div>
     </div>
 
@@ -680,51 +636,54 @@
             </div>
         </div>
 
-        <div class="products-section">
-            <div class="products-header"><h2>🚀 Наши продукты</h2><p>Готовые решения для вашего бизнеса</p></div>
-            <div class="products-grid">
-                <div class="product-card" onclick="location.href='/vpn'"><div class="product-icon">🔒</div><div class="product-title">VPN Сервис</div><div class="product-desc">Безопасный доступ из любой точки мира. Высокая скорость, шифрование WireGuard. 3 дня бесплатно.</div><div class="product-btn">Купить VPN →</div></div>
-                <div class="product-card" onclick="location.href='/ai'"><div class="product-icon">🤖</div><div class="product-title">AI Чат</div><div class="product-desc">Интеллектуальный помощник. Отвечает на вопросы, помогает с заказами.</div><div class="product-btn">Попробовать →</div></div>
+                       
+       
+  <div class="footer">
+    <div class="footer-grid">
+        <div class="footer-col">
+            <h4 style="font-size: 24px; margin-bottom: 25px; background: linear-gradient(135deg, #FFD700, #FF6B6B); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">✨ SaaSPro</h4>
+            <p style="line-height: 1.8; font-size: 14px; opacity: 0.9;">Платформа для управления подписками нового поколения. Эффективно, безопасно, масштабируемо.</p>
+            <div style="margin-top: 30px; display: flex; gap: 20px;">
+                <a href="#" style="color: white; font-size: 22px; transition: all 0.3s; display: inline-block;"><i class="fab fa-telegram"></i></a>
+                <a href="#" style="color: white; font-size: 22px; transition: all 0.3s; display: inline-block;"><i class="fab fa-whatsapp"></i></a>
+                <a href="#" style="color: white; font-size: 22px; transition: all 0.3s; display: inline-block;"><i class="fab fa-vk"></i></a>
+                <a href="#" style="color: white; font-size: 22px; transition: all 0.3s; display: inline-block;"><i class="fab fa-youtube"></i></a>
+                <a href="#" style="color: white; font-size: 22px; transition: all 0.3s; display: inline-block;"><i class="fab fa-github"></i></a>
             </div>
         </div>
-
-        <div class="pricing-section">
-            <div class="pricing-header"><h2>💰 Выберите свой тариф</h2><p>Гибкие планы для любого бизнеса</p></div>
-            <div class="pricing-row">
-                <div class="pricing-grid">
-                    <div class="pricing-card"><h3>Базовый</h3><div class="price">₽990 <small>/мес</small></div><ul class="features-list"><li>До 100 пользователей</li><li>Базовая аналитика</li><li>Email поддержка</li><li>5 интеграций</li></ul><button class="btn" onclick="location.href='/payment?plan=basic&price=990'">Выбрать</button></div>
-                    <div class="pricing-card"><div class="popular-tag">🔥 ПОПУЛЯРНЫЙ</div><h3>Профессиональный</h3><div class="price">₽2 990 <small>/мес</small></div><ul class="features-list"><li>До 1000 пользователей</li><li>Продвинутая аналитика</li><li>Приоритетная поддержка</li><li>20 интеграций</li><li>CRM система</li></ul><button class="btn" onclick="location.href='/payment?plan=pro&price=2990'">Выбрать</button></div>
-                    <div class="pricing-card"><h3>Предприятие</h3><div class="price">₽9 990 <small>/мес</small></div><ul class="features-list"><li>Неограниченно пользователей</li><li>Полная аналитика + AI</li><li>24/7 персональная поддержка</li><li>Все интеграции</li><li>White-label решение</li></ul><button class="btn" onclick="location.href='/contact'">Связаться</button></div>
-                </div>
-                
-                <div class="ai-chat-side">
-                    <div class="chat-header"><h3>🤖 AI Консультант</h3><span class="online-badge">Online 24/7</span></div>
-                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Расскажите, какой проект хотите заказать — я соберу все детали и передам разработчику</p>
-                    <div class="chat-container">
-                        <div class="messages" id="messages"></div>
-                        <div id="typingIndicator" class="typing" style="display: none;">AI печатает<div class="typing-dots"><span></span><span></span><span></span></div></div>
-                        <div class="input-area">
-                            <input type="text" id="messageInput" placeholder="Введите сообщение...">
-                            <button onclick="sendMessage()">Отправить</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="footer-col">
+            <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">ПРОДУКТЫ</h4>
+            <a href="/vpn">🔒 VPN Сервис</a>
+            <a href="/ai">🤖 AI Чат</a>
+            <a href="/crm">📋 CRM система</a>
+            <a href="/analytics">📊 Аналитика</a>
+        </div>
+        <div class="footer-col">
+            <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">РЕСУРСЫ</h4>
+            <a href="/docs">📄 Документация</a>
+            <a href="/support">🆘 Поддержка 24/7</a>
+            <a href="/pricing">💰 Тарифы</a>
+            <a href="/blog">📝 Блог</a>
+        </div>
+        <div class="footer-col">
+            <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">КОНТАКТЫ</h4>
+            <p>📧 <a href="mailto:support@saaspro.ru" style="display: inline;">support@saaspro.ru</a></p>
+            <p>📞 <a href="tel:+79991234567" style="display: inline;">+7 (999) 123-45-67</a></p>
+            <p>📍 Москва, ул. Тверская, 15</p>
+            <p>⏰ Пн-Пт: 9:00 - 21:00</p>
         </div>
     </div>
-
-    <div class="footer">
-        <div class="footer-grid">
-            <div class="footer-col"><h4>SaaSPro</h4><p>Платформа для управления подписками нового поколения. Эффективно, безопасно, масштабируемо.</p></div>
-            <div class="footer-col"><h4>Продукты</h4><a href="/vpn">VPN Сервис</a><a href="/ai">AI Чат</a></div>
-            <div class="footer-col"><h4>Ресурсы</h4><a href="/docs">Документация</a><a href="/support">Поддержка</a><a href="/pricing">Тарифы</a></div>
-            <div class="footer-col"><h4>Контакты</h4><p>📧 support@saaspro.ru</p><p>📞 +7 (999) 123-45-67</p></div>
-        </div>
-        <div class="copyright">© 2024 SaaSPro. Все права защищены.</div>
+    <div class="copyright">
+        <p>© 2025 SaaSPro. Все права защищены.</p>
+        <p style="margin-top: 15px; font-size: 12px;">
+            <a href="/privacy" style="color: rgba(255,255,255,0.5);">Политика конфиденциальности</a> | 
+            <a href="/terms" style="color: rgba(255,255,255,0.5);">Условия использования</a> | 
+            <a href="/cookies" style="color: rgba(255,255,255,0.5);">Cookies</a>
+        </p>
     </div>
+</div>
 
     <script>
-        // ========== АВТОМАТИЧЕСКИЙ РЕЛОГИН ==========
         async function refreshToken() {
             const refreshToken = localStorage.getItem('refresh_token');
             if (!refreshToken) return false;
@@ -741,7 +700,7 @@
                     if (data.user) {
                         localStorage.setItem('user_email', data.user.email);
                         localStorage.setItem('user_name', data.user.name);
-                        localStorage.setItem('is_Разработчик', data.user.role === 'Разработчик');
+                        localStorage.setItem('is_developer', data.user.role === 'developer');
                     }
                     return true;
                 }
@@ -749,221 +708,156 @@
             return false;
         }
 
-        // ========== AI Консультант ==========
-        let sessionId = localStorage.getItem('consultantSessionId') || '';
-        let messagesDiv = document.getElementById('messages');
-        let typingDiv = document.getElementById('typingIndicator');
-        let isTyping = false;
-        
-        function scrollToBottom() {
-            if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        function openAIChat() {
+            const modalEl = document.getElementById('aiChatModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
         }
-        
-        async function typeMessage(text, element) {
-            return new Promise((resolve) => {
-                let i = 0;
-                element.textContent = '';
-                function type() {
-                    if (i < text.length) {
-                        element.textContent += text.charAt(i);
-                        i++;
-                        scrollToBottom();
-                        setTimeout(type, 20 + Math.random() * 15);
-                    } else { resolve(); }
-                }
-                type();
-            });
-        }
-        
-        function addMessage(text, isUser) {
+
+        function addAIMessage(text, sender) {
+            const container = document.getElementById('aiChatMessages');
             const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            if (!isUser) {
-                msgDiv.textContent = '';
-                messagesDiv.appendChild(msgDiv);
-                scrollToBottom();
-                return { element: msgDiv, text: text };
-            } else {
-                msgDiv.textContent = text;
-                messagesDiv.appendChild(msgDiv);
-                scrollToBottom();
-                return null;
-            }
+            msgDiv.className = `ai-message ${sender}`;
+            msgDiv.textContent = text;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
         }
-        
-        function showTyping() { typingDiv.style.display = 'block'; scrollToBottom(); }
-        function hideTyping() { typingDiv.style.display = 'none'; }
-        
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
+
+        async function sendAIMessage() {
+            const input = document.getElementById('aiChatInput');
             const message = input.value.trim();
-            if (!message || isTyping) return;
-            addMessage(message, true);
+            if (!message) return;
+            addAIMessage(message, 'user');
             input.value = '';
-            showTyping();
             try {
                 const response = await fetch('/api/ai/consultant', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session_id: sessionId, message: message })
+                    body: JSON.stringify({ message: message })
                 });
                 const data = await response.json();
-                if (data.session_id) {
-                    sessionId = data.session_id;
-                    localStorage.setItem('consultantSessionId', sessionId);
-                }
-                hideTyping();
-                const msgPromise = addMessage('', false);
-                if (msgPromise) await typeMessage(data.message, msgPromise.element);
-                if (data.completed) {
-                    setTimeout(() => {
-                        if (confirm('Хотите оформить ещё одну заявку?')) {
-                            localStorage.removeItem('consultantSessionId');
-                            sessionId = '';
-                            const resetMsg = addMessage('', false);
-                            if (resetMsg) typeMessage('Здравствуйте! Я помогу вам оформить заявку. Расскажите, что хотите создать?', resetMsg.element);
-                        }
-                    }, 1000);
-                }
-            } catch (error) {
-                hideTyping();
-                const errorMsg = addMessage('', false);
-                if (errorMsg) typeMessage('Извините, произошла ошибка. Попробуйте позже.', errorMsg.element);
+                addAIMessage(data.message, 'assistant');
+            } catch (err) {
+                addAIMessage('Ошибка соединения', 'assistant');
             }
-        }
-        
-        document.getElementById('messageInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-        const observer = new MutationObserver(() => scrollToBottom());
-        if (messagesDiv) observer.observe(messagesDiv, { childList: true, subtree: true });
-        
-        if (!sessionId) {
-            setTimeout(() => {
-                const welcomeMsg = addMessage('', false);
-                if (welcomeMsg) typeMessage('Здравствуйте! Я помогу вам оформить заявку на индивидуальную разработку. Расскажите, что именно вы хотите создать?', welcomeMsg.element);
-            }, 500);
-        } else {
-            setTimeout(() => {
-                const continueMsg = addMessage('', false);
-                if (continueMsg) typeMessage('Продолжим оформление заявки? Напишите ваш ответ.', continueMsg.element);
-            }, 500);
         }
     </script>
-<script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-        .then(reg => console.log('Service Worker registered:', reg))
-        .catch(err => console.error('Service Worker registration failed:', err));
-}
-async function subscribeToPush() {
-    if (!('PushManager' in window)) return;
-    try {
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
-        });
-        await fetch('/api/push/subscribe', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(subscription) });
-        console.log('Push subscription successful');
-    } catch (err) { console.error('Push subscription failed:', err); }
-}
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-    return outputArray;
-}
-setTimeout(() => { if (confirm('Хотите получать push-уведомления?')) subscribeToPush(); }, 5000);
-</script>
-<style>
-.back-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s;
-    z-index: 1000;
-    cursor: pointer;
-}
-.back-button:hover {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, #764ba2, #667eea);
-    color: white;
-}
-</style>
-<a href="javascript:history.back()" class="back-button" title="Назад">
-    <i class="fas fa-arrow-left fa-lg"></i>
-</a>
-
-<script>
-    // ========== МЕНЮ ПОЛЬЗОВАТЕЛЯ С РЕЛОГИНОМ ==========
-    async function renderUserMenu() {
-        const container = document.getElementById('authButtons');
-        if (!container) return;
-        let token = localStorage.getItem('token');
-        // если токена нет, пробуем обновить через refresh_token
-        if (!token) {
-            const ok = await refreshToken();
-            if (ok) token = localStorage.getItem('token');
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => console.log('Service Worker registered:', reg))
+                .catch(err => console.error('Service Worker registration failed:', err));
         }
-        const userEmail = localStorage.getItem('user_email') || '';
-        const userName = localStorage.getItem('user_name') || userEmail.split('@')[0] || 'Пользователь';
-        const isРазработчик = localStorage.getItem('is_Разработчик') === 'true';
-        if (token) {
-            container.innerHTML = `
-                <div class="user-menu">
-                    <button class="user-menu-btn" id="userMenuBtn">
-                        <i class="fas fa-user-circle"></i> ${userName} ${isРазработчик ? '<span style="background: #10b981; padding: 2px 8px; border-radius: 20px; font-size: 10px;">Разработчик</span>' : ''}
-                        <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
-                    </button>
-                    <div class="user-menu-dropdown" id="userMenuDropdown">
-                        <div class="user-info">
-                            <div class="user-name">${userName}</div>
-                            <div class="user-email">${userEmail}</div>
-                            <div class="storage-info">📁 Занято 2.58 ГБ из 8 ГБ<div class="storage-bar"><div class="storage-used"></div></div></div>
+        async function subscribeToPush() {
+            if (!('PushManager' in window)) return;
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
+                });
+                await fetch('/api/push/subscribe', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(subscription) });
+                console.log('Push subscription successful');
+            } catch (err) { console.error('Push subscription failed:', err); }
+        }
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+            return outputArray;
+        }
+        setTimeout(() => { if (confirm('Хотите получать push-уведомления?')) subscribeToPush(); }, 5000);
+    </script>
+
+    <a href="javascript:history.back()" class="back-button" title="Назад">
+        <i class="fas fa-arrow-left fa-lg"></i>
+    </a>
+
+    <script>
+        async function renderUserMenu() {
+            const container = document.getElementById('authButtons');
+            if (!container) return;
+            let token = localStorage.getItem('token');
+            if (!token) {
+                const ok = await refreshToken();
+                if (ok) token = localStorage.getItem('token');
+            }
+            const userEmail = localStorage.getItem('user_email') || '';
+            const userName = localStorage.getItem('user_name') || userEmail.split('@')[0] || 'Пользователь';
+            const isDeveloper = localStorage.getItem('is_developer') === 'true';
+            if (token) {
+                container.innerHTML = `
+                    <div class="user-menu">
+                        <button class="user-menu-btn" id="userMenuBtn">
+                            <i class="fas fa-user-circle"></i> ${userName} ${isDeveloper ? '<span style="background: #10b981; padding: 2px 8px; border-radius: 20px; font-size: 10px;">Разработчик</span>' : ''}
+                            <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                        </button>
+                        <div class="user-menu-dropdown" id="userMenuDropdown">
+                            <div class="user-info">
+                                <div class="user-name">${userName}</div>
+                                <div class="user-email">${userEmail}</div>
+                                <div class="storage-info">📁 Занято 2.58 ГБ из 8 ГБ<div class="storage-bar"><div class="storage-used"></div></div></div>
+                            </div>
+                            <a href="/profile"><i class="fas fa-user"></i> Личные данные</a>
+                            <a href="/settings"><i class="fas fa-lock"></i> Пароль и безопасность</a>
+                            <a href="/my-subscriptions"><i class="fas fa-credit-card"></i> Мои подписки</a>
+                            <a href="/cloud"><i class="fas fa-cloud"></i> Облачное хранилище</a>
+                            <hr>
+                            <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> ВЫЙТИ</a>
+                          
                         </div>
-                        <a href="/profile"><i class="fas fa-user"></i> Личные данные</a>
-                        <a href="/settings"><i class="fas fa-lock"></i> Пароль и безопасность</a>
-                        <a href="/my-subscriptions"><i class="fas fa-credit-card"></i> Мои подписки</a>
-                        <a href="/cloud"><i class="fas fa-cloud"></i> Облачное хранилище</a>
-                        <hr>
-                        <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> ВЫЙТИ</a>
-                        <a href="/register"><i class="fas fa-user-plus"></i> Добавить аккаунт</a>
+                    </div>
+                `;
+                const btn = document.getElementById('userMenuBtn');
+                const dropdown = document.getElementById('userMenuDropdown');
+                if (btn && dropdown) {
+                    btn.addEventListener('click', (e) => { e.stopPropagation(); dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block'; });
+                    document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+                    dropdown.addEventListener('click', (e) => e.stopPropagation());
+                }
+            } else {
+                container.innerHTML = `<a href="/login" class="login">Вход</a><a href="/register" class="register">Регистрация</a>`;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_email');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('is_developer');
+            window.location.href = '/';
+        }
+        
+        renderUserMenu();
+    </script>
+
+    <button class="ai-fab" onclick="openAIChat()" title="AI-ассистент">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <div class="modal fade ai-chat-modal" id="aiChatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="ai-chat-header">
+                    <h5><i class="fas fa-robot me-2"></i>AI-ассистент</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="ai-chat-body" id="aiChatMessages">
+                    <div class="ai-message assistant">
+                        Здравствуйте! Я AI-ассистент. Задайте мне вопрос.
                     </div>
                 </div>
-            `;
-            const btn = document.getElementById('userMenuBtn');
-            const dropdown = document.getElementById('userMenuDropdown');
-            if (btn && dropdown) {
-                btn.addEventListener('click', (e) => { e.stopPropagation(); dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block'; });
-                document.addEventListener('click', () => { dropdown.style.display = 'none'; });
-                dropdown.addEventListener('click', (e) => e.stopPropagation());
-            }
-        } else {
-            container.innerHTML = `<a href="/login" class="login">Вход</a><a href="/register" class="register">Регистрация</a>`;
-        }
-    }
-    
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user_email');
-        localStorage.removeItem('user_name');
-        localStorage.removeItem('is_Разработчик');
-        window.location.href = '/';
-    }
-    
-    renderUserMenu();
-</script>
+                <div class="ai-chat-footer">
+                    <input type="text" id="aiChatInput" class="form-control" placeholder="Введите ваш вопрос..." onkeypress="if(event.key==='Enter') sendAIMessage()">
+                    <button class="btn btn-primary" onclick="sendAIMessage()">Отправить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

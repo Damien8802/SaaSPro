@@ -241,9 +241,18 @@ admin.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), handl
         public.GET("/partner", handlers.PartnerHandler)
         public.GET("/fusion-api", handlers.FusionAPIPortalHandler)
 
+
+
  // ========== СКРЫТЫЙ ВХОД ДЛЯ РАЗРАБОТЧИКОВ ==========
     log.Println("✅ Шаблоны загружены из файловой системы")
 
+
+   // ========== БЛОГ ==========
+        r.GET("/blog", func(c *gin.Context) {
+            c.HTML(200, "blog.html", gin.H{
+                "title": "Блог | SaaSPro - новости и статьи",
+            })
+        })
 
 
     // Загружаем шаблоны из файловой системы
@@ -882,16 +891,15 @@ admin2FA.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
         dashboards.GET("/dashboard-stats", handlers.DashboardStatsHandler)
     }
 
-    // Платежи
-    payments := r.Group("/")
-    payments.Use(middleware.AuthMiddleware(cfg))
-    {
-        payments.GET("/payment", handlers.PaymentHandler)
-        payments.GET("/bank_card_payment", handlers.BankCardPaymentHandler)
-        payments.GET("/payment-success", handlers.PaymentSuccessHandler)
-        payments.GET("/usdt-payment", handlers.USDTPaymentHandler)
-        payments.GET("/rub-payment", handlers.RUBPaymentHandler)
-    }
+   
+     // Платежи (публичные страницы, без авторизации)
+    r.GET("/payment", handlers.PaymentHandler)
+    r.GET("/bank_card_payment", handlers.BankCardPaymentHandler)
+    r.GET("/payment-success", handlers.PaymentSuccessHandler)
+    r.GET("/usdt-payment", handlers.USDTPaymentHandler)
+    r.GET("/rub-payment", handlers.RUBPaymentHandler)
+
+
 
       // ========== ЛОГИСТИКА ==========
     // Страницы логистики (публичные или с авторизацией)
