@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой кабинет | SaaSPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+            animation: float 15s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(-10%, -10%) rotate(0deg); }
+            50% { transform: translate(10%, 10%) rotate(5deg); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .profile-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 4px solid rgba(255,255,255,0.5);
+        }
+        .profile-name {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
+        .profile-role {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: white;
+            margin-top: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 30px;
+            background: rgba(0,0,0,0.2);
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: #a5b4fc;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 5px;
+        }
+        
+        .profile-info {
+            padding: 30px;
+        }
+        .info-section {
+            margin-bottom: 30px;
+        }
+        .info-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .info-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .info-label {
+            width: 150px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+        .info-value {
+            flex: 1;
+            font-size: 14px;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .plan-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .plan-price {
+            font-size: 28px;
+            font-weight: 800;
+            color: #a5b4fc;
+            margin-top: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(99,102,241,0.4);
+        }
+        .btn-outline {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-premium { background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; }
+        .badge-pro { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        .badge-basic { background: #10b981; color: white; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .info-row { flex-direction: column; gap: 5px; }
+            .info-label { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar" id="avatar">
+                    👤
+                </div>
+                <h1 class="profile-name" id="userName">Клиент</h1>
+                <div>
+                    <span class="badge badge-pro" id="userPlan">⭐ PRO Тариф</span>
+                </div>
+                <div class="profile-role" id="userRole">📋 Активный клиент</div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="projectsCount">0</div>
+                    <div class="stat-label">🚀 Моих проектов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="activeServices">0</div>
+                    <div class="stat-label">⚡ Активных услуг</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="supportTickets">0</div>
+                    <div class="stat-label">🎫 Обращений</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="daysWithUs">0</div>
+                    <div class="stat-label">📅 Дней с нами</div>
+                </div>
+            </div>
+            
+            <div class="profile-info">
+                <div class="info-section">
+                    <div class="info-title">
+                        <i class="fas fa-user-circle"></i> Личная информация
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">📧 Email</div>
+                        <div class="info-value" id="userEmail">client@example.com</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">👤 Имя пользователя</div>
+                        <div class="info-value" id="userLogin">Клиент</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">📅 Дата регистрации</div>
+                        <div class="info-value" id="regDate">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">🌍 Последний вход</div>
+                        <div class="info-value" id="lastLogin">—</div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-title">
+                        <i class="fas fa-chart-line"></i> Моя активность
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">📊 Всего запросов</div>
+                        <div class="info-value" id="totalRequests">0</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">💾 Использовано хранилища</div>
+                        <div class="info-value" id="storageUsed">0 ГБ / 10 ГБ</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">📝 Оставлено заявок</div>
+                        <div class="info-value" id="ordersCount">0</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">💡 Предложено идей</div>
+                        <div class="info-value" id="ideasCount">0</div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-title">
+                        <i class="fas fa-crown"></i> Мой тариф
+                    </div>
+                    <div class="plan-card">
+                        <div class="plan-name">
+                            <i class="fas fa-star"></i> <span id="planName">PRO Тариф</span>
+                        </div>
+                        <div class="plan-price" id="planPrice">от 9 900 ₽/мес</div>
+                        <div style="margin-top: 15px;">
+                            <div class="info-row" style="border: none; padding: 5px 0;">
+                                <span>✅ Безлимитные запросы</span>
+                            </div>
+                            <div class="info-row" style="border: none; padding: 5px 0;">
+                                <span>✅ Приоритетная поддержка 24/7</span>
+                            </div>
+                            <div class="info-row" style="border: none; padding: 5px 0;">
+                                <span>✅ До 50 проектов</span>
+                            </div>
+                            <div class="info-row" style="border: none; padding: 5px 0;">
+                                <span>✅ API доступ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="/settings" class="btn btn-primary">
+                        <i class="fas fa-sliders-h"></i> Настройки
+                    </a>
+                    <a href="/my-subscriptions" class="btn btn-outline">
+                        <i class="fas fa-credit-card"></i> Мои подписки
+                    </a>
+                    <a href="/individual-order" class="btn btn-outline">
+                        <i class="fas fa-plus-circle"></i> Новая заявка
+                    </a>
+                    <a href="/" class="btn btn-outline">
+                        <i class="fas fa-home"></i> На главную
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+   <script>
+    async function loadUserData() {
+        try {
+            const response = await fetch('/api/client/data');
+            if (response.ok) {
+                const user = await response.json();
+                document.getElementById('userName').innerText = user.name || 'Клиент';
+                document.getElementById('userEmail').innerText = user.email || 'client@example.com';
+                document.getElementById('userLogin').innerText = user.name || 'Клиент';
+                document.getElementById('regDate').innerText = user.created_at ? new Date(user.created_at).toLocaleDateString() : '—';
+                document.getElementById('lastLogin').innerText = new Date().toLocaleString();
+                document.getElementById('projectsCount').innerText = user.projects_count || 0;
+                document.getElementById('activeServices').innerText = user.active_services || 0;
+                document.getElementById('supportTickets').innerText = user.tickets_count || 0;
+                document.getElementById('daysWithUs').innerText = user.days_with_us || 0;
+                document.getElementById('totalRequests').innerText = user.total_requests || 0;
+                document.getElementById('storageUsed').innerText = (user.storage_used || 0).toFixed(2) + ' ГБ / 10 ГБ';
+                document.getElementById('ordersCount').innerText = user.orders_count || 0;
+                document.getElementById('ideasCount').innerText = user.ideas_count || 0;
+                
+                // Аватар по имени
+                const avatar = document.getElementById('avatar');
+                const firstName = (user.name || 'К').charAt(0).toUpperCase();
+                avatar.innerHTML = firstName;
+                avatar.style.fontSize = '48px';
+                avatar.style.fontWeight = 'bold';
+                avatar.style.color = '#667eea';
+            }
+        } catch(e) {
+            console.log('Error loading user data:', e);
+        }
+    }
+    
+    loadUserData();
+</script>
+</body>
+</html>

@@ -813,12 +813,10 @@
                                 <div class="user-email">${userEmail}</div>
                                 <div class="storage-info">📁 Занято 2.58 ГБ из 8 ГБ<div class="storage-bar"><div class="storage-used"></div></div></div>
                             </div>
-                          <a href="/profile"><i class="fas fa-user"></i> Личные данные</a>
+                       <a href="${isDeveloper ? '/profile' : '/client-profile'}"><i class="fas fa-user"></i> Личные данные</a>
 <a href="/settings"><i class="fas fa-lock"></i> Пароль и безопасность</a>
 <a href="/my-subscriptions"><i class="fas fa-credit-card"></i> Мои подписки</a>
 <a href="/cloud"><i class="fas fa-cloud"></i> Облачное хранилище</a>
-${(userEmail === 'dev@saaspro.ru') ? '<a href="/developer/admin"><i class="fas fa-shield-alt"></i> 🔐 Админ-панель</a>' : ''}
-<hr>
 <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> ВЫЙТИ</a>
                         </div>
                     </div>

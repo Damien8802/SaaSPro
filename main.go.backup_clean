@@ -1309,16 +1309,12 @@ r.GET("/client-profile", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
             "app-specific": true,
         })
     })
+
+// ========== API ДЛЯ ПРОСМОТРА ЗАЯВОК ИЗ БД ==========
+// API для получения списка заявок
 r.GET("/api/orders/list", func(c *gin.Context) {
     rows, err := database.Pool.Query(c.Request.Context(), 
-        `SELECT id, client_name, client_contact, service_type, deadline, 
-                COALESCE(NULLIF(budget, ''), '0') as budget,
-                status, created_at,
-                COALESCE(deposit_status, 'not_paid') as deposit_status,
-                COALESCE(deposit_amount, 0) as deposit_amount,
-                COALESCE(remaining_amount, 0) as remaining_amount,
-                COALESCE(remaining_status, 'not_paid') as remaining_status,
-                COALESCE(work_status, 'waiting_deposit') as work_status
+        `SELECT id, client_name, client_contact, service_type, deadline, status, created_at 
          FROM service_orders ORDER BY created_at DESC LIMIT 50`)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
@@ -1329,44 +1325,25 @@ r.GET("/api/orders/list", func(c *gin.Context) {
     var orders []gin.H
     for rows.Next() {
         var id int
-        var name, contact, service, deadline, budgetStr, status, depositStatus, remainingStatus, workStatus string
-        var depositAmount, remainingAmount float64
+        var name, contact, service, deadline, status string
         var createdAt time.Time
         
-        rows.Scan(&id, &name, &contact, &service, &deadline, &budgetStr, &status, &createdAt,
-            &depositStatus, &depositAmount, &remainingAmount, &remainingStatus, &workStatus)
-        
-        var budget float64
-        fmt.Sscanf(budgetStr, "%f", &budget)
+        rows.Scan(&id, &name, &contact, &service, &deadline, &status, &createdAt)
         
         orders = append(orders, gin.H{
-            "id": id, "name": name, "contact": contact, "service": service,
-            "deadline": deadline, "budget": budget,
-            "status": status, "date": createdAt.Format("02.01.2006 15:04"),
-            "deposit_status": depositStatus,
-            "deposit_status_text": map[string]string{
-                "not_paid": "⏳ Ожидает предоплату 50%",
-                "paid": "✅ Предоплата внесена",
-            }[depositStatus],
-            "deposit_amount": depositAmount,
-            "remaining_amount": remainingAmount,
-            "remaining_status": remainingStatus,
-            "remaining_status_text": map[string]string{
-                "not_paid": "⏳ Ожидает остаток",
-                "paid": "✅ Остаток оплачен",
-            }[remainingStatus],
-            "work_status": workStatus,
-            "work_status_text": map[string]string{
-                "waiting_deposit": "⏳ Ожидает предоплату",
-                "in_progress": "🔧 В работе",
-                "waiting_remaining": "⏳ Ожидает остаток",
-                "completed": "🎉 Завершён",
-                "cancelled": "❌ Отменён",
-            }[workStatus],
+            "id":       id,
+            "name":     name,
+            "contact":  contact,
+            "service":  service,
+            "deadline": deadline,
+            "status":   status,
+            "date":     createdAt.Format("02.01.2006 15:04"),
         })
     }
+    
     c.JSON(200, orders)
 })
+
 // Отметить заявку как просмотренную
 r.PUT("/api/orders/:id/view", func(c *gin.Context) {
     id := c.Param("id")
@@ -1606,35 +1583,30 @@ r.GET("/api/client/data", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
 
 // ========== HR МОДУЛЬ (НАЁМ СОТРУДНИКОВ) ==========
 
-// ========== HR МОДУЛЬ ==========
-
 // Статистика HR
 r.GET("/api/hr/stats", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
     var totalEmployees, totalCandidates, openVacancies, newApplications int
-    var totalPayroll float64
+    
     database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM employees WHERE status='active'").Scan(&totalEmployees)
     database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM candidates WHERE status='new'").Scan(&totalCandidates)
     database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM vacancies WHERE status='open'").Scan(&openVacancies)
-    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM candidates WHERE status='new'").Scan(&newApplications)
-    database.Pool.QueryRow(c.Request.Context(), "SELECT COALESCE(SUM(salary), 0) FROM employees WHERE status='active'").Scan(&totalPayroll)
+    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM applications WHERE status='pending'").Scan(&newApplications)
+    
     c.JSON(200, gin.H{
         "total_employees":  totalEmployees,
         "total_candidates": totalCandidates,
         "open_vacancies":   openVacancies,
         "new_applications": newApplications,
-        "total_payroll":    totalPayroll,
     })
 })
 
 // Список сотрудников
 r.GET("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
     rows, err := database.Pool.Query(c.Request.Context(), 
-        `SELECT e.id, e.full_name, COALESCE(p.title, e.position) as position, e.department, 
-                e.phone, e.email, e.hire_date, e.salary, e.bonus, e.status 
-         FROM employees e 
-         LEFT JOIN positions p ON e.position_id = p.id 
-         WHERE e.status='active' 
-         ORDER BY e.hire_date DESC`)
+        `SELECT id, full_name, position, COALESCE(department, '') as department, 
+                COALESCE(phone, '') as phone, COALESCE(email, '') as email, 
+                hire_date, status 
+         FROM employees ORDER BY hire_date DESC`)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1646,11 +1618,17 @@ r.GET("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMiddl
         var id int
         var fullName, position, department, phone, email, status string
         var hireDate time.Time
-        var salary, bonus float64
-        rows.Scan(&id, &fullName, &position, &department, &phone, &email, &hireDate, &salary, &bonus, &status)
+        
+        rows.Scan(&id, &fullName, &position, &department, &phone, &email, &hireDate, &status)
         employees = append(employees, gin.H{
-            "id": id, "full_name": fullName, "position": position, "department": department,
-            "phone": phone, "email": email, "hire_date": hireDate, "salary": salary, "bonus": bonus, "status": status,
+            "id":         id,
+            "full_name":  fullName,
+            "position":   position,
+            "department": department,
+            "phone":      phone,
+            "email":      email,
+            "hire_date":  hireDate,
+            "status":     status,
         })
     }
     c.JSON(200, employees)
@@ -1659,20 +1637,21 @@ r.GET("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMiddl
 // Добавить сотрудника
 r.POST("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
     var req struct {
-        FullName   string  `json:"full_name"`
-        Position   string  `json:"position"`
-        Department string  `json:"department"`
-        Phone      string  `json:"phone"`
-        Email      string  `json:"email"`
-        Salary     float64 `json:"salary"`
+        FullName   string `json:"full_name"`
+        Position   string `json:"position"`
+        Department string `json:"department"`
+        Phone      string `json:"phone"`
+        Email      string `json:"email"`
     }
     if err := c.BindJSON(&req); err != nil {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    _, err := database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO employees (full_name, position, department, phone, email, salary, hire_date, status) VALUES ($1, $2, $3, $4, $5, $6, NOW(), 'active')",
-        req.FullName, req.Position, req.Department, req.Phone, req.Email, req.Salary)
+    
+    _, err := database.Pool.Exec(c.Request.Context(),
+        `INSERT INTO employees (full_name, position, department, phone, email, hire_date, status) 
+         VALUES ($1, $2, $3, $4, $5, NOW(), 'active')`,
+        req.FullName, req.Position, req.Department, req.Phone, req.Email)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1680,7 +1659,7 @@ r.POST("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMidd
     c.JSON(200, gin.H{"message": "Сотрудник добавлен"})
 })
 
-// Удалить сотрудника
+// Удалить/уволить сотрудника
 r.DELETE("/api/hr/employees/:id", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
     id := c.Param("id")
     _, err := database.Pool.Exec(c.Request.Context(), "UPDATE employees SET status='inactive' WHERE id=$1", id)
@@ -1691,81 +1670,11 @@ r.DELETE("/api/hr/employees/:id", middleware.AuthMiddleware(cfg), middleware.Adm
     c.JSON(200, gin.H{"success": true})
 })
 
-// Список вакансий
-r.GET("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    rows, err := database.Pool.Query(c.Request.Context(), 
-        `SELECT id, title, COALESCE(salary_from, 0), COALESCE(salary_to, 0), 
-                COALESCE(description, ''), status, created_at 
-         FROM vacancies ORDER BY created_at DESC`)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    defer rows.Close()
-    
-    var vacancies []gin.H
-    for rows.Next() {
-        var id int
-        var title, description, status string
-        var salaryFrom, salaryTo float64
-        var createdAt time.Time
-        
-        err := rows.Scan(&id, &title, &salaryFrom, &salaryTo, &description, &status, &createdAt)
-        if err != nil {
-            continue
-        }
-        
-        vacancies = append(vacancies, gin.H{
-            "id":          id,
-            "title":       title,
-            "salary_from": salaryFrom,
-            "salary_to":   salaryTo,
-            "description": description,
-            "status":      status,
-            "created_at":  createdAt,
-        })
-    }
-    c.JSON(200, vacancies)
-})
-// Создать вакансию
-r.POST("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    var req struct {
-        Title       string  `json:"title"`
-        SalaryFrom  float64 `json:"salary_from"`
-        SalaryTo    float64 `json:"salary_to"`
-        Description string  `json:"description"`
-    }
-    if err := c.BindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": err.Error()})
-        return
-    }
-    _, err := database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO vacancies (title, salary_from, salary_to, description, status) VALUES ($1, $2, $3, $4, 'open')",
-        req.Title, req.SalaryFrom, req.SalaryTo, req.Description)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"message": "Вакансия создана"})
-})
-
-// Удалить вакансию
-r.DELETE("/api/hr/vacancies/:id", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    id := c.Param("id")
-    _, err := database.Pool.Exec(c.Request.Context(), "DELETE FROM vacancies WHERE id=$1", id)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"success": true})
-})
-
 // Список кандидатов
 r.GET("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    rows, err := database.Pool.Query(c.Request.Context(), 
-        `SELECT id, full_name, COALESCE(vacancy, ''), COALESCE(experience, ''), 
-                COALESCE(expected_salary, 0), COALESCE(phone, ''), COALESCE(email, ''), 
-                status, created_at 
+    rows, err := database.Pool.Query(c.Request.Context(),
+        `SELECT id, full_name, COALESCE(vacancy, '') as vacancy, COALESCE(experience, '') as experience,
+                COALESCE(phone, '') as phone, COALESCE(email, '') as email, status, created_at 
          FROM candidates ORDER BY created_at DESC`)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
@@ -1777,72 +1686,37 @@ r.GET("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMidd
     for rows.Next() {
         var id int
         var fullName, vacancy, experience, phone, email, status string
-        var expectedSalary float64
         var createdAt time.Time
         
-        err := rows.Scan(&id, &fullName, &vacancy, &experience, &expectedSalary, &phone, &email, &status, &createdAt)
-        if err != nil {
-            continue
-        }
-        
+        rows.Scan(&id, &fullName, &vacancy, &experience, &phone, &email, &status, &createdAt)
         candidates = append(candidates, gin.H{
-            "id":              id,
-            "full_name":       fullName,
-            "vacancy":         vacancy,
-            "experience":      experience,
-            "expected_salary": expectedSalary,
-            "phone":           phone,
-            "email":           email,
-            "status":          status,
-            "date":            createdAt.Format("02.01.2006"),
+            "id":         id,
+            "full_name":  fullName,
+            "vacancy":    vacancy,
+            "experience": experience,
+            "phone":      phone,
+            "email":      email,
+            "status":     status,
+            "date":       createdAt.Format("02.01.2006"),
         })
     }
     c.JSON(200, candidates)
 })
-// Добавить кандидата
-r.POST("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    var req struct {
-        FullName       string  `json:"full_name"`
-        Vacancy        string  `json:"vacancy"`
-        Experience     string  `json:"experience"`
-        ExpectedSalary float64 `json:"expected_salary"`
-        Phone          string  `json:"phone"`
-        Email          string  `json:"email"`
-    }
+
+// Обновить статус кандидата
+r.PUT("/api/hr/candidates/:id/status", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    id := c.Param("id")
+    var req struct{ Status string `json:"status"` }
     if err := c.BindJSON(&req); err != nil {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    _, err := database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO candidates (full_name, vacancy, experience, expected_salary, phone, email, status) VALUES ($1, $2, $3, $4, $5, $6, 'new')",
-        req.FullName, req.Vacancy, req.Experience, req.ExpectedSalary, req.Phone, req.Email)
+    _, err := database.Pool.Exec(c.Request.Context(), "UPDATE candidates SET status=$1 WHERE id=$2", req.Status, id)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
-    c.JSON(200, gin.H{"message": "Кандидат добавлен"})
-})
-
-// Принять кандидата на работу
-r.POST("/api/hr/candidates/:id/hire", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    id := c.Param("id")
-    var fullName, vacancy, phone, email string
-    var expectedSalary float64
-    err := database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT full_name, vacancy, phone, email, expected_salary FROM candidates WHERE id=$1", id).Scan(&fullName, &vacancy, &phone, &email, &expectedSalary)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    _, err = database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO employees (full_name, position, phone, email, salary, status) VALUES ($1, $2, $3, $4, $5, 'active')", 
-        fullName, vacancy, phone, email, expectedSalary)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    database.Pool.Exec(c.Request.Context(), "DELETE FROM candidates WHERE id=$1", id)
-    c.JSON(200, gin.H{"message": "Кандидат принят на работу"})
+    c.JSON(200, gin.H{"success": true})
 })
 
 // Удалить кандидата
@@ -1856,117 +1730,117 @@ r.DELETE("/api/hr/candidates/:id", middleware.AuthMiddleware(cfg), middleware.Ad
     c.JSON(200, gin.H{"success": true})
 })
 
-// Рассчитать зарплату
-r.POST("/api/hr/payroll/calculate", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    rows, err := database.Pool.Query(c.Request.Context(), "SELECT id, salary, bonus, tax_percent FROM employees WHERE status='active'")
+// Создать вакансию
+r.POST("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    var req struct {
+        Title       string `json:"title"`
+        Description string `json:"description"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    _, err := database.Pool.Exec(c.Request.Context(),
+        "INSERT INTO vacancies (title, description, status, created_at) VALUES ($1, $2, 'open', NOW())",
+        req.Title, req.Description)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"message": "Вакансия создана"})
+})
+
+// ========== ДОПОЛНИТЕЛЬНЫЕ HR API ==========
+
+// Список вакансий
+r.GET("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    rows, err := database.Pool.Query(c.Request.Context(), 
+        "SELECT id, title, salary_from, salary_to, description, status FROM vacancies WHERE status='open' ORDER BY created_at DESC")
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
     defer rows.Close()
-    
+    var vacancies []gin.H
+    for rows.Next() {
+        var id int; var title, description, status string; var salaryFrom, salaryTo float64
+        rows.Scan(&id, &title, &salaryFrom, &salaryTo, &description, &status)
+        vacancies = append(vacancies, gin.H{"id": id, "title": title, "salary_from": salaryFrom, "salary_to": salaryTo, "description": description, "status": status})
+    }
+    c.JSON(200, vacancies)
+})
+
+// Создать вакансию
+r.POST("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    var req struct { Title string `json:"title"`; SalaryFrom float64 `json:"salary_from"`; SalaryTo float64 `json:"salary_to"`; Description string `json:"description"` }
+    if err := c.BindJSON(&req); err != nil { c.JSON(400, gin.H{"error": err.Error()}); return }
+    _, err := database.Pool.Exec(c.Request.Context(), "INSERT INTO vacancies (title, salary_from, salary_to, description, status) VALUES ($1, $2, $3, $4, 'open')", req.Title, req.SalaryFrom, req.SalaryTo, req.Description)
+    if err != nil { c.JSON(500, gin.H{"error": err.Error()}); return }
+    c.JSON(200, gin.H{"message": "Вакансия создана"})
+})
+
+// Удалить вакансию
+r.DELETE("/api/hr/vacancies/:id", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    id := c.Param("id")
+    _, err := database.Pool.Exec(c.Request.Context(), "DELETE FROM vacancies WHERE id=$1", id)
+    if err != nil { c.JSON(500, gin.H{"error": err.Error()}); return }
+    c.JSON(200, gin.H{"success": true})
+})
+
+// Добавить кандидата
+r.POST("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    var req struct { FullName string `json:"full_name"`; Vacancy string `json:"vacancy"`; Experience string `json:"experience"`; ExpectedSalary float64 `json:"expected_salary"`; Phone string `json:"phone"` }
+    if err := c.BindJSON(&req); err != nil { c.JSON(400, gin.H{"error": err.Error()}); return }
+    _, err := database.Pool.Exec(c.Request.Context(), "INSERT INTO candidates (full_name, vacancy, experience, expected_salary, phone, status) VALUES ($1, $2, $3, $4, $5, 'new')", req.FullName, req.Vacancy, req.Experience, req.ExpectedSalary, req.Phone)
+    if err != nil { c.JSON(500, gin.H{"error": err.Error()}); return }
+    c.JSON(200, gin.H{"message": "Кандидат добавлен"})
+})
+
+// Принять кандидата на работу
+r.POST("/api/hr/candidates/:id/hire", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    id := c.Param("id")
+    // Получаем данные кандидата
+    var fullName, vacancy, phone, email string
+    var expectedSalary float64
+    err := database.Pool.QueryRow(c.Request.Context(), 
+        "SELECT full_name, vacancy, phone, email, expected_salary FROM candidates WHERE id=$1", id).Scan(&fullName, &vacancy, &phone, &email, &expectedSalary)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    // Добавляем в сотрудники
+    _, err = database.Pool.Exec(c.Request.Context(), 
+        "INSERT INTO employees (full_name, position, phone, email, salary, status) VALUES ($1, $2, $3, $4, $5, 'active')", 
+        fullName, vacancy, phone, email, expectedSalary)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    // Удаляем из кандидатов
+    database.Pool.Exec(c.Request.Context(), "DELETE FROM candidates WHERE id=$1", id)
+    c.JSON(200, gin.H{"message": "Кандидат принят на работу"})
+})
+// Рассчитать зарплату
+r.POST("/api/hr/payroll/calculate", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    rows, err := database.Pool.Query(c.Request.Context(), "SELECT id, salary, bonus, tax_percent FROM employees WHERE status='active'")
+    if err != nil { c.JSON(500, gin.H{"error": err.Error()}); return }
+    defer rows.Close()
     var totalNet, totalTaxes float64
     for rows.Next() {
-        var id int
-        var salary, bonus, taxPercent float64
+        var id int; var salary, bonus, taxPercent float64
         rows.Scan(&id, &salary, &bonus, &taxPercent)
         gross := salary + bonus
         tax := gross * taxPercent / 100
         net := gross - tax
         totalNet += net
         totalTaxes += tax
-        database.Pool.Exec(c.Request.Context(), 
-            "INSERT INTO payroll (employee_id, month, base_salary, bonus, tax, net_salary, paid) VALUES ($1, date_trunc('month', NOW()), $2, $3, $4, $5, false)",
-            id, salary, bonus, tax, net)
+        // Сохраняем в payroll
+        database.Pool.Exec(c.Request.Context(), "INSERT INTO payroll (employee_id, month, base_salary, bonus, tax, net_salary, paid) VALUES ($1, date_trunc('month', NOW()), $2, $3, $4, $5, false)", id, salary, bonus, tax, net)
     }
     c.JSON(200, gin.H{"total_net": totalNet, "total_taxes": totalTaxes, "message": "Зарплата рассчитана"})
 })
 
-// Обновить статус оплаты заявки
-r.PUT("/api/orders/:id/payment", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    id := c.Param("id")
-    var req struct {
-        PaymentStatus string  `json:"payment_status"`
-        Budget        float64 `json:"budget"`
-    }
-    if err := c.BindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": err.Error()})
-        return
-    }
-
-    _, err := database.Pool.Exec(c.Request.Context(),
-        "UPDATE service_orders SET payment_status = $1, budget = $2 WHERE id = $3",
-        req.PaymentStatus, req.Budget, id)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"success": true})
-})
-
-// Внести предоплату 50%
-r.PUT("/api/orders/:id/deposit", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    id := c.Param("id")
-    var req struct {
-        DepositAmount float64 `json:"deposit_amount"`
-        WorkStatus    string  `json:"work_status"`
-    }
-    if err := c.BindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": err.Error()})
-        return
-    }
-
-    var budget float64
-    database.Pool.QueryRow(c.Request.Context(),
-        "SELECT COALESCE(NULLIF(budget, ''), '0')::float FROM service_orders WHERE id=$1", id).Scan(&budget)
-
-    remaining := budget - req.DepositAmount
-
-    _, err := database.Pool.Exec(c.Request.Context(),
-        `UPDATE service_orders
-         SET deposit_status = 'paid',
-             deposit_amount = $1,
-             deposit_date = NOW(),
-             remaining_amount = $2,
-             work_status = $3
-         WHERE id = $4`,
-        req.DepositAmount, remaining, req.WorkStatus, id)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"success": true, "remaining": remaining})
-})
-
-// Внести остаток (после завершения работы)
-r.PUT("/api/orders/:id/remaining", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    id := c.Param("id")
-    var req struct {
-        RemainingAmount float64 `json:"remaining_amount"`
-        WorkStatus      string  `json:"work_status"`
-    }
-    if err := c.BindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": err.Error()})
-        return
-    }
-
-    _, err := database.Pool.Exec(c.Request.Context(),
-        `UPDATE service_orders
-         SET remaining_status = 'paid',
-             remaining_amount = $1,
-             remaining_date = NOW(),
-             payment_status = 'paid',
-             work_status = $2
-         WHERE id = $3`,
-        req.RemainingAmount, req.WorkStatus, id)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"success": true})
-})
-
-      r.NoRoute(func(c *gin.Context) {
+    r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
             "Version": "3.0",
@@ -2153,5 +2027,4 @@ func handleSocks5Connection(client net.Conn) {
 
     go func() { io.Copy(target, client) }()
     io.Copy(client, target)
-
 }

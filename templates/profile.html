@@ -13,8 +13,6 @@
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
             min-height: 100vh;
         }
-        
-        /* Анимированный фон */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -44,7 +42,6 @@
             0%, 100% { transform: translate(-10%, -10%) rotate(0deg); }
             50% { transform: translate(10%, 10%) rotate(5deg); }
         }
-        
         .container {
             position: relative;
             z-index: 1;
@@ -52,8 +49,6 @@
             margin: 0 auto;
             padding: 40px 20px;
         }
-        
-        /* Карточка профиля */
         .profile-card {
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(20px);
@@ -62,13 +57,10 @@
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-        
-        /* Шапка профиля */
         .profile-header {
             background: linear-gradient(135deg, #667eea, #764ba2);
             padding: 40px;
             text-align: center;
-            position: relative;
         }
         .profile-avatar {
             width: 120px;
@@ -87,28 +79,13 @@
             font-size: 28px;
             font-weight: 800;
             color: white;
-            margin-bottom: 5px;
         }
-        .profile-role {
-            display: inline-block;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 15px;
-            border-radius: 30px;
-            font-size: 12px;
-            color: white;
-            margin-top: 10px;
-        }
-        
-        /* Статистика */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             padding: 30px;
             background: rgba(0,0,0,0.2);
-        }
-        .stat-item {
-            text-align: center;
         }
         .stat-number {
             font-size: 32px;
@@ -118,26 +95,17 @@
         .stat-label {
             font-size: 12px;
             color: rgba(255,255,255,0.6);
-            margin-top: 5px;
         }
-        
-        /* Информация */
         .profile-info {
             padding: 30px;
-        }
-        .info-section {
-            margin-bottom: 30px;
         }
         .info-title {
             font-size: 18px;
             font-weight: 600;
             color: white;
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-bottom: 10px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
         }
         .info-row {
             display: flex;
@@ -146,17 +114,12 @@
         }
         .info-label {
             width: 150px;
-            font-size: 14px;
             color: rgba(255,255,255,0.6);
         }
         .info-value {
             flex: 1;
-            font-size: 14px;
             color: white;
-            font-weight: 500;
         }
-        
-        /* Кнопки */
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -166,11 +129,11 @@
         .btn {
             padding: 12px 24px;
             border-radius: 40px;
-            font-weight: 600;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 10px;
+            font-weight: 600;
             transition: all 0.3s;
         }
         .btn-primary {
@@ -181,6 +144,14 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px -5px rgba(99,102,241,0.4);
         }
+        .btn-admin {
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
+            color: white;
+        }
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(245,158,11,0.4);
+        }
         .btn-outline {
             background: rgba(255,255,255,0.1);
             color: white;
@@ -189,18 +160,8 @@
         .btn-outline:hover {
             background: rgba(255,255,255,0.2);
         }
-        
-        /* Бейджи */
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .badge-dev { background: #10b981; color: white; }
-        .badge-admin { background: #6366f1; color: white; }
-        
+        .badge-dev { background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; display: inline-block; }
+        .badge-admin { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; display: inline-block; }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .info-row { flex-direction: column; gap: 5px; }
@@ -212,121 +173,39 @@
     <div class="bg-animation"></div>
     <div class="container">
         <div class="profile-card">
-            <!-- Шапка -->
             <div class="profile-header">
-                <div class="profile-avatar">
-                    👨‍💻
-                </div>
+                <div class="profile-avatar" id="avatar">👨‍💻</div>
                 <h1 class="profile-name" id="userName">Разработчик</h1>
                 <div>
-                    <span class="badge badge-dev">⭐ Lead Developer</span>
-                    <span class="badge badge-admin">🛡️ Администратор</span>
+                    <span class="badge-dev">⭐ Lead Developer</span>
+                    <span class="badge-admin">🛡️ Администратор</span>
                 </div>
-                <div class="profile-role" id="userRole">👑 Супер-администратор</div>
             </div>
-            
-            <!-- Статистика -->
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number">7</div>
-                    <div class="stat-label">🚀 Проектов</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">3</div>
-                    <div class="stat-label">⚡ Активных</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">99.9%</div>
-                    <div class="stat-label">📈 Аптайм</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">24/7</div>
-                    <div class="stat-label">🛡️ Поддержка</div>
-                </div>
+                <div class="stat-item"><div class="stat-number" id="projectsCount">7</div><div class="stat-label">Проектов</div></div>
+                <div class="stat-item"><div class="stat-number" id="activeServices">3</div><div class="stat-label">Активных</div></div>
+                <div class="stat-item"><div class="stat-number">99.9%</div><div class="stat-label">Аптайм</div></div>
+                <div class="stat-item"><div class="stat-number">24/7</div><div class="stat-label">Поддержка</div></div>
             </div>
-            
-            <!-- Информация -->
             <div class="profile-info">
-                <div class="info-section">
-                    <div class="info-title">
-                        <i class="fas fa-user-astronaut"></i> Личная информация
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📧 Email</div>
-                        <div class="info-value" id="userEmail">dev@saaspro.ru</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">👤 Имя пользователя</div>
-                        <div class="info-value" id="userLogin">Разработчик</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📅 Дата регистрации</div>
-                        <div class="info-value">15 марта 2025</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">🌍 Последний вход</div>
-                        <div class="info-value">Сегодня, 15:30</div>
-                    </div>
-                </div>
+                <div class="info-title"><i class="fas fa-user"></i> Личная информация</div>
+                <div class="info-row"><div class="info-label">Email</div><div class="info-value" id="userEmail">dev@saaspro.ru</div></div>
+                <div class="info-row"><div class="info-label">Имя</div><div class="info-value" id="userLogin">Разработчик</div></div>
+                <div class="info-row"><div class="info-label">Дата регистрации</div><div class="info-value">15 марта 2025</div></div>
                 
-                <div class="info-section">
-                    <div class="info-title">
-                        <i class="fas fa-shield-alt"></i> Безопасность
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">🔐 2FA статус</div>
-                        <div class="info-value"><span style="color: #10b981;">✓ Включена</span></div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📱 Trusted devices</div>
-                        <div class="info-value">2 устройства</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">🔑 API ключей</div>
-                        <div class="info-value">12 активных</div>
-                    </div>
-                </div>
+                <div class="info-title" style="margin-top:30px;"><i class="fas fa-shield-alt"></i> Безопасность</div>
+                <div class="info-row"><div class="info-label">2FA статус</div><div class="info-value"><span style="color:#10b981;">✓ Включена</span></div></div>
+                <div class="info-row"><div class="info-label">Trusted devices</div><div class="info-value">2 устройства</div></div>
                 
-                <div class="info-section">
-                    <div class="info-title">
-                        <i class="fas fa-chart-line"></i> Системная информация
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">💾 Хранилище</div>
-                        <div class="info-value">2.58 ГБ / 8 ГБ (32%)</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">👥 Всего клиентов</div>
-                        <div class="info-value">156</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">🖥️ Активных серверов</div>
-                        <div class="info-value">24</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📊 Заявок сегодня</div>
-                        <div class="info-value">5 новых</div>
-                    </div>
-                </div>
-                
-                <!-- Кнопки действий -->
                 <div class="action-buttons">
-                    <a href="/settings" class="btn btn-primary">
-                        <i class="fas fa-lock"></i> Настройки безопасности
-                    </a>
-                    <a href="/developer/admin" class="btn btn-outline">
-                        <i class="fas fa-shield-alt"></i> Админ-панель
-                    </a>
-                    <a href="/" class="btn btn-outline">
-                        <i class="fas fa-home"></i> На главную
-                    </a>
+                    <a href="/settings" class="btn btn-primary"><i class="fas fa-sliders-h"></i> Настройки</a>
+                    <a href="/developer/admin" class="btn btn-admin"><i class="fas fa-shield-alt"></i> 🔐 Админ-панель</a>
+                    <a href="/" class="btn btn-outline"><i class="fas fa-home"></i> На главную</a>
                 </div>
             </div>
         </div>
     </div>
-    
     <script>
-        // Загружаем данные пользователя
         async function loadUserData() {
             try {
                 const response = await fetch('/api/current-user');
@@ -335,12 +214,18 @@
                     document.getElementById('userName').innerText = user.name || 'Разработчик';
                     document.getElementById('userEmail').innerText = user.email || 'dev@saaspro.ru';
                     document.getElementById('userLogin').innerText = user.name || 'Разработчик';
+                    const avatar = document.getElementById('avatar');
+                    const firstName = (user.name || 'Р').charAt(0).toUpperCase();
+                    avatar.innerHTML = firstName;
+                    avatar.style.fontSize = '48px';
+                    avatar.style.fontWeight = 'bold';
+                    avatar.style.color = '#667eea';
                 }
-            } catch(e) {
-                console.log('Error loading user data');
-            }
+            } catch(e) { console.log(e); }
         }
         loadUserData();
     </script>
+
+
 </body>
 </html>

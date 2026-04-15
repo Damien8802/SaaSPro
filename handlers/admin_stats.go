@@ -48,53 +48,49 @@ func AdminStatsHandler(c *gin.Context) {
 
 func AdminUsersHandler(c *gin.Context) {
     tenantID := middleware.GetTenantIDFromContext(c)
-
+    
     rows, err := database.Pool.Query(c.Request.Context(),
-        `SELECT id, email, name, role, telegram_id, telegram_username, is_active, created_at
+        `SELECT id, email, COALESCE(name, '') as name, COALESCE(role, 'user') as role,
+                COALESCE(telegram_id::text, '') as telegram_id,
+                COALESCE(is_developer, false) as is_developer,
+                created_at
          FROM users
-         WHERE tenant_id = $1
+         WHERE tenant_id = $1 OR $1 IS NULL
          ORDER BY created_at DESC
-         LIMIT 20`, tenantID)
+         LIMIT 50`, tenantID)
     if err != nil {
         log.Printf("AdminUsersHandler query error: %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+        c.JSON(500, gin.H{"error": err.Error()})
         return
     }
     defer rows.Close()
-
-    type UserInfo struct {
-        ID               string     `json:"id"`
-        Email            string     `json:"email"`
-        Name             *string    `json:"name"`
-        Role             string     `json:"role"`
-        TelegramID       *int64     `json:"telegram_id"`
-        TelegramUsername *string    `json:"telegram_username"`
-        IsActive         bool       `json:"is_active"`
-        CreatedAt        time.Time  `json:"created_at"`
-    }
-
-    var users []UserInfo
+    
+    var users []gin.H
     for rows.Next() {
-        var u UserInfo
-        if err := rows.Scan(
-            &u.ID,
-            &u.Email,
-            &u.Name,
-            &u.Role,
-            &u.TelegramID,
-            &u.TelegramUsername,
-            &u.IsActive,
-            &u.CreatedAt,
-        ); err != nil {
+        var id int
+        var email, name, role, telegramID string
+        var isDeveloper bool
+        var createdAt time.Time
+        
+        err := rows.Scan(&id, &email, &name, &role, &telegramID, &isDeveloper, &createdAt)
+        if err != nil {
             log.Printf("AdminUsersHandler scan error: %v", err)
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "scan error"})
-            return
+            continue
         }
-        users = append(users, u)
+        
+        users = append(users, gin.H{
+            "id":           id,
+            "email":        email,
+            "name":         name,
+            "role":         role,
+            "telegram_id":  telegramID,
+            "is_developer": isDeveloper,
+            "created_at":   createdAt,
+        })
     }
-    c.JSON(http.StatusOK, gin.H{"users": users})
+    
+    c.JSON(200, users)
 }
-
 func AdminToggleUserBlockHandler(c *gin.Context) {
     tenantID := middleware.GetTenantIDFromContext(c)
     userID := c.Param("id")

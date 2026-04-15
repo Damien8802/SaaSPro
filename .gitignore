@@ -4,96 +4,68 @@
 *.dll
 *.so
 *.dylib
-*.test
-*.out
-main.exe
-subscription-system.exe
-saaspro.exe
-my-app
 
-# Go workspace
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
 go.work
-go.work.sum
 
 # IDE
-.vscode/
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# Environment files (СЕКРЕТЫ!)
-.env
-.env.local
-.env.*.local
-secrets*.json
-secrets-backup*.json
+# OS
+.DS_Store
+Thumbs.db
 
 # Logs
 *.log
 logs/
 
-# Backups (НЕ нужны в репозитории)
+# Backups
 *.backup
 *.bak
-*.backup2
-*.working.backup
-*.CORRUPTED
-*.TEMP
-BACKUP_*
-old_backups_*
-backups/
+BACKUP_*/
+*_backup*/
 
-# Exports
-exports/
-*.csv
-*.xlsx
-*.xml
-*.json
-
-# Temp files (ВРЕМЕННЫЕ - НЕ НУЖНЫ)
+# Temp files
 tmp/
 temp/
-*.tmp
-*.temp
-temp_*
-project_files.txt
-project_structure.txt
-file_list.txt
-temp_response.html
-test.json
-request.json
-orders/
-_archive/
 
-# OS
-Thumbs.db
-ehthumbs.db
-Desktop.ini
+# Environment files with secrets
+.env
+.env.*
+*.env
+!.env.example
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Secrets
+secrets.json
+*secret*
+*key*
+*password*
+*token*
 
-# SSL certificates
-certs/
+# Orders
+orders/*.txt
+
+# Static generated
+static/dist/
+
+# Uploads
+uploads/
+storage/
+
+# Certificates
 *.pem
 *.crt
 *.key
-
-# WireGuard keys (СЕКРЕТЫ!)
-wireguard/clients/*.key
-wireguard/clients/*.conf
-wireguard/clients/database.txt
-
-# Frontend build
-frontend/dist/
-frontend/node_modules/
-static/dist/
-
-# Coverage
-*.cover
-*.coverprofile
-coverage.html

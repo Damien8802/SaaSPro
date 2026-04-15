@@ -1,0 +1,6 @@
+Folder PATH listing
+Volume serial number is 226B-6464
+C:\PROJECTS\SUBSCRIPTION-CLEAN-WORKS\-F
+Invalid path - \PROJECTS\SUBSCRIPTION-CLEAN-WORKS\-F
+No subfolders exist 
+
