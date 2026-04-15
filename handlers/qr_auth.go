@@ -49,38 +49,41 @@ func GenerateJWTForUser(userID uuid.UUID) (string, error) {
     return tokenString, nil
 }
 
-// Генерация QR кода для входа/регистрации
+
+// GenerateQRCode - генерация QR кода для входа/регистрации
 func GenerateQRCode(c *gin.Context) {
-    // Генерируем уникальный токен сессии
     sessionToken := generateRandomString(64)
-    
-    // Создаем QR код
-    qrData := fmt.Sprintf("saaspro://auth?token=%s&ts=%d", sessionToken, time.Now().Unix())
-    
-    // Сохраняем сессию
+
+    baseURL := os.Getenv("BASE_URL")
+    if baseURL == "" {
+        baseURL = "http://localhost:8080"
+    }
+
+    qrURL := fmt.Sprintf("%s/qr/approve?token=%s", baseURL, sessionToken)
+
     expiresAt := time.Now().Add(5 * time.Minute)
     _, err := database.Pool.Exec(c.Request.Context(), `
         INSERT INTO qr_sessions (session_token, qr_code, expires_at)
         VALUES ($1, $2, $3)
-    `, sessionToken, qrData, expiresAt)
-    
+    `, sessionToken, qrURL, expiresAt)
+
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create QR session"})
         return
     }
-    
+
     c.JSON(http.StatusOK, gin.H{
         "session_token": sessionToken,
-        "qr_code":       qrData,
-        "qr_data_url":   fmt.Sprintf("https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=%s", qrData),
+        "qr_code":       qrURL,
+        "qr_data_url":   fmt.Sprintf("https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=%s", qrURL),
         "expires_in":    300,
     })
 }
 
-// WebSocket для отслеживания статуса QR кода
+// QRStatusWebSocket - WebSocket для отслеживания статуса QR кода
 func QRStatusWebSocket(c *gin.Context) {
     sessionToken := c.Query("token")
-    mode := c.Query("mode") // login или register
+    mode := c.Query("mode")
     
     if sessionToken == "" {
         c.JSON(http.StatusBadRequest, gin.H{"error": "token required"})
@@ -93,7 +96,6 @@ func QRStatusWebSocket(c *gin.Context) {
     }
     defer conn.Close()
     
-    // Отправляем начальный статус
     var status string
     var userID uuid.UUID
     err = database.Pool.QueryRow(c.Request.Context(), `
@@ -108,7 +110,6 @@ func QRStatusWebSocket(c *gin.Context) {
     
     conn.WriteJSON(gin.H{"status": status, "user_id": userID.String()})
     
-    // Слушаем изменения статуса
     ticker := time.NewTicker(1 * time.Second)
     defer ticker.Stop()
     
@@ -143,7 +144,6 @@ func QRStatusWebSocket(c *gin.Context) {
                     var err error
                     
                     if mode == "register" {
-                        // Для регистрации создаем нового пользователя
                         token, err = createUserFromQR(newUserID)
                     } else {
                         token, err = GenerateJWTForUser(newUserID)
@@ -164,20 +164,17 @@ func QRStatusWebSocket(c *gin.Context) {
     }
 }
 
-// Создание пользователя из QR регистрации
+// createUserFromQR - создание пользователя из QR регистрации
 func createUserFromQR(userID uuid.UUID) (string, error) {
-    // Проверяем, существует ли пользователь
     var existingID uuid.UUID
     err := database.Pool.QueryRow(context.Background(), `
         SELECT id FROM users WHERE id = $1
     `, userID).Scan(&existingID)
     
     if err == nil {
-        // Пользователь существует, просто выдаем токен
         return GenerateJWTForUser(userID)
     }
     
-    // Создаем нового пользователя
     name := fmt.Sprintf("QR_User_%s", userID.String()[:8])
     email := fmt.Sprintf("%s@qr.saaspro.ru", userID.String()[:8])
     
@@ -194,7 +191,7 @@ func createUserFromQR(userID uuid.UUID) (string, error) {
     return GenerateJWTForUser(userID)
 }
 
-// Сканирование QR кода (мобильное приложение)
+// ScanQRCode - сканирование QR кода (мобильное приложение)
 func ScanQRCode(c *gin.Context) {
     var req struct {
         SessionToken string `json:"session_token" binding:"required"`
@@ -205,7 +202,6 @@ func ScanQRCode(c *gin.Context) {
         return
     }
     
-    // Проверяем сессию
     var sessionID uuid.UUID
     var expiresAt time.Time
     err := database.Pool.QueryRow(c.Request.Context(), `
@@ -218,7 +214,6 @@ func ScanQRCode(c *gin.Context) {
         return
     }
     
-    // Обновляем статус на scanned
     _, err = database.Pool.Exec(c.Request.Context(), `
         UPDATE qr_sessions SET status = 'scanned', scanned_at = NOW()
         WHERE session_token = $1
@@ -235,7 +230,7 @@ func ScanQRCode(c *gin.Context) {
     })
 }
 
-// Подтверждение входа (после сканирования)
+// ApproveQRLogin - подтверждение входа (после сканирования)
 func ApproveQRLogin(c *gin.Context) {
     userID := getUserID(c)
     
@@ -248,7 +243,6 @@ func ApproveQRLogin(c *gin.Context) {
         return
     }
     
-    // Проверяем сессию
     var sessionID uuid.UUID
     err := database.Pool.QueryRow(c.Request.Context(), `
         SELECT id FROM qr_sessions 
@@ -260,7 +254,6 @@ func ApproveQRLogin(c *gin.Context) {
         return
     }
     
-    // Подтверждаем вход
     _, err = database.Pool.Exec(c.Request.Context(), `
         UPDATE qr_sessions SET status = 'approved', user_id = $1, approved_at = NOW()
         WHERE session_token = $2
@@ -277,7 +270,39 @@ func ApproveQRLogin(c *gin.Context) {
     })
 }
 
-// Регистрация устройства для пуш-уведомлений
+// QRApprovePageHandler - страница подтверждения входа по QR
+func QRApprovePageHandler(c *gin.Context) {
+    token := c.Query("token")
+    if token == "" {
+        c.HTML(http.StatusBadRequest, "error.html", gin.H{
+            "title": "Ошибка",
+            "error": "Неверный QR код",
+        })
+        return
+    }
+
+    var status string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT status FROM qr_sessions
+        WHERE session_token = $1 AND expires_at > NOW()
+    `, token).Scan(&status)
+
+    if err != nil {
+        c.HTML(http.StatusNotFound, "error.html", gin.H{
+            "title": "Ошибка",
+            "error": "QR код устарел или недействителен",
+        })
+        return
+    }
+
+    c.HTML(http.StatusOK, "qr-approve.html", gin.H{
+        "title":  "Подтверждение входа | SaaSPro",
+        "token":  token,
+        "status": status,
+    })
+}
+
+// RegisterPushDevice - регистрация устройства для пуш-уведомлений
 func RegisterPushDevice(c *gin.Context) {
     userID := getUserID(c)
     
@@ -292,12 +317,10 @@ func RegisterPushDevice(c *gin.Context) {
         return
     }
     
-    // Удаляем старые устройства
     database.Pool.Exec(c.Request.Context(), `
         DELETE FROM push_devices WHERE device_token = $1
     `, req.DeviceToken)
     
-    // Регистрируем новое устройство
     _, err := database.Pool.Exec(c.Request.Context(), `
         INSERT INTO push_devices (user_id, device_token, device_type, device_name)
         VALUES ($1, $2, $3, $4)
@@ -314,7 +337,7 @@ func RegisterPushDevice(c *gin.Context) {
     })
 }
 
-// Получить устройства пользователя
+// GetUserDevices - получить устройства пользователя
 func GetUserDevices(c *gin.Context) {
     userID := getUserID(c)
     
@@ -354,7 +377,7 @@ func GetUserDevices(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"devices": devices})
 }
 
-// Удалить устройство
+// RemovePushDevice - удалить устройство
 func RemovePushDevice(c *gin.Context) {
     userID := getUserID(c)
     deviceID := c.Param("id")
@@ -371,9 +394,8 @@ func RemovePushDevice(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"status": "removed"})
 }
 
-// Отправить пуш-уведомление пользователю
+// SendPushNotification - отправить пуш-уведомление пользователю
 func SendPushNotification(userID uuid.UUID, title, body string, data map[string]interface{}) error {
-    // Получаем устройства пользователя
     rows, err := database.Pool.Query(context.Background(), `
         SELECT device_token, device_type FROM push_devices
         WHERE user_id = $1 AND active = true
@@ -397,7 +419,6 @@ func SendPushNotification(userID uuid.UUID, title, body string, data map[string]
         devices = append(devices, d)
     }
     
-    // Сохраняем уведомление в БД
     dataJSON, _ := json.Marshal(data)
     _, err = database.Pool.Exec(context.Background(), `
         INSERT INTO push_notifications (user_id, title, body, data)
@@ -407,7 +428,6 @@ func SendPushNotification(userID uuid.UUID, title, body string, data map[string]
         return err
     }
     
-    // Отправляем push через Web Push (для браузеров)
     for _, device := range devices {
         go sendWebPush(device.Token, title, body, data)
     }
@@ -445,4 +465,3 @@ func getUserID(c *gin.Context) uuid.UUID {
 func sendWebPush(endpoint, title, body string, data map[string]interface{}) {
     log.Printf("📱 Отправка push уведомления на %s: %s - %s", endpoint, title, body)
 }
-

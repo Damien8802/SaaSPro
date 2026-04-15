@@ -149,6 +149,18 @@
 <a href="javascript:history.back()" class="back-button" title="Go Back">
     <i class="fas fa-arrow-left fa-lg"></i>
 </a>
+<div class="ai-floating-widget">
+    <div class="ai-widget-button" onclick="openAIAssistant()">
+        🤖
+        <div class="ai-widget-badge">●</div>
+    </div>
+    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
+</div>
+<script>
+function openAIAssistant() {
+    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
+}
+</script>
 </body>
 </html>
 

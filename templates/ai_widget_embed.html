@@ -1,0 +1,64 @@
+package middleware
+
+import (
+    "bytes"
+    "strings"
+
+    "github.com/gin-gonic/gin"
+)
+
+type responseWriter struct {
+    gin.ResponseWriter
+    body *bytes.Buffer
+}
+
+func (rw *responseWriter) Write(b []byte) (int, error) {
+    return rw.body.Write(b)
+}
+
+func AIWidgetMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        if !strings.Contains(c.Request.Header.Get("Accept"), "text/html") {
+            c.Next()
+            return
+        }
+        
+        rw := &responseWriter{ResponseWriter: c.Writer, body: bytes.NewBufferString("")}
+        c.Writer = rw
+        
+        c.Next()
+        
+        if strings.Contains(c.Writer.Header().Get("Content-Type"), "text/html") && rw.body.Len() > 0 {
+            html := rw.body.String()
+            widgetScript := `<script src="/static/ai-assistant-full.js"></script>`
+            html = strings.Replace(html, "<div class="ai-floating-widget">
+    <div class="ai-widget-button" onclick="openAIAssistant()">
+        🤖
+        <div class="ai-widget-badge">●</div>
+    </div>
+    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
+</div>
+<script>
+function openAIAssistant() {
+    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
+}
+</script>
+</body>", widgetScript+"<div class="ai-floating-widget">
+    <div class="ai-widget-button" onclick="openAIAssistant()">
+        🤖
+        <div class="ai-widget-badge">●</div>
+    </div>
+    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
+</div>
+<script>
+function openAIAssistant() {
+    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
+}
+</script>
+</body>", 1)
+            c.Writer.Write([]byte(html))
+        } else {
+            c.Writer.Write(rw.body.Bytes())
+        }
+    }
+}

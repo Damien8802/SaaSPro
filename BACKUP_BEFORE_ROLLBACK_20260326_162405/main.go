@@ -229,10 +229,10 @@ func main() {
     // ========== СТАТИКА, РЕДИРЕКТЫ ==========
     r.Static("/static", cfg.StaticPath)
     r.Static("/frontend", cfg.FrontendPath)
-    r.Static("/app", "C:/Projects/subscription-clean-WORKS/telegram-mini-app")
+    r.Static("/app", "C:/Projects/subscription-system/telegram-mini-app")
     r.GET("/telegram/manifest.json", func(c *gin.Context) { c.File("./telegram-mini-app/manifest.json") })
     r.GET("/telegram/sw.js", func(c *gin.Context) { c.File("./telegram-mini-app/service-worker.js") })
-    r.GET("/app", func(c *gin.Context) { c.File("C:/Projects/subscription-clean-WORKS/telegram-mini-app/index.html") })
+    r.GET("/app", func(c *gin.Context) { c.File("C:/Projects/subscription-system/telegram-mini-app/index.html") })
     r.GET("/dashboard_improved", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/dashboard-improved") })
     r.GET("/dashboard", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/dashboard-improved") })
     r.GET("/delivery", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/logistics") })

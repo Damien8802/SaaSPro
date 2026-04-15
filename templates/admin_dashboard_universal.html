@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaSPro | Админ-панель разработчика</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        
+        /* Анимированный фон (как в профиле) */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+            animation: float 15s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(-10%, -10%) rotate(0deg); }
+            50% { transform: translate(10%, 10%) rotate(5deg); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Карточка как в профиле */
+        .admin-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Шапка как в профиле */
+        .admin-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px 40px;
+            position: relative;
+        }
+        .admin-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-header p {
+            color: rgba(255,255,255,0.8);
+            margin-top: 8px;
+        }
+        
+        /* Вкладки */
+        .tabs {
+            display: flex;
+            gap: 12px;
+            padding: 20px 30px 0 30px;
+            background: rgba(0,0,0,0.2);
+        }
+        .tab-btn {
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: rgba(255,255,255,0.7);
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+        .tab-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        /* Статистика */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.1); }
+        .stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: #a5b4fc;
+        }
+        .stat-label { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 8px; }
+        
+        /* Карточки заявок */
+        .card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            transition: all 0.3s;
+        }
+        .card:hover { transform: translateX(4px); border-color: #667eea; }
+        .card.new { border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.05); }
+        
+        .badge-new { background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-viewed { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .priority-high { background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .priority-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .priority-low { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 15px 0;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+        }
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a5b4fc;
+            font-size: 18px;
+        }
+        .info-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { font-size: 14px; font-weight: 600; color: white; margin-top: 4px; }
+        
+        .btn-action {
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            margin: 0 5px;
+            transition: all 0.2s;
+        }
+        .btn-copy { background: rgba(255,255,255,0.1); color: white; }
+        .btn-copy:hover { background: #667eea; color: white; }
+        .btn-delete { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .btn-delete:hover { background: #ef4444; color: white; }
+        .btn-view { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .btn-view:hover { background: #10b981; color: white; }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 14px 28px;
+            border-radius: 50px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .refresh-btn:hover { transform: scale(1.05); }
+        
+        .tab-content { display: none; padding: 0 30px 30px 30px; }
+        .tab-content.active { display: block; }
+        
+        select {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+        }
+        select option { background: #1e1b4b; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .info-grid { grid-template-columns: 1fr; }
+            .tabs { flex-wrap: wrap; }
+            .tab-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="container">
+        <div class="admin-card">
+            <div class="admin-header">
+                <h1><i class="fas fa-crown"></i> Админ-панель разработчика</h1>
+                <p><i class="fas fa-shield-alt"></i> Управление заявками и доработками | SaaSPro</p>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('orders')"><i class="fas fa-clipboard-list"></i> Заявки на разработку</button>
+                <button class="tab-btn" onclick="showTab('features')"><i class="fas fa-lightbulb"></i> Доработки от клиентов</button>
+            </div>
+            
+            <!-- Вкладка ЗАЯВКИ -->
+            <div id="ordersTab" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-number" id="totalOrders">0</div><div class="stat-label">Всего заявок</div></div>
+                    <div class="stat-card"><div class="stat-number" id="newOrders">0</div><div class="stat-label"><i class="fas fa-bell"></i> Новые</div></div>
+                    <div class="stat-card"><div class="stat-number" id="completedOrders">0</div><div class="stat-label"><i class="fas fa-check-circle"></i> Выполнено</div></div>
+                    <div class="stat-card"><div class="stat-number" id="todayOrders">0</div><div class="stat-label"><i class="fas fa-calendar-day"></i> За сегодня</div></div>
+                </div>
+                <div id="ordersList">Загрузка...</div>
+            </div>
+            
+            <!-- Вкладка ДОРАБОТКИ -->
+            <div id="featuresTab" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-number" id="totalFeatures">0</div><div class="stat-label">Всего идей</div></div>
+                    <div class="stat-card"><div class="stat-number" id="newFeatures">0</div><div class="stat-label"><i class="fas fa-bell"></i> Новые</div></div>
+                    <div class="stat-card"><div class="stat-number" id="inProgressFeatures">0</div><div class="stat-label"><i class="fas fa-spinner"></i> В работе</div></div>
+                    <div class="stat-card"><div class="stat-number" id="doneFeatures">0</div><div class="stat-label"><i class="fas fa-check-circle"></i> Готово</div></div>
+                </div>
+                <div id="featuresList">Загрузка...</div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="refresh-btn" onclick="loadAll()"><i class="fas fa-sync-alt"></i> Обновить</button>
+
+    <script>
+        async function loadOrders() {
+            const res = await fetch('/api/orders/list');
+            const orders = await res.json();
+            document.getElementById('totalOrders').innerHTML = orders.length;
+            document.getElementById('newOrders').innerHTML = orders.filter(o => o.status === 'new').length;
+            document.getElementById('completedOrders').innerHTML = orders.filter(o => o.status === 'viewed').length;
+            document.getElementById('todayOrders').innerHTML = orders.filter(o => new Date(o.date).toDateString() === new Date().toDateString()).length;
+            
+            const container = document.getElementById('ordersList');
+            if(orders.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;color:rgba(255,255,255,0.5);">📭 Нет заявок</div>'; return; }
+            container.innerHTML = orders.map(o => `
+                <div class="card ${o.status === 'new' ? 'new' : ''}">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:15px;">
+                        <span class="${o.status === 'new' ? 'badge-new' : 'badge-viewed'}">${o.status === 'new' ? '🆕 НОВАЯ' : '✓ ПРОСМОТРЕНА'}</span>
+                        <span style="color:rgba(255,255,255,0.5);font-size:12px;">${o.date}</span>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item"><div class="info-icon"><i class="fas fa-user"></i></div><div><div class="info-label">Клиент</div><div class="info-value">${o.name}</div></div></div>
+                        <div class="info-item"><div class="info-icon"><i class="fas fa-phone"></i></div><div><div class="info-label">Контакт</div><div class="info-value">${o.contact}</div></div></div>
+                        <div class="info-item"><div class="info-icon"><i class="fas fa-cube"></i></div><div><div class="info-label">Услуга</div><div class="info-value">${o.service || '—'}</div></div></div>
+                        <div class="info-item"><div class="info-icon"><i class="fas fa-calendar"></i></div><div><div class="info-label">Срок</div><div class="info-value">${o.deadline || '—'}</div></div></div>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <button class="btn-action btn-copy" onclick="copyText('${o.contact}')"><i class="fas fa-copy"></i> Копировать</button>
+                        ${o.status === 'new' ? `<button class="btn-action btn-view" onclick="markViewed(${o.id})"><i class="fas fa-check"></i> Просмотрено</button>` : ''}
+                        <button class="btn-action btn-delete" onclick="deleteOrder(${o.id})"><i class="fas fa-trash"></i> Удалить</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadFeatures() {
+            const res = await fetch('/api/feature-requests');
+            const features = await res.json();
+            document.getElementById('totalFeatures').innerHTML = features.length;
+            document.getElementById('newFeatures').innerHTML = features.filter(f => f.status === 'new').length;
+            document.getElementById('inProgressFeatures').innerHTML = features.filter(f => f.status === 'in_progress').length;
+            document.getElementById('doneFeatures').innerHTML = features.filter(f => f.status === 'done').length;
+            
+            const container = document.getElementById('featuresList');
+            if(features.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;color:rgba(255,255,255,0.5);">💡 Нет идей</div>'; return; }
+            container.innerHTML = features.map(f => `
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:15px;">
+                        <span class="priority-${f.priority}">${f.priority === 'high' ? '🔴 Высокий' : f.priority === 'medium' ? '🟡 Средний' : '🟢 Низкий'}</span>
+                        <span style="color:rgba(255,255,255,0.5);font-size:12px;">${f.date}</span>
+                    </div>
+                    <h3 style="color:white;margin-bottom:10px;">💡 ${f.title}</h3>
+                    <p style="color:rgba(255,255,255,0.7);margin-bottom:15px;">${f.description}</p>
+                    <div class="info-grid">
+                        <div class="info-item"><div class="info-icon"><i class="fas fa-user"></i></div><div><div class="info-label">От кого</div><div class="info-value">${f.user_name}</div></div></div>
+                        <div class="info-item"><div class="info-icon"><i class="fas fa-envelope"></i></div><div><div class="info-label">Email</div><div class="info-value">${f.user_email}</div></div></div>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <select onchange="updateStatus(${f.id}, this.value)">
+                            <option value="new" ${f.status === 'new' ? 'selected' : ''}>🆕 Новая</option>
+                            <option value="in_progress" ${f.status === 'in_progress' ? 'selected' : ''}>🔧 В работе</option>
+                            <option value="done" ${f.status === 'done' ? 'selected' : ''}>✅ Готово</option>
+                            <option value="rejected" ${f.status === 'rejected' ? 'selected' : ''}>❌ Отклонено</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function markViewed(id) { await fetch(`/api/orders/${id}/view`, { method: 'PUT' }); loadOrders(); }
+        async function deleteOrder(id) { if(confirm('Удалить заявку?')) await fetch(`/api/orders/${id}/delete`, { method: 'DELETE' }); loadOrders(); }
+        async function updateStatus(id, status) { await fetch(`/api/feature-requests/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status}) }); loadFeatures(); }
+        function copyText(text) { navigator.clipboard.writeText(text); alert('✅ Скопировано: ' + text); }
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(tab === 'orders') { document.getElementById('ordersTab').classList.add('active'); event.target.classList.add('active'); }
+            else { document.getElementById('featuresTab').classList.add('active'); event.target.classList.add('active'); }
+        }
+        function loadAll() { loadOrders(); loadFeatures(); }
+        loadAll();
+        setInterval(loadAll, 15000);
+    </script>
+</body>
+</html>

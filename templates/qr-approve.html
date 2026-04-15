@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение входа | SaaSPro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Подтверждение входа</h1>
+        <p>Вы пытаетесь войти в SaaSPro</p>
+        <button id="confirmBtn">✅ Подтвердить вход</button>
+        <div id="message" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const token = new URLSearchParams(window.location.search).get('token');
+        
+        if (!token) {
+            document.getElementById('message').innerHTML = '<span class="error">❌ Неверный QR код</span>';
+            document.getElementById('confirmBtn').disabled = true;
+        }
+
+        document.getElementById('confirmBtn').onclick = async () => {
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.textContent = 'Обработка...';
+            
+            try {
+                const response = await fetch('/api/qr/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_token: token })
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'approved') {
+                    document.getElementById('message').innerHTML = '<span class="success">✅ Вход выполнен! Перенаправление...</span>';
+                    setTimeout(() => {
+                        window.location.href = '/dashboard-improved';
+                    }, 1500);
+                } else {
+                    document.getElementById('message').innerHTML = '<span class="error">❌ Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</span>';
+                    btn.disabled = false;
+                    btn.textContent = '✅ Подтвердить вход';
+                }
+            } catch (error) {
+                document.getElementById('message').innerHTML = '<span class="error">❌ Ошибка сети</span>';
+                btn.disabled = false;
+                btn.textContent = '✅ Подтвердить вход';
+            }
+        };
+    </script>
+<div class="ai-floating-widget">
+    <div class="ai-widget-button" onclick="openAIAssistant()">
+        🤖
+        <div class="ai-widget-badge">●</div>
+    </div>
+    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
+</div>
+<script>
+function openAIAssistant() {
+    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
+}
+</script>
+</body>
+</html>

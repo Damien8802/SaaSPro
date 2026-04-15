@@ -152,14 +152,14 @@ func GetMarketplaceApps(c *gin.Context) {
             "purchased":     contains(purchasedApps, "10"),
         },
         {
-            "id":            "subscription-clean-works",
+            "id":            "subscription-system",
             "name":          "Subscription Clean Works",
             "description":   "💼 Комплексная ERP система: CRM, VPN, AI, Маркетплейс, Логистика, Финансы. Управляйте бизнесом в одном месте!",
             "category":      "business",
             "price_monthly": 0,
             "price_yearly":  0,
             "icon_url":      "📦",
-            "slug":          "subscription-clean-works",
+            "slug":          "subscription-system",
             "featured":      true,
             "purchased":     true,
             "status":        "active",
@@ -259,12 +259,12 @@ func PurchaseApp(c *gin.Context) {
     }
 
     // Обработка вашего приложения
-    if req.AppID == "subscription-clean-works" {
+    if req.AppID == "subscription-system" {
         c.JSON(http.StatusOK, gin.H{
             "success": true,
             "message": "✅ Приложение Subscription Clean Works уже активировано",
             "app": gin.H{
-                "id":           "subscription-clean-works",
+                "id":           "subscription-system",
                 "name":         "Subscription Clean Works",
                 "status":       "active",
                 "activated_at": "2026-04-11",
@@ -399,8 +399,8 @@ func GetMyPurchases(c *gin.Context) {
     
     // Добавляем ваше приложение, если его нет в БД
     purchases = append(purchases, gin.H{
-        "id":           "subscription-clean-works",
-        "app_id":       "subscription-clean-works",
+        "id":           "subscription-system",
+        "app_id":       "subscription-system",
         "name":         "Subscription Clean Works",
         "description":  "Комплексная ERP система",
         "icon":         "📦",
@@ -452,7 +452,7 @@ func GetMyAppsAPI(c *gin.Context) {
 
     myApps := []gin.H{
         {
-            "id":           "subscription-clean-works",
+            "id":           "subscription-system",
             "name":         "Subscription Clean Works",
             "description":  "Комплексная ERP система с CRM, VPN, AI и маркетплейсом",
             "icon":         "📦",

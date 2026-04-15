@@ -1,0 +1,64 @@
+<!-- Плавающий AI виджет для всех страниц -->
+<style>
+    .ai-floating-widget {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .ai-widget-button {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+        border: none;
+        font-size: 28px;
+    }
+    
+    .ai-widget-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    }
+    
+    .ai-widget-tooltip {
+        position: absolute;
+        bottom: 70px;
+        right: 0;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+    }
+    
+    .ai-floating-widget:hover .ai-widget-tooltip {
+        opacity: 1;
+    }
+</style>
+
+<div class="ai-floating-widget">
+    <div class="ai-widget-button" onclick="openAIAssistant()">
+        🤖
+    </div>
+    <div class="ai-widget-tooltip">
+        Спросить AI ассистента
+    </div>
+</div>
+
+<script>
+function openAIAssistant() {
+    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
+}
+</script>

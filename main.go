@@ -12,12 +12,15 @@ import (
     "io"
     "net"
     "strconv"
+     "os" 
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
     swaggerFiles "github.com/swaggo/files"
     ginSwagger "github.com/swaggo/gin-swagger"
     
+
+
     "subscription-system/config"
     "subscription-system/database"
     "subscription-system/handlers"
@@ -110,6 +113,49 @@ func main() {
     } else {
         log.Println("✅ VPN тарифы загружены")
     }
+
+// ========== СОЗДАНИЕ ТАБЛИЦЫ ЗАЯВОК ==========
+_, err = database.Pool.Exec(ctx, `
+    CREATE TABLE IF NOT EXISTS service_orders (
+        id SERIAL PRIMARY KEY,
+        client_name VARCHAR(255) NOT NULL,
+        client_contact VARCHAR(255) NOT NULL,
+        service_type VARCHAR(255),
+        design_requirements TEXT,
+        deadline VARCHAR(100),
+        budget VARCHAR(100),
+        additional_info TEXT,
+        status VARCHAR(50) DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT NOW(),
+        viewed_at TIMESTAMP
+    )
+`)
+if err != nil {
+    log.Printf("⚠️ Ошибка создания service_orders: %v", err)
+} else {
+    log.Println("✅ Таблица service_orders готова")
+}
+
+// ========== СОЗДАНИЕ ТАБЛИЦЫ ДОРАБОТОК ==========
+_, err = database.Pool.Exec(ctx, `
+    CREATE TABLE IF NOT EXISTS feature_requests (
+        id SERIAL PRIMARY KEY,
+        user_id UUID,
+        user_name VARCHAR(255),
+        user_email VARCHAR(255),
+        title VARCHAR(500) NOT NULL,
+        description TEXT NOT NULL,
+        priority VARCHAR(50) DEFAULT 'medium',
+        status VARCHAR(50) DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP
+    )
+`)
+if err != nil {
+    log.Printf("⚠️ Ошибка создания feature_requests: %v", err)
+} else {
+    log.Println("✅ Таблица feature_requests готова")
+}
     
     handlers.InitVPNWithDB(database.Pool)
     // Инициализация Stealth VPN сервиса
@@ -132,6 +178,39 @@ func main() {
     _ = speechKitService
     log.Println("🎙️ Сервис транскрибации SpeechKit инициализирован")
 
+    // ========== НОВЫЕ СЕРВИСЫ ==========
+    // Получаем API ключи для новых сервисов
+    //yandexSearchAPIKey := os.Getenv("YANDEX_SEARCH_API_KEY")
+    yandexFolderID := os.Getenv("YANDEX_FOLDER_ID")
+    yandexAPIKey := os.Getenv("YANDEX_API_KEY")
+    telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+    telegramChatID := os.Getenv("TELEGRAM_CHAT_ID")
+    adminChatID := os.Getenv("ADMIN_CHAT_ID")
+    
+    log.Printf("🤖 AI Assistant: YandexAPI=%v, Telegram=%v", 
+        yandexAPIKey != "", telegramBotToken != "")
+    
+      // Универсальный AI ассистент
+universalAI := handlers.NewUniversalAIAssistant(
+    yandexAPIKey,
+    yandexFolderID,
+    telegramBotToken,
+    telegramChatID,
+    adminChatID,
+    database.Pool,  // <--- ДОБАВИТЬ ЭТУ СТРОКУ
+)
+    log.Println("✅ Universal AI Assistant инициализирован")
+    
+    // Обработчик заказов на разработку
+  individualOrdersHandler := handlers.NewIndividualOrdersHandler(
+    yandexAPIKey,
+    yandexFolderID,
+    telegramBotToken,
+    telegramChatID,
+    adminChatID,
+)
+    log.Println("✅ Individual Orders Handler инициализирован")
+
     if cfg.Env == "release" {
         gin.SetMode(gin.ReleaseMode)
     }
@@ -146,6 +225,11 @@ func main() {
     r.Use(middleware.Fail2BanMiddleware())       // Блокировка IP
     r.Use(middleware.ForcePasswordChangeMiddleware()) // Принудительная смена пароля
 
+  //r.Use(middleware.AIWidgetMiddleware())
+// AI Assistant API
+r.POST("/api/ai/assistant", handlers.AIAssistantHandler)
+
+
     r.Use(gin.Logger())
     r.Use(gin.Recovery())
     r.Use(middleware.Logger())
@@ -156,6 +240,8 @@ func main() {
     rateLimiter := middleware.NewRateLimiter(30, time.Minute)
     r.Use(middleware.SecurityMonitor())
     authLimiter := middleware.NewRateLimiter(3, time.Minute)
+
+
 
     // ========== ЗАГРУЗКА ШАБЛОНОВ ==========
     // Загружаем шаблоны из файловой системы
@@ -244,10 +330,10 @@ func main() {
     // ========== СТАТИКА, РЕДИРЕКТЫ ==========
     r.Static("/static", cfg.StaticPath)
     r.Static("/frontend", cfg.FrontendPath)
-    r.Static("/app", "C:/Projects/subscription-clean-WORKS/telegram-mini-app")
+    r.Static("/app", "C:/Projects/subscription-system/telegram-mini-app")
     r.GET("/telegram/manifest.json", func(c *gin.Context) { c.File("./telegram-mini-app/manifest.json") })
     r.GET("/telegram/sw.js", func(c *gin.Context) { c.File("./telegram-mini-app/service-worker.js") })
-    r.GET("/app", func(c *gin.Context) { c.File("C:/Projects/subscription-clean-WORKS/telegram-mini-app/index.html") })
+    r.GET("/app", func(c *gin.Context) { c.File("C:/Projects/subscription-system/telegram-mini-app/index.html") })
     r.GET("/dashboard_improved", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/dashboard-improved") })
     r.GET("/dashboard", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/dashboard-improved") })
     r.GET("/delivery", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/logistics") })
@@ -261,7 +347,47 @@ func main() {
     r.GET("/ai-agents", handlers.AIAgentsPage)
     r.GET("/advanced-analytics", handlers.AdvancedAnalyticsPage)
 
+
+
     r.GET("/marketplace", handlers.MarketplacePageHandler)
+        // ========== НОВЫЕ РОУТЫ ==========
+    
+    // Universal AI Assistant - страница
+    r.GET("/ai-assistant", func(c *gin.Context) {
+        c.HTML(http.StatusOK, "ai_assistant_page.html", gin.H{
+            "title": "AI-ассистент SaaSPro",
+        })
+    })
+    
+    // Universal AI Assistant API
+    r.POST("/api/ai/universal/chat", universalAI.ChatHandler)
+    r.GET("/api/ai/universal/history", universalAI.GetHistory)
+    r.GET("/api/ai/universal/actions", universalAI.GetActions)
+    r.GET("/api/ai/universal/settings", universalAI.GetSettings)
+    
+    // Individual Orders - страницы
+    r.GET("/individual-order", individualOrdersHandler.OrderPage)
+    r.GET("/admin/orders", individualOrdersHandler.AdminOrdersPage)
+    
+    // Individual Orders API (публичные)
+    r.GET("/api/price", individualOrdersHandler.GetPrice)
+    r.GET("/api/services", individualOrdersHandler.GetServices)
+    r.GET("/api/categories", individualOrdersHandler.GetCategories)
+    r.POST("/api/individual-order", individualOrdersHandler.CreateOrder)
+    
+    // Individual Orders API (админские - защищенные)
+    adminOrdersAPI := r.Group("/api/admin/orders")
+    adminOrdersAPI.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
+    {
+        adminOrdersAPI.GET("", individualOrdersHandler.GetOrders)
+        adminOrdersAPI.GET("/:id", individualOrdersHandler.GetOrder)
+        adminOrdersAPI.PUT("/:id/status", individualOrdersHandler.UpdateOrderStatus)
+        adminOrdersAPI.DELETE("/:id", individualOrdersHandler.DeleteOrder)
+        adminOrdersAPI.GET("/stats", individualOrdersHandler.GetOrderStats)
+    }
+
+
+
 
     // QR код авторизация
     r.GET("/qr-login", handlers.QRLoginPageHandler)
@@ -269,6 +395,9 @@ func main() {
     r.GET("/api/qr/status", handlers.QRStatusWebSocket)
     r.POST("/api/qr/scan", handlers.ScanQRCode)
     r.POST("/api/qr/approve", handlers.ApproveQRLogin)
+
+r.GET("/qr/approve-page", handlers.QRApprovePageHandler)
+
 
     r.GET("/logout", handlers.LogoutHandler)
 
@@ -352,12 +481,13 @@ func main() {
     r.POST("/api/restore", handlers.RestoreBackup)
     
     // Страница поставщиков
-    r.GET("/suppliers", func(c *gin.Context) {
-        c.HTML(http.StatusOK, "suppliers.html", gin.H{
-            "title": "Поставщики | SaaSPro",
-        })
+r.GET("/suppliers", func(c *gin.Context) {
+    // Проверяем существование шаблона
+    c.HTML(http.StatusOK, "suppliers.html", gin.H{
+        "title": "Поставщики | SaaSPro",
+        "message": "Управление поставщиками",
     })
-    
+})
     r.GET("/inventory/products", func(c *gin.Context) {
         c.HTML(http.StatusOK, "inventory_products.html", gin.H{
             "title": "Товары - SaaSPro",
@@ -822,16 +952,27 @@ func main() {
     }
 
     // Защищенные маршруты
-    protected := r.Group("/")
-    protected.Use(middleware.AuthMiddleware(cfg))
-    {
-        protected.GET("/settings", handlers.SettingsHandler)
-        protected.GET("/my-subscriptions", handlers.MySubscriptionsPageHandler)
-        protected.GET("/trusted-devices", handlers.TrustedDevicesHandler)
-        protected.GET("/monetization", handlers.MonetizationHandler)
-        protected.GET("/profile", handlers.ProfilePageHandler)
-        protected.GET("/calendar", handlers.CalendarHandler)
+   protected := r.Group("/")
+protected.Use(middleware.AuthMiddleware(cfg))
+{
+    protected.GET("/settings", handlers.SettingsHandler)
+    protected.GET("/my-subscriptions", handlers.MySubscriptionsPageHandler)
+    protected.GET("/trusted-devices", handlers.TrustedDevicesHandler)
+    protected.GET("/monetization", handlers.MonetizationHandler)
+    protected.GET("/calendar", handlers.CalendarHandler)
+}
+
+// Профиль - доступен только разработчику
+r.GET("/profile", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
+    role := c.GetString("role")
+    if role != "developer" && role != "admin" {
+        c.String(403, "⛔ Доступ запрещён. Только для разработчиков.")
+        return
     }
+    c.HTML(200, "profile.html", gin.H{
+        "title": "Профиль разработчика | SaaSPro",
+    })
+})
 
     // Админские маршруты
     adminGroup := r.Group("/")
@@ -1157,6 +1298,192 @@ func main() {
         })
     })
 
+// ========== API ДЛЯ ПРОСМОТРА ЗАЯВОК ИЗ БД ==========
+// API для получения списка заявок
+r.GET("/api/orders/list", func(c *gin.Context) {
+    rows, err := database.Pool.Query(c.Request.Context(), 
+        `SELECT id, client_name, client_contact, service_type, deadline, status, created_at 
+         FROM service_orders ORDER BY created_at DESC LIMIT 50`)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var orders []gin.H
+    for rows.Next() {
+        var id int
+        var name, contact, service, deadline, status string
+        var createdAt time.Time
+        
+        rows.Scan(&id, &name, &contact, &service, &deadline, &status, &createdAt)
+        
+        orders = append(orders, gin.H{
+            "id":       id,
+            "name":     name,
+            "contact":  contact,
+            "service":  service,
+            "deadline": deadline,
+            "status":   status,
+            "date":     createdAt.Format("02.01.2006 15:04"),
+        })
+    }
+    
+    c.JSON(200, orders)
+})
+
+// Отметить заявку как просмотренную
+r.PUT("/api/orders/:id/view", func(c *gin.Context) {
+    id := c.Param("id")
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        "UPDATE service_orders SET status = 'viewed', viewed_at = NOW() WHERE id = $1", id)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+// Обновить заявку
+r.PUT("/api/orders/:id/update", func(c *gin.Context) {
+    id := c.Param("id")
+    var data struct {
+        Name     string `json:"name"`
+        Contact  string `json:"contact"`
+        Service  string `json:"service"`
+        Deadline string `json:"deadline"`
+    }
+    if err := c.BindJSON(&data); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        `UPDATE service_orders 
+         SET client_name = $1, client_contact = $2, service_type = $3, deadline = $4 
+         WHERE id = $5`,
+        data.Name, data.Contact, data.Service, data.Deadline, id)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+// Удалить заявку
+r.DELETE("/api/orders/:id/delete", func(c *gin.Context) {
+    id := c.Param("id")
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        "DELETE FROM service_orders WHERE id = $1", id)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+// Страница просмотра заявок (админка)
+r.GET("/admin/orders-view", func(c *gin.Context) {
+    c.HTML(200, "orders_view.html", gin.H{
+        "title": "Заявки | SaaSPro Admin",
+    })
+})
+
+// ========== API ДЛЯ ДОРАБОТОК/ФИЧРЕКВЕСТОВ ==========
+
+// Создать заявку на доработку (для авторизованных клиентов)
+r.POST("/api/feature-request", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    userName := c.GetString("user_name")
+    userEmail := c.GetString("user_email")
+    
+    var req struct {
+        Title       string `json:"title"`
+        Description string `json:"description"`
+        Priority    string `json:"priority"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        `INSERT INTO feature_requests (user_id, user_name, user_email, title, description, priority, status) 
+         VALUES ($1, $2, $3, $4, $5, $6, 'new')`,
+        userID, userName, userEmail, req.Title, req.Description, req.Priority)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"message": "Заявка на доработку отправлена"})
+})
+
+r.GET("/api/feature-requests", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    rows, err := database.Pool.Query(c.Request.Context(), 
+        `SELECT COALESCE(id, 0), COALESCE(user_name, ''), COALESCE(user_email, ''), 
+                COALESCE(title, ''), COALESCE(description, ''), 
+                COALESCE(priority, 'medium'), COALESCE(status, 'new'), 
+                COALESCE(created_at, NOW())
+         FROM feature_requests ORDER BY created_at DESC`)
+    if err != nil {
+        c.JSON(200, []gin.H{}) // возвращаем пустой массив вместо ошибки
+        return
+    }
+    defer rows.Close()
+    
+    var requests []gin.H
+    for rows.Next() {
+        var id int
+        var userName, userEmail, title, description, priority, status string
+        var createdAt time.Time
+        
+        err := rows.Scan(&id, &userName, &userEmail, &title, &description, &priority, &status, &createdAt)
+        if err != nil {
+            continue
+        }
+        
+        requests = append(requests, gin.H{
+            "id":         id,
+            "user_name":  userName,
+            "user_email": userEmail,
+            "title":      title,
+            "description": description,
+            "priority":   priority,
+            "status":     status,
+            "date":       createdAt.Format("02.01.2006 15:04"),
+        })
+    }
+    
+    if requests == nil {
+        requests = []gin.H{}
+    }
+    c.JSON(200, requests)
+})
+// Обновить статус доработки (только для админов)
+r.PUT("/api/feature-requests/:id/status", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    id := c.Param("id")
+    var req struct{ Status string `json:"status"` }
+    c.BindJSON(&req)
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        "UPDATE feature_requests SET status = $1, updated_at = NOW() WHERE id = $2", req.Status, id)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+// Админ-панель разработчика (видит всё)
+r.GET("/developer/admin", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
+    role := c.GetString("role")
+    if role != "developer" && role != "admin" {
+        c.String(403, "⛔ Доступ только для разработчиков")
+        return
+    }
+    c.HTML(200, "admin_dashboard_universal.html", gin.H{
+        "title": "Админ-панель разработчика",
+    })
+})
+
     r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
@@ -1222,6 +1549,13 @@ func main() {
     r.GET("/favicon.ico", func(c *gin.Context) {
         c.File("./static/favicon.ico")
     })  
+
+// AI Assistant widget (добавить после инициализации шаблонов)
+r.GET("/api/ai/widget", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "ai_widget.html", gin.H{
+        "title": "AI Assistant",
+    })
+})
     
     r.GET("/team/team", func(c *gin.Context) {
         c.HTML(http.StatusOK, "team_page.html", gin.H{
@@ -1271,7 +1605,11 @@ func main() {
     r.GET("/api/marketplace/my-apps", handlers.GetMyAppsAPI)
     r.PUT("/api/marketplace/apps/:id/settings", handlers.UpdateAppSettings)
     
-    r.Run(port)
+   // Запускаем на всех интерфейсах, чтобы было доступно из сети
+err = r.Run("0.0.0.0:" + cfg.Port)
+if err != nil {
+    log.Fatalf("❌ Ошибка запуска сервера: %v", err)
+}
 }
 
 // ========== ВСЕ ФУНКЦИИ ПОСЛЕ main ==========

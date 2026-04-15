@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказать разработку | SaaSPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .header { text-align: center; margin-bottom: 48px; }
+        .header h1 { font-size: 42px; font-weight: 800; color: white; margin-bottom: 16px; }
+        .header p { font-size: 18px; color: rgba(255,255,255,0.8); }
+        
+        .categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px; margin-bottom: 48px; }
+        .category-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 24px; cursor: pointer; text-align: center; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.2); }
+        .category-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.2); }
+        .category-card.selected { background: linear-gradient(135deg, #667eea, #764ba2); border-color: white; }
+        .category-icon { font-size: 48px; margin-bottom: 16px; }
+        .category-name { font-size: 18px; font-weight: 600; color: white; margin-bottom: 8px; }
+        .category-desc { font-size: 12px; color: rgba(255,255,255,0.7); }
+        
+        .order-form { background: rgba(255,255,255,0.95); border-radius: 24px; padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: 600; color: #333; margin-bottom: 8px; display: block; }
+        input, textarea, select { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 12px; font-size: 14px; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #667eea; }
+        .price-card { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 24px; color: white; }
+        .price-value { font-size: 36px; font-weight: 800; }
+        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102,126,234,0.3); }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: white; text-decoration: none; }
+        .back-btn:hover { color: #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> На главную</a>
+        
+        <div class="header">
+            <h1><i class="fas fa-code"></i> Заказать разработку</h1>
+            <p>Выберите тип проекта и получите расчёт стоимости</p>
+        </div>
+        
+        <div class="categories">
+            <div class="category-card" onclick="selectCategory(this, 'telegram-bot', 'Telegram бот', 50000)">
+                <div class="category-icon">🤖</div>
+                <div class="category-name">Telegram бот</div>
+                <div class="category-desc">Бот для бизнеса с админ-панелью</div>
+            </div>
+            <div class="category-card" onclick="selectCategory(this, 'chat-bot', 'Чат-бот с ИИ', 70000)">
+                <div class="category-icon">💬</div>
+                <div class="category-name">Чат-бот с ИИ</div>
+                <div class="category-desc">Нейросеть для общения с клиентами</div>
+            </div>
+            <div class="category-card" onclick="selectCategory(this, 'internet-shop', 'Интернет-магазин', 150000)">
+                <div class="category-icon">🛒</div>
+                <div class="category-name">Интернет-магазин</div>
+                <div class="category-desc">Под ключ с оплатой и доставкой</div>
+            </div>
+            <div class="category-card" onclick="selectCategory(this, 'crm', 'CRM система', 200000)">
+                <div class="category-icon">📊</div>
+                <div class="category-name">CRM система</div>
+                <div class="category-desc">Управление клиентами и продажами</div>
+            </div>
+            <div class="category-card" onclick="selectCategory(this, 'landing', 'Лендинг', 30000)">
+                <div class="category-icon">🌐</div>
+                <div class="category-name">Лендинг</div>
+                <div class="category-desc">Продающая страница под ключ</div>
+            </div>
+            <div class="category-card" onclick="selectCategory(this, 'mobile-app', 'Мобильное приложение', 300000)">
+                <div class="category-icon">📱</div>
+                <div class="category-name">Мобильное приложение</div>
+                <div class="category-desc">iOS / Android / Cross-platform</div>
+            </div>
+        </div>
+        
+        <div class="order-form" id="orderForm" style="display: none;">
+            <h3 id="selectedServiceName" style="margin-bottom: 20px;"></h3>
+            
+            <div class="price-card" id="priceCard">
+                <div class="price-label">💰 Ориентировочная стоимость</div>
+                <div class="price-value" id="priceValue">0 ₽</div>
+                <div class="price-sources" style="font-size: 12px; opacity: 0.9;">*точная цена после обсуждения ТЗ</div>
+            </div>
+            
+            <div class="form-group">
+                <label>Ваше имя *</label>
+                <input type="text" id="clientName" placeholder="Иван Иванов">
+            </div>
+            
+            <div class="form-group">
+                <label>Телефон или Telegram *</label>
+                <input type="text" id="clientContact" placeholder="+7 999 123-45-67 или @username">
+            </div>
+            
+            <div class="form-group">
+                <label>Описание проекта *</label>
+                <textarea id="requirements" rows="4" placeholder="Опишите подробно, что нужно разработать..."></textarea>
+            </div>
+            
+            <button class="btn-submit" onclick="submitOrder()">
+                <i class="fas fa-paper-plane"></i> Отправить заявку
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        let currentService = { id: '', name: '', price: 0 };
+        
+        function selectCategory(card, id, name, price) {
+            document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            currentService = { id, name, price };
+            document.getElementById('selectedServiceName').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Вы выбрали: ${name}`;
+            document.getElementById('priceValue').innerHTML = `${price.toLocaleString()} ₽`;
+            document.getElementById('orderForm').style.display = 'block';
+        }
+        
+        async function submitOrder() {
+            const name = document.getElementById('clientName').value;
+            const contact = document.getElementById('clientContact').value;
+            const requirements = document.getElementById('requirements').value;
+            
+            if (!name) { alert('Введите ваше имя'); return; }
+            if (!contact) { alert('Введите телефон или Telegram'); return; }
+            if (!requirements) { alert('Опишите требования к проекту'); return; }
+            if (!currentService.name) { alert('Выберите тип проекта'); return; }
+            
+            const btn = document.querySelector('.btn-submit');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/individual-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        service_name: currentService.name,
+                        requirements: requirements,
+                        estimated_price: currentService.price,
+                        client_name: name,
+                        client_phone: contact,
+                        client_email: '',
+                        client_telegram: contact.startsWith('@') ? contact : ''
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('✅ Заявка отправлена! Мы свяжемся с вами в ближайшее время.');
+                    window.location.href = '/';
+                } else {
+                    alert('❌ Ошибка отправки. Попробуйте позже.');
+                }
+            } catch(err) {
+                alert('❌ Ошибка: ' + err.message);
+            } finally {
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить заявку';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
