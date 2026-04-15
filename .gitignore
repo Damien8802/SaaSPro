@@ -69,3 +69,11 @@ storage/
 *.pem
 *.crt
 *.key
+
+# Backups and exports
+backups/
+exports/
+*.backup
+*.backup_*
+project_files.txt
+project_structure.txt
