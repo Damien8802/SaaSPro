@@ -10,90 +10,77 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            background: linear-gradient(135deg, #0a0a1a 0%, #0f0f23 50%, #0a0a1a 100%);
             min-height: 100vh;
+            color: #ffffff;
         }
-        
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            overflow: hidden;
-        }
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%);
-            animation: float 20s ease-in-out infinite;
-        }
-        .bg-animation::after {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
-            animation: float 15s ease-in-out infinite reverse;
-        }
-        @keyframes float {
-            0%, 100% { transform: translate(-10%, -10%) rotate(0deg); }
-            50% { transform: translate(10%, 10%) rotate(5deg); }
-        }
-        
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         
         .profile-card {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(10, 10, 26, 0.95);
             backdrop-filter: blur(20px);
             border-radius: 32px;
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            border: 1px solid rgba(99, 102, 241, 0.4);
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
         
         .profile-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             padding: 40px;
             text-align: center;
-            position: relative;
         }
         .profile-avatar {
-            width: 120px;
-            height: 120px;
-            background: white;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 56px;
-            margin: 0 auto 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border: 4px solid rgba(255,255,255,0.5);
+            font-size: 48px;
+            margin: 0 auto 15px;
+            border: 3px solid rgba(255,255,255,0.3);
         }
-        .profile-name {
-            font-size: 28px;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 5px;
-        }
+        .profile-name { font-size: 28px; font-weight: 800; color: white; }
+        .profile-email { color: rgba(255,255,255,0.8); margin-top: 5px; }
         .profile-role {
             display: inline-block;
             background: rgba(255,255,255,0.2);
             padding: 5px 15px;
             border-radius: 30px;
             font-size: 12px;
-            color: white;
             margin-top: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 20px 30px 0 30px;
+            flex-wrap: wrap;
+            background: rgba(0,0,0,0.2);
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-color: transparent;
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.15);
+            color: white;
         }
         
         .stats-grid {
@@ -101,283 +88,443 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             padding: 30px;
-            background: rgba(0,0,0,0.2);
         }
-        .stat-item {
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
             text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
         }
-        .stat-number {
-            font-size: 32px;
-            font-weight: 800;
-            color: #a5b4fc;
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.08);
+            border-color: #4f46e5;
         }
-        .stat-label {
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-            margin-top: 5px;
-        }
+        .stat-number { font-size: 32px; font-weight: 800; color: #818cf8; }
+        .stat-label { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 8px; }
         
-        .profile-info {
-            padding: 30px;
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 0 30px 30px 30px;
         }
-        .info-section {
-            margin-bottom: 30px;
+        .dashboard-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .info-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: white;
+        .dashboard-card h3 {
             margin-bottom: 20px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             gap: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
+        .dashboard-card h3 i { color: #f59e0b; }
+        
         .info-row {
             display: flex;
             padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-        .info-label {
-            width: 150px;
-            font-size: 14px;
-            color: rgba(255,255,255,0.6);
-        }
-        .info-value {
-            flex: 1;
-            font-size: 14px;
-            color: white;
+        .info-label { width: 150px; color: rgba(255,255,255,0.6); }
+        .info-value { flex: 1; color: white; }
+        
+        .btn-action {
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 13px;
             font-weight: 500;
-        }
-        
-        .plan-card {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-            border-radius: 20px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid rgba(99, 102, 241, 0.3);
-        }
-        .plan-name {
-            font-size: 20px;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .plan-price {
-            font-size: 28px;
-            font-weight: 800;
-            color: #a5b4fc;
-            margin-top: 10px;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: 600;
-            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.3s;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(99,102,241,0.4);
-        }
-        .btn-outline {
+            gap: 8px;
             background: rgba(255,255,255,0.1);
             color: white;
-            border: 1px solid rgba(255,255,255,0.2);
         }
-        .btn-outline:hover {
-            background: rgba(255,255,255,0.2);
-        }
+        .btn-action:hover { background: #4f46e5; transform: translateY(-2px); }
+        .btn-save { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
         
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-active { background: rgba(16,185,129,0.2); color: #34d399; }
+        .badge-expired { background: rgba(239,68,68,0.2); color: #f87171; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
         }
-        .badge-premium { background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; }
-        .badge-pro { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
-        .badge-basic { background: #10b981; color: white; }
+        .modal-content {
+            background: rgba(10, 10, 26, 0.98);
+            border-radius: 32px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(79,70,229,0.4);
+        }
+        .modal-content h3 { color: white; margin-bottom: 24px; }
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(79,70,229,0.3);
+            border-radius: 12px;
+            color: white;
+        }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-cancel { background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; }
+        
+        .tab-content { display: none; padding: 0 30px 30px 30px; }
+        .tab-content.active { display: block; }
         
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-row { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; flex-wrap: nowrap; }
             .info-row { flex-direction: column; gap: 5px; }
             .info-label { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="bg-animation"></div>
-    <div class="container">
-        <div class="profile-card">
-            <div class="profile-header">
-                <div class="profile-avatar" id="avatar">
-                    👤
-                </div>
-                <h1 class="profile-name" id="userName">Клиент</h1>
-                <div>
-                    <span class="badge badge-pro" id="userPlan">⭐ PRO Тариф</span>
-                </div>
-                <div class="profile-role" id="userRole">📋 Активный клиент</div>
-            </div>
-            
+<div class="container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-avatar" id="avatar">👤</div>
+            <h1 class="profile-name" id="userName">Загрузка...</h1>
+            <div class="profile-email" id="userEmail">-</div>
+            <div><span class="profile-role" id="userRole">Клиент</span></div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('overview')"><i class="fas fa-user"></i> Обзор</button>
+            <button class="tab-btn" onclick="showTab('profile')"><i class="fas fa-edit"></i> Личные данные</button>
+            <button class="tab-btn" onclick="showTab('orders')"><i class="fas fa-clipboard-list"></i> Мои заявки</button>
+            <button class="tab-btn" onclick="showTab('features')"><i class="fas fa-lightbulb"></i> Мои идеи</button>
+            <button class="tab-btn" onclick="showTab('security')"><i class="fas fa-shield-alt"></i> Безопасность</button>
+        </div>
+        
+        <!-- Обзор -->
+        <div id="overviewTab" class="tab-content active">
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number" id="projectsCount">0</div>
-                    <div class="stat-label">🚀 Моих проектов</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="activeServices">0</div>
-                    <div class="stat-label">⚡ Активных услуг</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="supportTickets">0</div>
-                    <div class="stat-label">🎫 Обращений</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="daysWithUs">0</div>
-                    <div class="stat-label">📅 Дней с нами</div>
-                </div>
+                <div class="stat-card"><div class="stat-number" id="statProjects">0</div><div class="stat-label">📁 Проектов</div></div>
+                <div class="stat-card"><div class="stat-number" id="statOrders">0</div><div class="stat-label">📋 Заявок</div></div>
+                <div class="stat-card"><div class="stat-number" id="statIdeas">0</div><div class="stat-label">💡 Идей</div></div>
+                <div class="stat-card"><div class="stat-number" id="statDays">0</div><div class="stat-label">📅 Дней с нами</div></div>
             </div>
-            
-            <div class="profile-info">
-                <div class="info-section">
-                    <div class="info-title">
-                        <i class="fas fa-user-circle"></i> Личная информация
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📧 Email</div>
-                        <div class="info-value" id="userEmail">client@example.com</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">👤 Имя пользователя</div>
-                        <div class="info-value" id="userLogin">Клиент</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📅 Дата регистрации</div>
-                        <div class="info-value" id="regDate">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">🌍 Последний вход</div>
-                        <div class="info-value" id="lastLogin">—</div>
-                    </div>
+            <div class="dashboard-row">
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-clock"></i> Последние заявки</h3>
+                    <div id="recentOrders">Загрузка...</div>
                 </div>
-                
-                <div class="info-section">
-                    <div class="info-title">
-                        <i class="fas fa-chart-line"></i> Моя активность
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📊 Всего запросов</div>
-                        <div class="info-value" id="totalRequests">0</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">💾 Использовано хранилища</div>
-                        <div class="info-value" id="storageUsed">0 ГБ / 10 ГБ</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">📝 Оставлено заявок</div>
-                        <div class="info-value" id="ordersCount">0</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">💡 Предложено идей</div>
-                        <div class="info-value" id="ideasCount">0</div>
-                    </div>
-                </div>
-                
-                <div class="info-section">
-                    <div class="info-title">
-                        <i class="fas fa-crown"></i> Мой тариф
-                    </div>
-                    <div class="plan-card">
-                        <div class="plan-name">
-                            <i class="fas fa-star"></i> <span id="planName">PRO Тариф</span>
-                        </div>
-                        <div class="plan-price" id="planPrice">от 9 900 ₽/мес</div>
-                        <div style="margin-top: 15px;">
-                            <div class="info-row" style="border: none; padding: 5px 0;">
-                                <span>✅ Безлимитные запросы</span>
-                            </div>
-                            <div class="info-row" style="border: none; padding: 5px 0;">
-                                <span>✅ Приоритетная поддержка 24/7</span>
-                            </div>
-                            <div class="info-row" style="border: none; padding: 5px 0;">
-                                <span>✅ До 50 проектов</span>
-                            </div>
-                            <div class="info-row" style="border: none; padding: 5px 0;">
-                                <span>✅ API доступ</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="action-buttons">
-                    <a href="/settings" class="btn btn-primary">
-                        <i class="fas fa-sliders-h"></i> Настройки
-                    </a>
-                    <a href="/my-subscriptions" class="btn btn-outline">
-                        <i class="fas fa-credit-card"></i> Мои подписки
-                    </a>
-                    <a href="/individual-order" class="btn btn-outline">
-                        <i class="fas fa-plus-circle"></i> Новая заявка
-                    </a>
-                    <a href="/" class="btn btn-outline">
-                        <i class="fas fa-home"></i> На главную
-                    </a>
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-lightbulb"></i> Мои идеи</h3>
+                    <div id="recentIdeas">Загрузка...</div>
                 </div>
             </div>
         </div>
+        
+        <!-- Личные данные -->
+        <div id="profileTab" class="tab-content">
+            <div class="dashboard-card">
+                <h3><i class="fas fa-user-circle"></i> Личная информация</h3>
+                <div class="info-row"><div class="info-label">Email</div><div class="info-value" id="infoEmail">-</div></div>
+                <div class="info-row"><div class="info-label">Имя</div><div class="info-value" id="infoName">-</div></div>
+                <div class="info-row"><div class="info-label">Телефон</div><div class="info-value" id="infoPhone">-</div></div>
+                <div class="info-row"><div class="info-label">Дата регистрации</div><div class="info-value" id="infoRegDate">-</div></div>
+                <div class="info-row"><div class="info-label">Роль</div><div class="info-value" id="infoRole">-</div></div>
+                <div class="info-row"><div class="info-label">Статус</div><div class="info-value"><span class="badge badge-active" id="infoStatus">Активен</span></div></div>
+                <div style="margin-top: 20px;">
+                    <button class="btn-action btn-save" onclick="openEditProfileModal()"><i class="fas fa-edit"></i> Редактировать профиль</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Мои заявки -->
+        <div id="ordersTab" class="tab-content">
+            <div id="userOrdersList">Загрузка...</div>
+        </div>
+        
+        <!-- Мои идеи -->
+        <div id="featuresTab" class="tab-content">
+            <div class="dashboard-card">
+                <h3><i class="fas fa-plus"></i> Предложить идею</h3>
+                <input type="text" id="ideaTitle" placeholder="Название идеи" style="width:100%; margin-bottom:10px; padding:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white;">
+                <textarea id="ideaDesc" rows="3" placeholder="Описание идеи..." style="width:100%; margin-bottom:10px; padding:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white;"></textarea>
+                <select id="ideaPriority" style="width:100%; margin-bottom:10px; padding:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white;">
+                    <option value="low">🟢 Низкий приоритет</option>
+                    <option value="medium">🟡 Средний приоритет</option>
+                    <option value="high">🔴 Высокий приоритет</option>
+                </select>
+                <button class="btn-action btn-save" onclick="submitIdea()"><i class="fas fa-paper-plane"></i> Отправить идею</button>
+            </div>
+            <div style="margin-top: 20px;" id="userIdeasList">Загрузка...</div>
+        </div>
+        
+        <!-- Безопасность -->
+        <div id="securityTab" class="tab-content">
+            <div class="dashboard-card">
+                <h3><i class="fas fa-key"></i> Смена пароля</h3>
+                <div class="info-row"><div class="info-label">Текущий пароль</div><div class="info-value"><input type="password" id="currentPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px;"></div></div>
+                <div class="info-row"><div class="info-label">Новый пароль</div><div class="info-value"><input type="password" id="newPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px;"></div></div>
+                <div class="info-row"><div class="info-label">Подтверждение</div><div class="info-value"><input type="password" id="confirmPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px;"></div></div>
+                <div style="margin-top: 20px;"><button class="btn-action btn-save" onclick="changePassword()"><i class="fas fa-save"></i> Сменить пароль</button></div>
+            </div>
+            <div class="dashboard-card" style="margin-top: 20px;">
+                <h3><i class="fas fa-trash"></i> Удалить аккаунт</h3>
+                <p style="color: #f87171; margin-bottom: 15px;">⚠️ Внимание! Это действие необратимо.</p>
+                <button class="btn-action" style="background: rgba(239,68,68,0.2); color: #f87171;" onclick="deleteAccount()"><i class="fas fa-trash"></i> Удалить аккаунт</button>
+            </div>
+        </div>
     </div>
+</div>
+
+<!-- Модалка редактирования профиля -->
+<div class="modal-overlay" id="editProfileModal">
+    <div class="modal-content">
+        <h3><i class="fas fa-edit"></i> Редактировать профиль</h3>
+        <label>Имя</label>
+        <input type="text" id="editName" placeholder="Ваше имя">
+        <label>Телефон</label>
+        <input type="text" id="editPhone" placeholder="+7-xxx-xxx-xx-xx">
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeEditProfileModal()">Отмена</button>
+            <button class="btn-save" onclick="saveProfile()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;
     
-   <script>
+    // Загрузка данных пользователя
     async function loadUserData() {
         try {
-            const response = await fetch('/api/client/data');
-            if (response.ok) {
-                const user = await response.json();
-                document.getElementById('userName').innerText = user.name || 'Клиент';
-                document.getElementById('userEmail').innerText = user.email || 'client@example.com';
-                document.getElementById('userLogin').innerText = user.name || 'Клиент';
-                document.getElementById('regDate').innerText = user.created_at ? new Date(user.created_at).toLocaleDateString() : '—';
-                document.getElementById('lastLogin').innerText = new Date().toLocaleString();
-                document.getElementById('projectsCount').innerText = user.projects_count || 0;
-                document.getElementById('activeServices').innerText = user.active_services || 0;
-                document.getElementById('supportTickets').innerText = user.tickets_count || 0;
-                document.getElementById('daysWithUs').innerText = user.days_with_us || 0;
-                document.getElementById('totalRequests').innerText = user.total_requests || 0;
-                document.getElementById('storageUsed').innerText = (user.storage_used || 0).toFixed(2) + ' ГБ / 10 ГБ';
-                document.getElementById('ordersCount').innerText = user.orders_count || 0;
-                document.getElementById('ideasCount').innerText = user.ideas_count || 0;
-                
-                // Аватар по имени
-                const avatar = document.getElementById('avatar');
-                const firstName = (user.name || 'К').charAt(0).toUpperCase();
-                avatar.innerHTML = firstName;
-                avatar.style.fontSize = '48px';
-                avatar.style.fontWeight = 'bold';
-                avatar.style.color = '#667eea';
+            const res = await fetch('/api/client/data');
+            if (res.ok) {
+                currentUser = await res.json();
+                updateUI();
+            } else {
+                // Fallback на /api/current-user
+                const res2 = await fetch('/api/current-user');
+                if (res2.ok) {
+                    const user = await res2.json();
+                    currentUser = { name: user.name || 'Клиент', email: user.email || '—', user_id: user.user_id };
+                    updateUI();
+                }
             }
-        } catch(e) {
-            console.log('Error loading user data:', e);
+        } catch(e) { console.error(e); }
+        
+        // Загружаем заявки пользователя
+        loadUserOrders();
+        loadUserIdeas();
+    }
+    
+    function updateUI() {
+        document.getElementById('userName').innerText = currentUser?.name || 'Клиент';
+        document.getElementById('userEmail').innerText = currentUser?.email || '—';
+        document.getElementById('avatar').innerHTML = (currentUser?.name?.charAt(0) || '👤').toUpperCase();
+        
+        document.getElementById('infoEmail').innerText = currentUser?.email || '—';
+        document.getElementById('infoName').innerText = currentUser?.name || '—';
+        document.getElementById('infoPhone').innerText = currentUser?.phone || '—';
+        document.getElementById('infoRegDate').innerText = currentUser?.created_at?.slice(0,10) || '—';
+        document.getElementById('infoRole').innerText = currentUser?.role || 'Клиент';
+        
+        document.getElementById('statProjects').innerHTML = currentUser?.projects_count || 0;
+        document.getElementById('statOrders').innerHTML = currentUser?.orders_count || 0;
+        document.getElementById('statIdeas').innerHTML = currentUser?.ideas_count || 0;
+        document.getElementById('statDays').innerHTML = currentUser?.days_with_us || 0;
+    }
+    
+    async function loadUserOrders() {
+        try {
+            const res = await fetch('/api/orders/list');
+            const orders = await res.json();
+            const userEmail = currentUser?.email;
+            const userOrders = orders.filter(o => o.contact?.includes(userEmail) || o.name === currentUser?.name);
+            const container = document.getElementById('userOrdersList');
+            const recentContainer = document.getElementById('recentOrders');
+            
+            if (!userOrders || userOrders.length === 0) {
+                container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">📭 У вас пока нет заявок</div>';
+                if (recentContainer) recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет заявок</div>';
+                return;
+            }
+            
+            container.innerHTML = userOrders.map(o => `
+                <div class="dashboard-card" style="margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+                        <div><strong>📋 ${o.name || 'Проект'}</strong></div>
+                        <div><span class="badge ${o.status === 'new' ? 'badge-active' : ''}">${o.status === 'new' ? '🆕 Новая' : '✓ Просмотрена'}</span></div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px;">
+                        <div><small>⏰ Срок:</small> ${o.deadline || '—'}</div>
+                        <div><small>💰 Бюджет:</small> ${(o.budget || 0).toLocaleString()} ₽</div>
+                        <div><small>📅 Дата:</small> ${o.date || '—'}</div>
+                    </div>
+                    <div class="progress-bar" style="margin-top:10px;"><div class="progress-fill" style="width:${o.work_status === 'completed' ? 100 : 30}%"></div></div>
+                </div>
+            `).join('');
+            
+            if (recentContainer) {
+                recentContainer.innerHTML = userOrders.slice(0,3).map(o => `
+                    <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <div><strong>${o.name || 'Проект'}</strong></div>
+                        <small>💰 ${(o.budget || 0).toLocaleString()} ₽ | ${o.date || '—'}</small>
+                    </div>
+                `).join('');
+                if (userOrders.length === 0) recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет заявок</div>';
+            }
+        } catch(e) { console.error(e); }
+    }
+    
+    async function loadUserIdeas() {
+        try {
+            const res = await fetch('/api/feature-requests');
+            const ideas = await res.json();
+            const userIdeas = ideas.filter(i => i.user_email === currentUser?.email);
+            const container = document.getElementById('userIdeasList');
+            const recentContainer = document.getElementById('recentIdeas');
+            
+            if (!userIdeas || userIdeas.length === 0) {
+                container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">💡 У вас пока нет идей</div>';
+                if (recentContainer) recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет идей</div>';
+                return;
+            }
+            
+            container.innerHTML = userIdeas.map(i => `
+                <div class="dashboard-card" style="margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+                        <div><strong>💡 ${i.title}</strong></div>
+                        <div><span class="badge ${i.priority === 'high' ? 'badge-active' : ''}">${i.priority === 'high' ? '🔴 Высокий' : i.priority === 'medium' ? '🟡 Средний' : '🟢 Низкий'}</span></div>
+                    </div>
+                    <p style="margin-top:8px;">${i.description}</p>
+                    <small>📅 ${i.date} | Статус: ${i.status === 'new' ? 'На рассмотрении' : i.status}</small>
+                </div>
+            `).join('');
+            
+            if (recentContainer) {
+                recentContainer.innerHTML = userIdeas.slice(0,3).map(i => `
+                    <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <div><strong>${i.title}</strong></div>
+                        <small>${i.priority === 'high' ? '🔴 Высокий' : '🟡 Средний'} | ${i.date}</small>
+                    </div>
+                `).join('');
+                if (userIdeas.length === 0) recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет идей</div>';
+            }
+        } catch(e) { console.error(e); }
+    }
+    
+    async function submitIdea() {
+        const title = document.getElementById('ideaTitle').value;
+        const description = document.getElementById('ideaDesc').value;
+        const priority = document.getElementById('ideaPriority').value;
+        
+        if (!title || !description) {
+            alert('❌ Заполните название и описание идеи');
+            return;
         }
+        
+        await fetch('/api/feature-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, description, priority })
+        });
+        
+        document.getElementById('ideaTitle').value = '';
+        document.getElementById('ideaDesc').value = '';
+        alert('✅ Идея отправлена!');
+        loadUserIdeas();
+    }
+    
+    async function changePassword() {
+        const current = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        
+        if (newPass !== confirm) { alert('❌ Пароли не совпадают'); return; }
+        if (newPass.length < 6) { alert('❌ Пароль должен быть не менее 6 символов'); return; }
+        
+        const res = await fetch('/api/user/password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ current_password: current, new_password: newPass })
+        });
+        
+        if (res.ok) {
+            alert('✅ Пароль изменён');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        } else {
+            alert('❌ Ошибка смены пароля');
+        }
+    }
+    
+    function openEditProfileModal() {
+        document.getElementById('editName').value = currentUser?.name || '';
+        document.getElementById('editPhone').value = currentUser?.phone || '';
+        document.getElementById('editProfileModal').style.display = 'flex';
+    }
+    
+    function closeEditProfileModal() { document.getElementById('editProfileModal').style.display = 'none'; }
+    
+    async function saveProfile() {
+        const name = document.getElementById('editName').value;
+        const phone = document.getElementById('editPhone').value;
+        
+        const res = await fetch('/api/user/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone })
+        });
+        
+        if (res.ok) {
+            alert('✅ Профиль обновлён');
+            closeEditProfileModal();
+            loadUserData();
+        } else {
+            alert('❌ Ошибка обновления');
+        }
+    }
+    
+    async function deleteAccount() {
+        if (confirm('⚠️ ВНИМАНИЕ! Вы уверены, что хотите удалить аккаунт? Это действие необратимо!')) {
+            if (confirm('Ещё раз подтвердите удаление аккаунта')) {
+                const res = await fetch('/api/user/delete', { method: 'DELETE' });
+                if (res.ok) {
+                    alert('Аккаунт удалён');
+                    window.location.href = '/logout';
+                } else {
+                    alert('❌ Ошибка удаления');
+                }
+            }
+        }
+    }
+    
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabName + 'Tab').classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
+        if (tabName === 'orders') loadUserOrders();
+        if (tabName === 'features') loadUserIdeas();
     }
     
     loadUserData();

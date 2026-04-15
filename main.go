@@ -1425,7 +1425,9 @@ r.GET("/admin/orders-view", func(c *gin.Context) {
 
 // ========== API ДЛЯ ДОРАБОТОК/ФИЧРЕКВЕСТОВ ==========
 
-// Создать заявку на доработку (для авторизованных клиентов)
+// ========== API ДЛЯ ДОРАБОТОК/ФИЧРЕКВЕСТОВ ==========
+
+// Создать заявку на доработку (для всех авторизованных пользователей)
 r.POST("/api/feature-request", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     userID := c.GetString("user_id")
     userName := c.GetString("user_name")
@@ -1452,7 +1454,8 @@ r.POST("/api/feature-request", middleware.AuthMiddleware(cfg), func(c *gin.Conte
     c.JSON(200, gin.H{"message": "Заявка на доработку отправлена"})
 })
 
-r.GET("/api/feature-requests", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+// GET /api/feature-requests - для всех авторизованных пользователей (без админской проверки)
+r.GET("/api/feature-requests", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     rows, err := database.Pool.Query(c.Request.Context(), 
         `SELECT COALESCE(id, 0), COALESCE(user_name, ''), COALESCE(user_email, ''), 
                 COALESCE(title, ''), COALESCE(description, ''), 
@@ -1460,7 +1463,7 @@ r.GET("/api/feature-requests", middleware.AuthMiddleware(cfg), middleware.AdminM
                 COALESCE(created_at, NOW())
          FROM feature_requests ORDER BY created_at DESC`)
     if err != nil {
-        c.JSON(200, []gin.H{}) // возвращаем пустой массив вместо ошибки
+        c.JSON(200, []gin.H{})
         return
     }
     defer rows.Close()
@@ -1492,8 +1495,7 @@ r.GET("/api/feature-requests", middleware.AuthMiddleware(cfg), middleware.AdminM
         requests = []gin.H{}
     }
     c.JSON(200, requests)
-})
-// Обновить статус доработки (только для админов)
+})// Обновить статус доработки (только для админов)
 r.PUT("/api/feature-requests/:id/status", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
     id := c.Param("id")
     var req struct{ Status string `json:"status"` }
