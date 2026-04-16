@@ -48,9 +48,12 @@
             border: 1px solid rgba(99, 102, 241, 0.4);
             padding: 30px;
         }
-        .docs-content h1 { color: #a5b4fc; margin-bottom: 20px; }
-        .docs-content h2 { color: #fbbf24; margin-top: 30px; margin-bottom: 15px; }
+        .docs-content h1 { color: #a5b4fc; margin-bottom: 20px; font-size: 32px; }
+        .docs-content h2 { color: #fbbf24; margin-top: 30px; margin-bottom: 15px; font-size: 24px; }
+        .docs-content h3 { color: #a5b4fc; margin-top: 20px; margin-bottom: 10px; font-size: 18px; }
         .docs-content p { color: #e2e8f0; line-height: 1.7; margin-bottom: 15px; }
+        .docs-content ul, .docs-content ol { margin: 15px 0; padding-left: 25px; color: #e2e8f0; }
+        .docs-content li { margin: 8px 0; }
         .docs-content pre {
             background: rgba(0,0,0,0.4);
             padding: 15px;
@@ -76,7 +79,12 @@
             z-index: 1000;
         }
         .back-button:hover { transform: scale(1.05); }
-        @media (max-width: 768px) { .docs-sidebar { width: 100%; position: relative; } }
+        @media (max-width: 768px) { 
+            .docs-sidebar { width: 100%; position: relative; top: 0; }
+            .docs-content { padding: 20px; }
+            .docs-content h1 { font-size: 24px; }
+            .docs-content h2 { font-size: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -91,47 +99,229 @@
                 <a href="#" data-section="webhooks">📡 Webhooks</a>
             </div>
             <div class="docs-content" id="docsContent">
-                <h1>🚀 Начало работы с SaaSPro</h1>
-                <p>Добро пожаловать в SaaSPro! Эта документация поможет вам быстро освоиться с платформой.</p>
-                
-                <h2>Регистрация</h2>
-                <p>1. Перейдите на страницу <a href="/register" style="color: #a5b4fc;">/register</a></p>
-                <p>2. Заполните форму: email, имя, пароль</p>
-                <p>3. Подтвердите email (письмо придёт в течение 5 минут)</p>
-                
-                <h2>Первый вход</h2>
-                <p>После входа в систему вы попадёте на дашборд, где сможете:</p>
-                <ul>
-                    <li>Создать первый проект</li>
-                    <li>Настроить уведомления</li>
-                    <li>Подключить API</li>
-                </ul>
-                
-                <h2>Создание заявки</h2>
-                <p>Для создания индивидуальной заявки перейдите в раздел <strong>Индивидуальная разработка</strong> и заполните форму.</p>
-                
-                <pre><code>// Пример запроса к API
-curl -X POST https://api.saaspro.ru/v1/ai/ask \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Привет!"}'</code></pre>
-                
-                <h2>Поддержка</h2>
-                <p>Если у вас возникли вопросы, обращайтесь в поддержку 24/7: <strong>support@saaspro.ru</strong> или Telegram <strong>@saaspro_support</strong></p>
+                <!-- Содержимое загружается через JavaScript -->
             </div>
         </div>
     </div>
     
     <script>
+        // Данные для разных разделов документации
+        const sections = {
+            'getting-started': {
+                title: '🚀 Начало работы с SaaSPro',
+                content: `
+                    <h1>🚀 Начало работы с SaaSPro</h1>
+                    <p>Добро пожаловать в SaaSPro! Эта документация поможет вам быстро освоиться с платформой.</p>
+                    
+                    <h2>Регистрация</h2>
+                    <p>1. Перейдите на страницу <a href="/register" style="color: #a5b4fc;">/register</a></p>
+                    <p>2. Заполните форму: email, имя, пароль</p>
+                    <p>3. Подтвердите email (письмо придёт в течение 5 минут)</p>
+                    
+                    <h2>Первый вход</h2>
+                    <p>После входа в систему вы попадёте на дашборд, где сможете:</p>
+                    <ul>
+                        <li>Создать первый проект</li>
+                        <li>Настроить уведомления</li>
+                        <li>Подключить API</li>
+                    </ul>
+                    
+                    <h2>Создание заявки</h2>
+                    <p>Для создания индивидуальной заявки перейдите в раздел <strong>Индивидуальная разработка</strong> и заполните форму.</p>
+                    
+                    <pre><code>// Пример запроса к API
+curl -X POST https://api.saaspro.ru/v1/ai/ask \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"message":"Привет!"}'</code></pre>
+                    
+                    <h2>Поддержка</h2>
+                    <p>Если у вас возникли вопросы, обращайтесь в поддержку 24/7: <strong>support@saaspro.ru</strong> или Telegram <strong>@saaspro_support</strong></p>
+                `
+            },
+            'api': {
+                title: '🔌 API интеграция',
+                content: `
+                    <h1>🔌 API интеграция</h1>
+                    <p>SaaSPro предоставляет мощный REST API для интеграции с вашими сервисами.</p>
+                    
+                    <h2>Базовый URL</h2>
+                    <pre><code>https://api.saaspro.ru/v1/</code></pre>
+                    
+                    <h2>Аутентификация</h2>
+                    <p>Для доступа к API требуется API ключ. Получить ключ можно в разделе <strong>Настройки → API ключи</strong>.</p>
+                    <pre><code>curl -X GET https://api.saaspro.ru/v1/user/profile \\
+  -H "Authorization: Bearer YOUR_API_KEY"</code></pre>
+                    
+                    <h2>Доступные эндпоинты</h2>
+                    <ul>
+                        <li><strong>GET /v1/user/profile</strong> — получить профиль пользователя</li>
+                        <li><strong>POST /v1/ai/ask</strong> — задать вопрос AI ассистенту</li>
+                        <li><strong>GET /v1/subscriptions</strong> — список подписок</li>
+                        <li><strong>POST /v1/webhook/register</strong> — регистрация webhook</li>
+                    </ul>
+                    
+                    <h2>Лимиты</h2>
+                    <p>Бесплатный тариф: 100 запросов/час. Премиум: 10000 запросов/час.</p>
+                    
+                    <h2>Примеры запросов</h2>
+                    <pre><code>// Получение профиля
+fetch('https://api.saaspro.ru/v1/user/profile', {
+    headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+}).then(r => r.json()).then(console.log);
+
+// Запрос к AI
+fetch('https://api.saaspro.ru/v1/ai/ask', {
+    method: 'POST',
+    headers: {
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message: 'Привет!' })
+}).then(r => r.json()).then(console.log);</code></pre>
+                `
+            },
+            '2fa': {
+                title: '🔒 Настройка 2FA',
+                content: `
+                    <h1>🔒 Настройка двухфакторной аутентификации</h1>
+                    <p>2FA добавляет дополнительный уровень безопасности вашему аккаунту.</p>
+                    
+                    <h2>Как включить 2FA</h2>
+                    <ol>
+                        <li>Перейдите в раздел <strong>Безопасность</strong> (<a href="/security-center" style="color: #a5b4fc;">/security-center</a>)</li>
+                        <li>Нажмите кнопку <strong>"Настроить 2FA"</strong></li>
+                        <li>Отсканируйте QR-код приложением Google Authenticator или аналогичным</li>
+                        <li>Введите полученный 6-значный код для подтверждения</li>
+                        <li>Сохраните резервные коды в надёжном месте</li>
+                    </ol>
+                    
+                    <h2>Резервные коды</h2>
+                    <p>При настройке 2FA вы получите 10 резервных кодов. Используйте их для входа, если потеряете доступ к приложению-аутентификатору.</p>
+                    
+                    <h2>Восстановление доступа</h2>
+                    <p>Если вы потеряли доступ к 2FA и резервным кодам, обратитесь в поддержку для восстановления доступа.</p>
+                    
+                    <h2>Советы по безопасности</h2>
+                    <ul>
+                        <li>Никогда не передавайте резервные коды третьим лицам</li>
+                        <li>Храните резервные коды в безопасном месте (менеджер паролей, сейф)</li>
+                        <li>Используйте только официальные приложения-аутентификаторы</li>
+                    </ul>
+                `
+            },
+            'payments': {
+                title: '💳 Приём платежей',
+                content: `
+                    <h1>💳 Приём платежей</h1>
+                    <p>SaaSPro поддерживает различные способы оплаты для ваших клиентов.</p>
+                    
+                    <h2>Доступные способы оплаты</h2>
+                    <ul>
+                        <li>💳 <strong>Банковские карты</strong> (МИР, Visa, Mastercard)</li>
+                        <li>🏦 <strong>СБП</strong> (Система быстрых платежей)</li>
+                        <li>₿ <strong>Криптовалюты</strong> (USDT, BTC, ETH)</li>
+                        <li>⭐ <strong>Telegram Stars</strong></li>
+                    </ul>
+                    
+                    <h2>Настройка платежей</h2>
+                    <ol>
+                        <li>Перейдите в раздел <strong>Настройки → Платежи</strong></li>
+                        <li>Выберите нужные способы оплаты</li>
+                        <li>Укажите реквизиты для приёма платежей</li>
+                        <li>Сохраните настройки</li>
+                    </ol>
+                    
+                    <h2>Комиссия</h2>
+                    <p>Комиссия сервиса составляет всего <strong>1%</strong> от суммы платежа. Для криптовалют — <strong>0.5%</strong>.</p>
+                    
+                    <h2>Автоматические уведомления</h2>
+                    <p>При поступлении платежа вы получите уведомление на email и в Telegram.</p>
+                    
+                    <h2>Интеграция с CRM</h2>
+                    <p>Все платежи автоматически синхронизируются с CRM системой и отображаются в финансовом учёте.</p>
+                `
+            },
+            'webhooks': {
+                title: '📡 Webhooks',
+                content: `
+                    <h1>📡 Webhooks</h1>
+                    <p>Webhooks позволяют получать уведомления о событиях в реальном времени.</p>
+                    
+                    <h2>Доступные события</h2>
+                    <ul>
+                        <li><strong>payment.success</strong> — успешный платёж</li>
+                        <li><strong>subscription.created</strong> — создана подписка</li>
+                        <li><strong>subscription.cancelled</strong> — отмена подписки</li>
+                        <li><strong>subscription.renewed</strong> — продление подписки</li>
+                        <li><strong>user.registered</strong> — регистрация нового пользователя</li>
+                        <li><strong>order.created</strong> — создан заказ</li>
+                        <li><strong>order.status_changed</strong> — изменение статуса заказа</li>
+                    </ul>
+                    
+                    <h2>Настройка webhook</h2>
+                    <ol>
+                        <li>Перейдите в <strong>Настройки → Webhooks</strong></li>
+                        <li>Нажмите <strong>"Добавить webhook"</strong></li>
+                        <li>Укажите URL для приёма уведомлений</li>
+                        <li>Выберите события, которые хотите отслеживать</li>
+                        <li>Сохраните настройки</li>
+                    </ol>
+                    
+                    <h2>Формат уведомления</h2>
+                    <pre><code>{
+  "event": "payment.success",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "signature": "sha256=...",
+  "data": {
+    "payment_id": "pay_123456",
+    "amount": 1000,
+    "currency": "RUB",
+    "status": "completed"
+  }
+}</code></pre>
+                    
+                    <h2>Безопасность</h2>
+                    <p>Мы подписываем каждый запрос заголовком <strong>X-Webhook-Signature</strong>. Проверяйте подпись для подтверждения подлинности.</p>
+                    
+                    <pre><code>// Пример проверки подписи
+const crypto = require('crypto');
+const signature = req.headers['x-webhook-signature'];
+const expected = crypto
+  .createHmac('sha256', webhookSecret)
+  .update(JSON.stringify(body))
+  .digest('hex');
+if (signature === expected) {
+  // Подпись верна, обрабатываем
+}</code></pre>
+                `
+            }
+        };
+        
+        // Функция загрузки раздела
+        function loadSection(sectionId) {
+            const section = sections[sectionId];
+            if (section) {
+                document.getElementById('docsContent').innerHTML = section.content;
+                document.title = section.title + ' | SaaSPro';
+                // Плавный скролл к началу контента
+                document.querySelector('.docs-content').scrollTop = 0;
+            }
+        }
+        
+        // Обработчики кликов по ссылкам в боковой панели
         document.querySelectorAll('.docs-sidebar a').forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 document.querySelectorAll('.docs-sidebar a').forEach(l => l.classList.remove('active'));
                 this.classList.add('active');
-                const section = this.dataset.section;
-                // Здесь можно загружать разные секции документации
+                const sectionId = this.dataset.section;
+                loadSection(sectionId);
             });
         });
+        
+        // Загружаем начальный раздел
+        loadSection('getting-started');
     </script>
     
     <a href="/" class="back-button"><i class="fas fa-arrow-left"></i> На главную</a>
