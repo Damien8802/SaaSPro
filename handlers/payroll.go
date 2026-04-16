@@ -5,8 +5,10 @@ import (
     "log"
     "net/http"
     "time"
+
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
+
     "subscription-system/database"
 )
 
@@ -110,6 +112,10 @@ func CalculatePayroll(c *gin.Context) {
             SET salary = $6, tax = $7, net_amount = $8, status = 'calculated'
         `, uuid.New(), tenantID, id, req.Month, req.Year, salary, tax, netAmount)
         
+        if err != nil {
+            log.Printf("⚠️ Ошибка вставки payroll: %v", err)
+        }
+        
         payrolls = append(payrolls, gin.H{
             "employee_id": id,
             "name":        firstName + " " + lastName,
@@ -128,7 +134,7 @@ func CalculatePayroll(c *gin.Context) {
     })
 }
 
-// GetPayrollHistory - история начислений
+// GetPayrollHistory - история начислений (исправленная версия)
 func GetPayrollHistory(c *gin.Context) {
     tenantID := c.GetString("tenant_id")
     if tenantID == "" {
@@ -161,7 +167,11 @@ func GetPayrollHistory(c *gin.Context) {
         var status string
         var createdAt time.Time
         
-        rows.Scan(&id, &firstName, &lastName, &month, &year, &salary, &tax, &netAmount, &status, &createdAt)
+        err := rows.Scan(&id, &firstName, &lastName, &month, &year, &salary, &tax, &netAmount, &status, &createdAt)
+        if err != nil {
+            log.Printf("⚠️ Ошибка сканирования: %v", err)
+            continue
+        }
         
         history = append(history, gin.H{
             "id":         id,

@@ -15,6 +15,7 @@ import (
      "os" 
 
     "github.com/gin-gonic/gin"
+    "github.com/jackc/pgx/v5"  // ДОБАВЛЕНО ДЛЯ pgx.Rows
     "github.com/joho/godotenv"
     swaggerFiles "github.com/swaggo/files"
     ginSwagger "github.com/swaggo/gin-swagger"
@@ -114,6 +115,20 @@ func main() {
         log.Println("✅ VPN тарифы загружены")
     }
 
+// ========== ДОБАВЛЯЕМ tenant_id В ТАБЛИЦЫ (ЕСЛИ НЕТ) ==========
+_, err = database.Pool.Exec(ctx, `
+    ALTER TABLE service_orders ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '11111111-1111-1111-1111-111111111111';
+    ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '11111111-1111-1111-1111-111111111111';
+    ALTER TABLE employees ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '11111111-1111-1111-1111-111111111111';
+    ALTER TABLE candidates ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '11111111-1111-1111-1111-111111111111';
+    ALTER TABLE vacancies ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '11111111-1111-1111-1111-111111111111';
+`)
+if err != nil {
+    log.Printf("⚠️ Ошибка добавления tenant_id: %v", err)
+} else {
+    log.Println("✅ tenant_id добавлен во все таблицы")
+}
+
 // ========== СОЗДАНИЕ ТАБЛИЦЫ ЗАЯВОК ==========
 _, err = database.Pool.Exec(ctx, `
     CREATE TABLE IF NOT EXISTS service_orders (
@@ -127,7 +142,15 @@ _, err = database.Pool.Exec(ctx, `
         additional_info TEXT,
         status VARCHAR(50) DEFAULT 'new',
         created_at TIMESTAMP DEFAULT NOW(),
-        viewed_at TIMESTAMP
+        viewed_at TIMESTAMP,
+        tenant_id UUID DEFAULT '11111111-1111-1111-1111-111111111111',
+        deposit_status VARCHAR(50) DEFAULT 'not_paid',
+        deposit_amount DECIMAL(10,2) DEFAULT 0,
+        deposit_date TIMESTAMP,
+        remaining_amount DECIMAL(10,2) DEFAULT 0,
+        remaining_status VARCHAR(50) DEFAULT 'not_paid',
+        remaining_date TIMESTAMP,
+        work_status VARCHAR(50) DEFAULT 'waiting_deposit'
     )
 `)
 if err != nil {
@@ -148,7 +171,8 @@ _, err = database.Pool.Exec(ctx, `
         priority VARCHAR(50) DEFAULT 'medium',
         status VARCHAR(50) DEFAULT 'new',
         created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP
+        updated_at TIMESTAMP,
+        tenant_id UUID DEFAULT '11111111-1111-1111-1111-111111111111'
     )
 `)
 if err != nil {
@@ -197,7 +221,7 @@ universalAI := handlers.NewUniversalAIAssistant(
     telegramBotToken,
     telegramChatID,
     adminChatID,
-    database.Pool,  // <--- ДОБАВИТЬ ЭТУ СТРОКУ
+    database.Pool,
 )
     log.Println("✅ Universal AI Assistant инициализирован")
     
@@ -986,28 +1010,28 @@ r.GET("/client-profile", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     })
 })
 
-    // Админские маршруты
-    adminGroup := r.Group("/")
-    adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
-    {
-        adminGroup.GET("/admin", handlers.AdminDashboardHandler)
-        adminGroup.GET("/admin/users", handlers.AdminUsersHandler)
-        adminGroup.GET("/admin/subscriptions", handlers.AdminSubscriptionsHandler)
-        adminGroup.GET("/admin-fixed", handlers.AdminFixedHandler)
-        adminGroup.GET("/gold-admin", handlers.GoldAdminHandler)
-        adminGroup.GET("/database-admin", handlers.DatabaseAdminHandler)
-        adminGroup.GET("/users", handlers.UsersHandler)
-        adminGroup.GET("/subscriptions", handlers.SubscriptionsHandler)
-        adminGroup.GET("/crm", handlers.CRMHandler)
-        adminGroup.GET("/admin/api-keys", handlers.AdminAPIKeysHandler)
+   // Админские маршруты с проверкой 2FA
+adminGroup := r.Group("/")
+adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), middleware.Require2FA())
+{
+    adminGroup.GET("/admin", handlers.AdminDashboardHandler)
+    adminGroup.GET("/admin/users", handlers.AdminUsersHandler)
+    adminGroup.GET("/admin/subscriptions", handlers.AdminSubscriptionsHandler)
+    adminGroup.GET("/admin-fixed", handlers.AdminFixedHandler)
+    adminGroup.GET("/gold-admin", handlers.GoldAdminHandler)
+    adminGroup.GET("/database-admin", handlers.DatabaseAdminHandler)
+    adminGroup.GET("/users", handlers.UsersHandler)
+    adminGroup.GET("/subscriptions", handlers.SubscriptionsHandler)
+    adminGroup.GET("/crm", handlers.CRMHandler)
+    adminGroup.GET("/admin/api-keys", handlers.AdminAPIKeysHandler)
 
-        admin2FA := r.Group("/api/admin/2fa")
-        admin2FA.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
-        {
-            admin2FA.POST("/enable", handlers.EnableAdmin2FA)
-            admin2FA.POST("/verify", handlers.VerifyAdmin2FA)
-        }
+    admin2FA := r.Group("/api/admin/2fa")
+    admin2FA.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
+    {
+        admin2FA.POST("/enable", handlers.EnableAdmin2FA)
+        admin2FA.POST("/verify", handlers.VerifyAdmin2FA)
     }
+}
 
     // Дашборды
     dashboards := r.Group("/")
@@ -1309,17 +1333,47 @@ r.GET("/client-profile", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
             "app-specific": true,
         })
     })
+
+// ========== API ЗАЯВОК С МУЛЬТИТЕНАНТНОСТЬЮ ==========
 r.GET("/api/orders/list", func(c *gin.Context) {
-    rows, err := database.Pool.Query(c.Request.Context(), 
-        `SELECT id, client_name, client_contact, service_type, deadline, 
-                COALESCE(NULLIF(budget, ''), '0') as budget,
-                status, created_at,
-                COALESCE(deposit_status, 'not_paid') as deposit_status,
-                COALESCE(deposit_amount, 0) as deposit_amount,
-                COALESCE(remaining_amount, 0) as remaining_amount,
-                COALESCE(remaining_status, 'not_paid') as remaining_status,
-                COALESCE(work_status, 'waiting_deposit') as work_status
-         FROM service_orders ORDER BY created_at DESC LIMIT 50`)
+    tenantID := c.GetString("tenant_id")
+    userEmail := c.GetString("user_email")
+    userName := c.GetString("user_name")
+    role := c.GetString("role")
+    
+    var rows pgx.Rows
+    var err error
+    
+    if role == "admin" || role == "developer" {
+        // Администратор видит все заявки в своём тенанте
+        rows, err = database.Pool.Query(c.Request.Context(), 
+            `SELECT id, client_name, client_contact, service_type, deadline, 
+                    COALESCE(NULLIF(budget, ''), '0') as budget,
+                    status, created_at,
+                    COALESCE(deposit_status, 'not_paid') as deposit_status,
+                    COALESCE(deposit_amount, 0) as deposit_amount,
+                    COALESCE(remaining_amount, 0) as remaining_amount,
+                    COALESCE(remaining_status, 'not_paid') as remaining_status,
+                    COALESCE(work_status, 'waiting_deposit') as work_status
+             FROM service_orders 
+             WHERE tenant_id = $1 
+             ORDER BY created_at DESC LIMIT 50`, tenantID)
+    } else {
+        // Обычный клиент видит только свои заявки
+        rows, err = database.Pool.Query(c.Request.Context(), 
+            `SELECT id, client_name, client_contact, service_type, deadline, 
+                    COALESCE(NULLIF(budget, ''), '0') as budget,
+                    status, created_at,
+                    COALESCE(deposit_status, 'not_paid') as deposit_status,
+                    COALESCE(deposit_amount, 0) as deposit_amount,
+                    COALESCE(remaining_amount, 0) as remaining_amount,
+                    COALESCE(remaining_status, 'not_paid') as remaining_status,
+                    COALESCE(work_status, 'waiting_deposit') as work_status
+             FROM service_orders 
+             WHERE tenant_id = $1 AND (client_contact LIKE $2 OR client_name = $3)
+             ORDER BY created_at DESC LIMIT 50`, tenantID, "%"+userEmail+"%", userName)
+    }
+    
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1367,6 +1421,108 @@ r.GET("/api/orders/list", func(c *gin.Context) {
     }
     c.JSON(200, orders)
 })
+
+// ========== API ДЛЯ ДОРАБОТОК/ФИЧРЕКВЕСТОВ С МУЛЬТИТЕНАНТНОСТЬЮ ==========
+
+// Создать заявку на доработку (для всех авторизованных пользователей)
+r.POST("/api/feature-request", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    userName := c.GetString("user_name")
+    userEmail := c.GetString("user_email")
+    tenantID := c.GetString("tenant_id")
+    
+    var req struct {
+        Title       string `json:"title"`
+        Description string `json:"description"`
+        Priority    string `json:"priority"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        `INSERT INTO feature_requests (user_id, user_name, user_email, title, description, priority, status, tenant_id) 
+         VALUES ($1, $2, $3, $4, $5, $6, 'new', $7)`,
+        userID, userName, userEmail, req.Title, req.Description, req.Priority, tenantID)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"message": "Заявка на доработку отправлена"})
+})
+
+// GET /api/feature-requests - с мультитенантностью
+r.GET("/api/feature-requests", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    userID := c.GetString("user_id")
+    role := c.GetString("role")
+    
+    var rows pgx.Rows
+    var err error
+    
+    if role == "admin" || role == "developer" {
+        rows, err = database.Pool.Query(c.Request.Context(), 
+            `SELECT id, user_name, user_email, title, description, priority, status, created_at 
+             FROM feature_requests WHERE tenant_id = $1 ORDER BY created_at DESC`, tenantID)
+    } else {
+        rows, err = database.Pool.Query(c.Request.Context(), 
+            `SELECT id, user_name, user_email, title, description, priority, status, created_at 
+             FROM feature_requests WHERE tenant_id = $1 AND user_id = $2 ORDER BY created_at DESC`, tenantID, userID)
+    }
+    
+    if err != nil {
+        c.JSON(200, []gin.H{})
+        return
+    }
+    defer rows.Close()
+    
+    var requests []gin.H
+    for rows.Next() {
+        var id int
+        var userName, userEmail, title, description, priority, status string
+        var createdAt time.Time
+        
+        err := rows.Scan(&id, &userName, &userEmail, &title, &description, &priority, &status, &createdAt)
+        if err != nil {
+            continue
+        }
+        
+        requests = append(requests, gin.H{
+            "id":          id,
+            "user_name":   userName,
+            "user_email":  userEmail,
+            "title":       title,
+            "description": description,
+            "priority":    priority,
+            "status":      status,
+            "date":        createdAt.Format("02.01.2006 15:04"),
+        })
+    }
+    
+    if requests == nil {
+        requests = []gin.H{}
+    }
+    c.JSON(200, requests)
+})
+
+// Обновить статус доработки (только для админов)
+r.PUT("/api/feature-requests/:id/status", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    id := c.Param("id")
+    var req struct{ Status string `json:"status"` }
+    c.BindJSON(&req)
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        "UPDATE feature_requests SET status = $1, updated_at = NOW() WHERE id = $2", req.Status, id)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+// Остальные маршруты без изменений...
+// (здесь продолжается ваш код с r.PUT, r.DELETE и т.д.)
+
 // Отметить заявку как просмотренную
 r.PUT("/api/orders/:id/view", func(c *gin.Context) {
     id := c.Param("id")
@@ -1423,92 +1579,6 @@ r.GET("/admin/orders-view", func(c *gin.Context) {
     })
 })
 
-// ========== API ДЛЯ ДОРАБОТОК/ФИЧРЕКВЕСТОВ ==========
-
-// ========== API ДЛЯ ДОРАБОТОК/ФИЧРЕКВЕСТОВ ==========
-
-// Создать заявку на доработку (для всех авторизованных пользователей)
-r.POST("/api/feature-request", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
-    userID := c.GetString("user_id")
-    userName := c.GetString("user_name")
-    userEmail := c.GetString("user_email")
-    
-    var req struct {
-        Title       string `json:"title"`
-        Description string `json:"description"`
-        Priority    string `json:"priority"`
-    }
-    if err := c.BindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": err.Error()})
-        return
-    }
-    
-    _, err := database.Pool.Exec(c.Request.Context(), 
-        `INSERT INTO feature_requests (user_id, user_name, user_email, title, description, priority, status) 
-         VALUES ($1, $2, $3, $4, $5, $6, 'new')`,
-        userID, userName, userEmail, req.Title, req.Description, req.Priority)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"message": "Заявка на доработку отправлена"})
-})
-
-// GET /api/feature-requests - для всех авторизованных пользователей (без админской проверки)
-r.GET("/api/feature-requests", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
-    rows, err := database.Pool.Query(c.Request.Context(), 
-        `SELECT COALESCE(id, 0), COALESCE(user_name, ''), COALESCE(user_email, ''), 
-                COALESCE(title, ''), COALESCE(description, ''), 
-                COALESCE(priority, 'medium'), COALESCE(status, 'new'), 
-                COALESCE(created_at, NOW())
-         FROM feature_requests ORDER BY created_at DESC`)
-    if err != nil {
-        c.JSON(200, []gin.H{})
-        return
-    }
-    defer rows.Close()
-    
-    var requests []gin.H
-    for rows.Next() {
-        var id int
-        var userName, userEmail, title, description, priority, status string
-        var createdAt time.Time
-        
-        err := rows.Scan(&id, &userName, &userEmail, &title, &description, &priority, &status, &createdAt)
-        if err != nil {
-            continue
-        }
-        
-        requests = append(requests, gin.H{
-            "id":         id,
-            "user_name":  userName,
-            "user_email": userEmail,
-            "title":      title,
-            "description": description,
-            "priority":   priority,
-            "status":     status,
-            "date":       createdAt.Format("02.01.2006 15:04"),
-        })
-    }
-    
-    if requests == nil {
-        requests = []gin.H{}
-    }
-    c.JSON(200, requests)
-})// Обновить статус доработки (только для админов)
-r.PUT("/api/feature-requests/:id/status", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    id := c.Param("id")
-    var req struct{ Status string `json:"status"` }
-    c.BindJSON(&req)
-    _, err := database.Pool.Exec(c.Request.Context(), 
-        "UPDATE feature_requests SET status = $1, updated_at = NOW() WHERE id = $2", req.Status, id)
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"success": true})
-})
-
 // Админ-панель разработчика (видит всё)
 r.GET("/developer/admin", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     role := c.GetString("role")
@@ -1527,6 +1597,7 @@ r.GET("/api/client/data", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     userID := c.GetString("user_id")
     userEmail := c.GetString("user_email")
     userName := c.GetString("user_name")
+    tenantID := c.GetString("tenant_id")
     
     // Получаем статистику клиента из БД
     var projectsCount, activeServices, ticketsCount, daysWithUs, totalRequests, ordersCount, ideasCount int
@@ -1535,56 +1606,56 @@ r.GET("/api/client/data", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     
     // Количество проектов клиента (если есть таблица projects)
     err := database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT COUNT(*) FROM projects WHERE user_id = $1", userID).Scan(&projectsCount)
+        "SELECT COUNT(*) FROM projects WHERE user_id = $1 AND tenant_id = $2", userID, tenantID).Scan(&projectsCount)
     if err != nil {
         projectsCount = 0
     }
     
     // Количество активных услуг (подписок)
     err = database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT COUNT(*) FROM subscriptions WHERE user_id = $1 AND status = 'active'", userID).Scan(&activeServices)
+        "SELECT COUNT(*) FROM subscriptions WHERE user_id = $1 AND status = 'active' AND tenant_id = $2", userID, tenantID).Scan(&activeServices)
     if err != nil {
         activeServices = 0
     }
     
     // Количество обращений в поддержку
     err = database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT COUNT(*) FROM support_tickets WHERE user_id = $1", userID).Scan(&ticketsCount)
+        "SELECT COUNT(*) FROM support_tickets WHERE user_id = $1 AND tenant_id = $2", userID, tenantID).Scan(&ticketsCount)
     if err != nil {
         ticketsCount = 0
     }
     
     // Количество дней с регистрации
     err = database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT created_at FROM users WHERE id = $1", userID).Scan(&regDate)
+        "SELECT created_at FROM users WHERE id = $1 AND tenant_id = $2", userID, tenantID).Scan(&regDate)
     if err == nil && !regDate.IsZero() {
         daysWithUs = int(time.Since(regDate).Hours() / 24)
     }
     
     // Количество запросов к API
     err = database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT COUNT(*) FROM api_usage WHERE user_id = $1", userID).Scan(&totalRequests)
+        "SELECT COUNT(*) FROM api_usage WHERE user_id = $1 AND tenant_id = $2", userID, tenantID).Scan(&totalRequests)
     if err != nil {
         totalRequests = 0
     }
     
     // Использовано хранилища (если есть таблица cloud_files)
     err = database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT COALESCE(SUM(size), 0) FROM cloud_files WHERE user_id = $1", userID).Scan(&storageUsed)
+        "SELECT COALESCE(SUM(size), 0) FROM cloud_files WHERE user_id = $1 AND tenant_id = $2", userID, tenantID).Scan(&storageUsed)
     if err != nil {
         storageUsed = 0
     }
     
     // Количество заявок клиента
     err = database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT COUNT(*) FROM service_orders WHERE client_contact LIKE $1", "%"+userEmail+"%").Scan(&ordersCount)
+        "SELECT COUNT(*) FROM service_orders WHERE client_contact LIKE $1 AND tenant_id = $2", "%"+userEmail+"%", tenantID).Scan(&ordersCount)
     if err != nil {
         ordersCount = 0
     }
     
     // Количество идей клиента
     err = database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT COUNT(*) FROM feature_requests WHERE user_id = $1", userID).Scan(&ideasCount)
+        "SELECT COUNT(*) FROM feature_requests WHERE user_id = $1 AND tenant_id = $2", userID, tenantID).Scan(&ideasCount)
     if err != nil {
         ideasCount = 0
     }
@@ -1598,7 +1669,7 @@ r.GET("/api/client/data", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
         "tickets_count":   ticketsCount,
         "days_with_us":    daysWithUs,
         "total_requests":  totalRequests,
-        "storage_used":    storageUsed / 1024 / 1024 / 1024, // в ГБ
+        "storage_used":    storageUsed / 1024 / 1024 / 1024,
         "orders_count":    ordersCount,
         "ideas_count":     ideasCount,
         "created_at":      regDate,
@@ -1606,19 +1677,18 @@ r.GET("/api/client/data", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     })
 })
 
-// ========== HR МОДУЛЬ (НАЁМ СОТРУДНИКОВ) ==========
-
 // ========== HR МОДУЛЬ ==========
 
 // Статистика HR
 r.GET("/api/hr/stats", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
     var totalEmployees, totalCandidates, openVacancies, newApplications int
     var totalPayroll float64
-    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM employees WHERE status='active'").Scan(&totalEmployees)
-    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM candidates WHERE status='new'").Scan(&totalCandidates)
-    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM vacancies WHERE status='open'").Scan(&openVacancies)
-    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM candidates WHERE status='new'").Scan(&newApplications)
-    database.Pool.QueryRow(c.Request.Context(), "SELECT COALESCE(SUM(salary), 0) FROM employees WHERE status='active'").Scan(&totalPayroll)
+    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM employees WHERE status='active' AND tenant_id=$1", tenantID).Scan(&totalEmployees)
+    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM candidates WHERE status='new' AND tenant_id=$1", tenantID).Scan(&totalCandidates)
+    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM vacancies WHERE status='open' AND tenant_id=$1", tenantID).Scan(&openVacancies)
+    database.Pool.QueryRow(c.Request.Context(), "SELECT COUNT(*) FROM candidates WHERE status='new' AND tenant_id=$1", tenantID).Scan(&newApplications)
+    database.Pool.QueryRow(c.Request.Context(), "SELECT COALESCE(SUM(salary), 0) FROM employees WHERE status='active' AND tenant_id=$1", tenantID).Scan(&totalPayroll)
     c.JSON(200, gin.H{
         "total_employees":  totalEmployees,
         "total_candidates": totalCandidates,
@@ -1630,13 +1700,14 @@ r.GET("/api/hr/stats", middleware.AuthMiddleware(cfg), middleware.AdminMiddlewar
 
 // Список сотрудников
 r.GET("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
     rows, err := database.Pool.Query(c.Request.Context(), 
         `SELECT e.id, e.full_name, COALESCE(p.title, e.position) as position, e.department, 
                 e.phone, e.email, e.hire_date, e.salary, e.bonus, e.status 
          FROM employees e 
          LEFT JOIN positions p ON e.position_id = p.id 
-         WHERE e.status='active' 
-         ORDER BY e.hire_date DESC`)
+         WHERE e.status='active' AND e.tenant_id = $1
+         ORDER BY e.hire_date DESC`, tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1660,6 +1731,7 @@ r.GET("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMiddl
 
 // Добавить сотрудника
 r.POST("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
     var req struct {
         FullName   string  `json:"full_name"`
         Position   string  `json:"position"`
@@ -1673,8 +1745,8 @@ r.POST("/api/hr/employees", middleware.AuthMiddleware(cfg), middleware.AdminMidd
         return
     }
     _, err := database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO employees (full_name, position, department, phone, email, salary, hire_date, status) VALUES ($1, $2, $3, $4, $5, $6, NOW(), 'active')",
-        req.FullName, req.Position, req.Department, req.Phone, req.Email, req.Salary)
+        "INSERT INTO employees (full_name, position, department, phone, email, salary, hire_date, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, NOW(), 'active', $7)",
+        req.FullName, req.Position, req.Department, req.Phone, req.Email, req.Salary, tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1695,10 +1767,11 @@ r.DELETE("/api/hr/employees/:id", middleware.AuthMiddleware(cfg), middleware.Adm
 
 // Список вакансий
 r.GET("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
     rows, err := database.Pool.Query(c.Request.Context(), 
         `SELECT id, title, COALESCE(salary_from, 0), COALESCE(salary_to, 0), 
                 COALESCE(description, ''), status, created_at 
-         FROM vacancies ORDER BY created_at DESC`)
+         FROM vacancies WHERE tenant_id = $1 ORDER BY created_at DESC`, tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1729,8 +1802,10 @@ r.GET("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddl
     }
     c.JSON(200, vacancies)
 })
+
 // Создать вакансию
 r.POST("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
     var req struct {
         Title       string  `json:"title"`
         SalaryFrom  float64 `json:"salary_from"`
@@ -1742,8 +1817,8 @@ r.POST("/api/hr/vacancies", middleware.AuthMiddleware(cfg), middleware.AdminMidd
         return
     }
     _, err := database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO vacancies (title, salary_from, salary_to, description, status) VALUES ($1, $2, $3, $4, 'open')",
-        req.Title, req.SalaryFrom, req.SalaryTo, req.Description)
+        "INSERT INTO vacancies (title, salary_from, salary_to, description, status, tenant_id) VALUES ($1, $2, $3, $4, 'open', $5)",
+        req.Title, req.SalaryFrom, req.SalaryTo, req.Description, tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1764,11 +1839,12 @@ r.DELETE("/api/hr/vacancies/:id", middleware.AuthMiddleware(cfg), middleware.Adm
 
 // Список кандидатов
 r.GET("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
     rows, err := database.Pool.Query(c.Request.Context(), 
         `SELECT id, full_name, COALESCE(vacancy, ''), COALESCE(experience, ''), 
                 COALESCE(expected_salary, 0), COALESCE(phone, ''), COALESCE(email, ''), 
                 status, created_at 
-         FROM candidates ORDER BY created_at DESC`)
+         FROM candidates WHERE tenant_id = $1 ORDER BY created_at DESC`, tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1801,8 +1877,10 @@ r.GET("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMidd
     }
     c.JSON(200, candidates)
 })
+
 // Добавить кандидата
 r.POST("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
     var req struct {
         FullName       string  `json:"full_name"`
         Vacancy        string  `json:"vacancy"`
@@ -1816,8 +1894,8 @@ r.POST("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMid
         return
     }
     _, err := database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO candidates (full_name, vacancy, experience, expected_salary, phone, email, status) VALUES ($1, $2, $3, $4, $5, $6, 'new')",
-        req.FullName, req.Vacancy, req.Experience, req.ExpectedSalary, req.Phone, req.Email)
+        "INSERT INTO candidates (full_name, vacancy, experience, expected_salary, phone, email, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'new', $7)",
+        req.FullName, req.Vacancy, req.Experience, req.ExpectedSalary, req.Phone, req.Email, tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1828,17 +1906,18 @@ r.POST("/api/hr/candidates", middleware.AuthMiddleware(cfg), middleware.AdminMid
 // Принять кандидата на работу
 r.POST("/api/hr/candidates/:id/hire", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
     id := c.Param("id")
+    tenantID := c.GetString("tenant_id")
     var fullName, vacancy, phone, email string
     var expectedSalary float64
     err := database.Pool.QueryRow(c.Request.Context(), 
-        "SELECT full_name, vacancy, phone, email, expected_salary FROM candidates WHERE id=$1", id).Scan(&fullName, &vacancy, &phone, &email, &expectedSalary)
+        "SELECT full_name, vacancy, phone, email, expected_salary FROM candidates WHERE id=$1 AND tenant_id=$2", id, tenantID).Scan(&fullName, &vacancy, &phone, &email, &expectedSalary)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
     _, err = database.Pool.Exec(c.Request.Context(), 
-        "INSERT INTO employees (full_name, position, phone, email, salary, status) VALUES ($1, $2, $3, $4, $5, 'active')", 
-        fullName, vacancy, phone, email, expectedSalary)
+        "INSERT INTO employees (full_name, position, phone, email, salary, status, tenant_id) VALUES ($1, $2, $3, $4, $5, 'active', $6)", 
+        fullName, vacancy, phone, email, expectedSalary, tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
@@ -1860,7 +1939,8 @@ r.DELETE("/api/hr/candidates/:id", middleware.AuthMiddleware(cfg), middleware.Ad
 
 // Рассчитать зарплату
 r.POST("/api/hr/payroll/calculate", middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), func(c *gin.Context) {
-    rows, err := database.Pool.Query(c.Request.Context(), "SELECT id, salary, bonus, tax_percent FROM employees WHERE status='active'")
+    tenantID := c.GetString("tenant_id")
+    rows, err := database.Pool.Query(c.Request.Context(), "SELECT id, salary, bonus, tax_percent FROM employees WHERE status='active' AND tenant_id=$1", tenantID)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
