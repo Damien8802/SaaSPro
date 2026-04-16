@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Документация | SaaSPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+        .docs-wrapper { display: flex; gap: 30px; flex-wrap: wrap; }
+        .docs-sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+        .docs-sidebar h3 { color: #a5b4fc; margin-bottom: 20px; font-size: 18px; }
+        .docs-sidebar a {
+            display: block;
+            padding: 10px 15px;
+            color: #e2e8f0;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s;
+            margin-bottom: 5px;
+        }
+        .docs-sidebar a:hover, .docs-sidebar a.active {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+        .docs-content {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 30px;
+        }
+        .docs-content h1 { color: #a5b4fc; margin-bottom: 20px; }
+        .docs-content h2 { color: #fbbf24; margin-top: 30px; margin-bottom: 15px; }
+        .docs-content p { color: #e2e8f0; line-height: 1.7; margin-bottom: 15px; }
+        .docs-content pre {
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 3px solid #4f46e5;
+        }
+        .docs-content code { font-family: monospace; color: #fbbf24; }
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 14px 28px;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .back-button:hover { transform: scale(1.05); }
+        @media (max-width: 768px) { .docs-sidebar { width: 100%; position: relative; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="docs-wrapper">
+            <div class="docs-sidebar">
+                <h3><i class="fas fa-book"></i> Содержание</h3>
+                <a href="#" class="active" data-section="getting-started">🚀 Начало работы</a>
+                <a href="#" data-section="api">🔌 API интеграция</a>
+                <a href="#" data-section="2fa">🔒 Настройка 2FA</a>
+                <a href="#" data-section="payments">💳 Приём платежей</a>
+                <a href="#" data-section="webhooks">📡 Webhooks</a>
+            </div>
+            <div class="docs-content" id="docsContent">
+                <h1>🚀 Начало работы с SaaSPro</h1>
+                <p>Добро пожаловать в SaaSPro! Эта документация поможет вам быстро освоиться с платформой.</p>
+                
+                <h2>Регистрация</h2>
+                <p>1. Перейдите на страницу <a href="/register" style="color: #a5b4fc;">/register</a></p>
+                <p>2. Заполните форму: email, имя, пароль</p>
+                <p>3. Подтвердите email (письмо придёт в течение 5 минут)</p>
+                
+                <h2>Первый вход</h2>
+                <p>После входа в систему вы попадёте на дашборд, где сможете:</p>
+                <ul>
+                    <li>Создать первый проект</li>
+                    <li>Настроить уведомления</li>
+                    <li>Подключить API</li>
+                </ul>
+                
+                <h2>Создание заявки</h2>
+                <p>Для создания индивидуальной заявки перейдите в раздел <strong>Индивидуальная разработка</strong> и заполните форму.</p>
+                
+                <pre><code>// Пример запроса к API
+curl -X POST https://api.saaspro.ru/v1/ai/ask \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Привет!"}'</code></pre>
+                
+                <h2>Поддержка</h2>
+                <p>Если у вас возникли вопросы, обращайтесь в поддержку 24/7: <strong>support@saaspro.ru</strong> или Telegram <strong>@saaspro_support</strong></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.docs-sidebar a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.docs-sidebar a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                const section = this.dataset.section;
+                // Здесь можно загружать разные секции документации
+            });
+        });
+    </script>
+    
+    <a href="/" class="back-button"><i class="fas fa-arrow-left"></i> На главную</a>
+</body>
+</html>

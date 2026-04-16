@@ -23,6 +23,7 @@
             box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
         }
         
+        /* Красивый навбар - только логотип по центру */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -34,33 +35,30 @@
             gap: 15px;
         }
         .logo {
-            font-size: 28px;
+            font-size: 48px;
             font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 15px;
             background: linear-gradient(135deg, #fff 0%, #ffd89b 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            margin: 0 auto;
         }
-        .nav-links {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        .nav-links a:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
+        .logo i {
+            background: linear-gradient(135deg, #FFD700, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 56px;
         }
         .auth-buttons {
             display: flex;
             gap: 15px;
+            position: absolute;
+            right: 40px;
+            top: 28px;
         }
         .auth-buttons a {
             color: white;
@@ -75,6 +73,125 @@
             background: white;
             color: #667eea !important;
             font-weight: 600;
+        }
+
+        /* Красивое меню пользователя */
+        .user-menu {
+            position: relative;
+            display: inline-block;
+        }
+        .user-menu-btn {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 6px 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .user-menu-btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.4);
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .user-name-text {
+            font-weight: 500;
+        }
+        .user-role {
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .user-menu-dropdown {
+            position: absolute;
+            right: 0;
+            top: 50px;
+            background: white;
+            min-width: 320px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 999999;
+            overflow: hidden;
+        }
+        .user-info {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar-large {
+            width: 56px;
+            height: 56px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .user-details {
+            flex: 1;
+        }
+        .user-name-full {
+            font-weight: 700;
+            color: white;
+            font-size: 16px;
+        }
+        .user-email-full {
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+            word-break: break-all;
+        }
+        .storage-info-dropdown {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        .storage-info-dropdown i {
+            color: #667eea;
+            margin-right: 8px;
+        }
+        .dropdown-divider {
+            height: 1px;
+            background: #eee;
+            margin: 0;
+        }
+        .user-menu-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+        .user-menu-dropdown a:hover {
+            background: #f5f5f5;
+        }
+        .logout-btn {
+            color: #dc3545 !important;
         }
         
         .hero {
@@ -343,95 +460,14 @@
             .hero-content { text-align: center; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
             .features-grid { grid-template-columns: 1fr; }
+            .auth-buttons { position: relative; right: 0; top: 0; }
         }
         @media (max-width: 700px) {
             .stats { grid-template-columns: repeat(2, 1fr); }
             .navbar { flex-direction: column; }
-            .nav-links { justify-content: center; }
             .hero h1 { font-size: 36px; }
-        }
-
-        .user-menu {
-            position: relative;
-            display: inline-block;
-        }
-        .user-menu-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 8px 20px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-        .user-menu-dropdown {
-            position: absolute;
-            right: 0;
-            top: 45px;
-            background: white;
-            min-width: 280px;
-            border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-            display: none;
-            z-index: 999999;
-            overflow: visible;
-        }
-        .user-menu-dropdown a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            color: #333;
-            text-decoration: none;
-            transition: background 0.2s;
-            font-size: 14px;
-        }
-        .user-menu-dropdown a:hover {
-            background: #f5f5f5;
-        }
-        .user-menu-dropdown hr {
-            margin: 0;
-            border-color: #eee;
-        }
-        .logout-btn {
-            color: #dc3545 !important;
-        }
-        .user-info {
-            padding: 15px 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #eee;
-        }
-        .user-email {
-            font-size: 12px;
-            color: #666;
-            word-break: break-all;
-        }
-        .user-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 4px;
-        }
-        .storage-info {
-            font-size: 11px;
-            color: #999;
-            margin-top: 8px;
-        }
-        .storage-bar {
-            height: 4px;
-            background: #e0e0e0;
-            border-radius: 2px;
-            margin-top: 6px;
-            overflow: hidden;
-        }
-        .storage-used {
-            width: 32%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 2px;
+            .logo { font-size: 32px; }
+            .logo i { font-size: 38px; }
         }
 
         .ai-fab {
@@ -574,12 +610,8 @@
 <body>
 
     <nav class="navbar">
-        <div class="logo">✨ SaaSPro</div>
-        <div class="nav-links">
-            <a href="/"><i class="fas fa-home"></i> Главная</a>
-            <a href="/dashboard-improved">Дашборд</a>
-            <a href="/partner"><i class="fas fa-handshake"></i> Партнерам</a>
-            <a href="/ai-assistant"><i class="fas fa-robot"></i> AI Ассистент</a>       
+        <div class="logo">
+            <i class="fas fa-crown"></i> SaaSPro
         </div>
         <div class="auth-buttons" id="authButtons"></div>
     </nav>
@@ -665,18 +697,18 @@
             </div>
         </div>
         <div class="footer-col">
-            <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">ПРОДУКТЫ</h4>
-            <a href="/vpn">🔒 VPN Сервис</a>
-            <a href="/ai">🤖 AI Чат</a>
-            <a href="/crm">📋 CRM система</a>
-            <a href="/analytics">📊 Аналитика</a>
+            <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">ДОКУМЕНТЫ</h4>
+            <a href="/docs"><i class="fas fa-file-contract"></i> Документация</a>
+            <a href="/offer"><i class="fas fa-file-signature"></i> Договор оферты</a>
+            <a href="/privacy"><i class="fas fa-shield-alt"></i> Политика конфиденциальности</a>
+            <a href="/terms"><i class="fas fa-gavel"></i> Условия использования</a>
         </div>
         <div class="footer-col">
-            <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">РЕСУРСЫ</h4>
-            <a href="/docs">📄 Документация</a>
-            <a href="/support">🆘 Поддержка 24/7</a>
-            <a href="/pricing">💰 Тарифы</a>
-            <a href="/blog">📝 Блог</a>
+            <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">ПОДДЕРЖКА</h4>
+            <a href="/support"><i class="fas fa-headset"></i> Поддержка 24/7</a>
+            <a href="/pricing"><i class="fas fa-tags"></i> Тарифы</a>
+            <a href="/blog"><i class="fas fa-blog"></i> Блог</a>
+            <a href="/faq"><i class="fas fa-question-circle"></i> FAQ</a>
         </div>
         <div class="footer-col">
             <h4 style="font-size: 18px; margin-bottom: 25px; letter-spacing: 2px;">КОНТАКТЫ</h4>
@@ -691,6 +723,7 @@
         <p style="margin-top: 15px; font-size: 12px;">
             <a href="/privacy" style="color: rgba(255,255,255,0.5);">Политика конфиденциальности</a> | 
             <a href="/terms" style="color: rgba(255,255,255,0.5);">Условия использования</a> | 
+            <a href="/offer" style="color: rgba(255,255,255,0.5);">Договор оферты</a> |
             <a href="/cookies" style="color: rgba(255,255,255,0.5);">Cookies</a>
         </p>
     </div>
@@ -800,31 +833,48 @@
             const userEmail = localStorage.getItem('user_email') || '';
             const userName = localStorage.getItem('user_name') || userEmail.split('@')[0] || 'Пользователь';
             const isDeveloper = localStorage.getItem('is_developer') === 'true';
+            const role = isDeveloper ? 'Разработчик' : 'Клиент';
+            const roleColor = isDeveloper ? '#10b981' : '#667eea';
+            
             if (token) {
                 container.innerHTML = `
                     <div class="user-menu">
                         <button class="user-menu-btn" id="userMenuBtn">
-                            <i class="fas fa-user-circle"></i> ${userName} ${isDeveloper ? '<span style="background: #10b981; padding: 2px 8px; border-radius: 20px; font-size: 10px;">Разработчик</span>' : ''}
-                            <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                            <div class="user-avatar">${userName.charAt(0).toUpperCase()}</div>
+                            <span class="user-name-text">${userName}</span>
+                            <span class="user-role" style="background: ${roleColor};">${role}</span>
+                            <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="user-menu-dropdown" id="userMenuDropdown">
                             <div class="user-info">
-                                <div class="user-name">${userName}</div>
-                                <div class="user-email">${userEmail}</div>
-                                <div class="storage-info">📁 Занято 2.58 ГБ из 8 ГБ<div class="storage-bar"><div class="storage-used"></div></div></div>
+                                <div class="user-avatar-large">${userName.charAt(0).toUpperCase()}</div>
+                                <div class="user-details">
+                                    <div class="user-name-full">${userName}</div>
+                                    <div class="user-email-full">${userEmail}</div>
+                                </div>
                             </div>
-                       <a href="${isDeveloper ? '/profile' : '/client-profile'}"><i class="fas fa-user"></i> Личные данные</a>
-<a href="/settings"><i class="fas fa-lock"></i> Пароль и безопасность</a>
-<a href="/my-subscriptions"><i class="fas fa-credit-card"></i> Мои подписки</a>
-<a href="/cloud"><i class="fas fa-cloud"></i> Облачное хранилище</a>
-<a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> ВЫЙТИ</a>
+                            <div class="storage-info-dropdown">
+                                <i class="fas fa-cloud"></i>
+                                <span>📁 Занято <span id="storageUsed">2.58</span> ГБ из <span id="storageLimit">8</span> ГБ</span>
+                                <div class="storage-bar"><div class="storage-used" style="width: 32%"></div></div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="${isDeveloper ? '/profile' : '/client-profile'}"><i class="fas fa-user"></i> Личные данные</a>
+                            <a href="/settings"><i class="fas fa-lock"></i> Пароль и безопасность</a>
+                            <a href="/my-subscriptions"><i class="fas fa-credit-card"></i> Мои подписки</a>
+                            <a href="/cloud"><i class="fas fa-cloud-upload-alt"></i> Облачное хранилище</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</a>
                         </div>
                     </div>
                 `;
                 const btn = document.getElementById('userMenuBtn');
                 const dropdown = document.getElementById('userMenuDropdown');
                 if (btn && dropdown) {
-                    btn.addEventListener('click', (e) => { e.stopPropagation(); dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block'; });
+                    btn.addEventListener('click', (e) => { 
+                        e.stopPropagation(); 
+                        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block'; 
+                    });
                     document.addEventListener('click', () => { dropdown.style.display = 'none'; });
                     dropdown.addEventListener('click', (e) => e.stopPropagation());
                 }

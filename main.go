@@ -330,27 +330,51 @@ r.POST("/api/ai/assistant", handlers.AIAssistantHandler)
 
     r.SetHTMLTemplate(tmpl)
 
-    // Публичные маршруты
-    public := r.Group("/")
-    {
-        public.GET("/", handlers.HomeHandler)
-        public.GET("/about", handlers.AboutHandler)
-        public.GET("/contact", handlers.ContactHandler)
-        public.GET("/info", handlers.InfoHandler)
-        public.GET("/pricing", handlers.PricingPageHandler)
-        public.GET("/partner", handlers.PartnerHandler)
-        public.GET("/fusion-api", handlers.FusionAPIPortalHandler)
+  // Публичные маршруты
+public := r.Group("/")
+{
+    public.GET("/", handlers.HomeHandler)
+    public.GET("/about", handlers.AboutHandler)
+    public.GET("/contact", handlers.ContactHandler)
+    public.GET("/info", handlers.InfoHandler)
+    public.GET("/pricing", handlers.PricingPageHandler)
+    public.GET("/partner", handlers.PartnerHandler)
+    public.GET("/fusion-api", handlers.FusionAPIPortalHandler)
 
-        log.Println("✅ Шаблоны загружены из файловой системы")
-
-        // ========== БЛОГ ==========
-        r.GET("/blog", func(c *gin.Context) {
-            c.HTML(200, "blog.html", gin.H{
-                "title": "Блог | SaaSPro - новости и статьи",
-            })
+    // ========== БЛОГ ==========
+    r.GET("/blog", func(c *gin.Context) {
+        c.HTML(200, "blog.html", gin.H{
+            "title": "Блог | SaaSPro - новости и статьи",
         })
-    }
+    })
+}
 
+// ========== СТРАНИЦЫ ДОКУМЕНТОВ ==========
+r.GET("/offer", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "offer.html", gin.H{
+        "title": "Договор оферты | SaaSPro",
+    })
+})
+r.GET("/privacy", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "privacy.html", gin.H{
+        "title": "Политика конфиденциальности | SaaSPro",
+    })
+})
+r.GET("/terms", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "terms.html", gin.H{
+        "title": "Условия использования | SaaSPro",
+    })
+})
+r.GET("/faq", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "faq.html", gin.H{
+        "title": "FAQ | SaaSPro",
+    })
+})
+r.GET("/docs", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "docs.html", gin.H{
+        "title": "Документация | SaaSPro",
+    })
+})
     // ========== СТАТИКА, РЕДИРЕКТЫ ==========
     r.Static("/static", cfg.StaticPath)
     r.Static("/frontend", cfg.FrontendPath)

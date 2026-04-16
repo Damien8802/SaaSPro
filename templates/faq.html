@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ | SaaSPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .faq-card {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            overflow: hidden;
+        }
+        .faq-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 40px;
+            text-align: center;
+        }
+        .faq-header h1 { font-size: 36px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .faq-header h1 i { font-size: 48px; color: #fbbf24; }
+        .faq-header p { color: rgba(255,255,255,0.8); margin-top: 15px; }
+        .faq-content { padding: 40px; }
+        .faq-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s;
+        }
+        .faq-item:hover { border-color: #4f46e5; background: rgba(255,255,255,0.08); }
+        .faq-question {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .faq-question i { transition: transform 0.3s; color: #a5b4fc; }
+        .faq-item.active .faq-question i { transform: rotate(180deg); }
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        .faq-item.active .faq-answer {
+            padding: 0 20px 20px 20px;
+            max-height: 500px;
+        }
+        .search-box {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 14px 20px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 16px;
+        }
+        .search-box input:focus { outline: none; border-color: #4f46e5; }
+        .search-box button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        .category-tab {
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .category-tab.active, .category-tab:hover {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 14px 28px;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .back-button:hover { transform: scale(1.05); }
+        @media (max-width: 768px) { .faq-header h1 { font-size: 24px; } .faq-content { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="faq-card">
+            <div class="faq-header">
+                <h1><i class="fas fa-question-circle"></i> Часто задаваемые вопросы</h1>
+                <p>Ответы на популярные вопросы о SaaSPro</p>
+            </div>
+            <div class="faq-content">
+                <div class="search-box">
+                    <input type="text" id="faqSearch" placeholder="🔍 Поиск по вопросам...">
+                    <button onclick="searchFAQ()">Найти</button>
+                </div>
+                <div class="category-tabs">
+                    <div class="category-tab active" data-cat="all">Все вопросы</div>
+                    <div class="category-tab" data-cat="payment">💳 Оплата</div>
+                    <div class="category-tab" data-cat="technical">⚙️ Технические</div>
+                    <div class="category-tab" data-cat="security">🔒 Безопасность</div>
+                    <div class="category-tab" data-cat="account">👤 Аккаунт</div>
+                </div>
+                
+                <div id="faqList">
+                    <div class="faq-item" data-cat="payment">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>💳 Какие способы оплаты вы принимаете?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">Мы принимаем банковские карты (МИР, Visa, Mastercard), СБП, криптовалюты (USDT, BTC), Telegram Stars. Все платежи защищены шифрованием TLS 1.3.</div>
+                    </div>
+                    <div class="faq-item" data-cat="payment">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>💰 Как вернуть деньги?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">Возврат возможен в течение 14 дней с момента оплаты, если услуга не была оказана. Для возврата обратитесь в поддержку support@saaspro.ru.</div>
+                    </div>
+                    <div class="faq-item" data-cat="technical">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>⚙️ Как подключить API?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">API документация доступна по адресу /api/fusion/docs. Для получения API ключа перейдите в раздел "Настройки" → "API ключи".</div>
+                    </div>
+                    <div class="faq-item" data-cat="security">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🔒 Как включить двухфакторную аутентификацию?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">Перейдите в раздел "Безопасность" (/security-center), нажмите "Настроить 2FA" и следуйте инструкциям. Мы поддерживаем Google Authenticator.</div>
+                    </div>
+                    <div class="faq-item" data-cat="account">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>👤 Как удалить аккаунт?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">Удаление аккаунта доступно в настройках профиля (/settings). Все данные будут безвозвратно удалены через 30 дней после запроса.</div>
+                    </div>
+                    <div class="faq-item" data-cat="technical">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>📊 Где посмотреть статистику использования?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">Статистика доступна в дашборде (/dashboard-improved) и в разделе аналитика (/analytics-center).</div>
+                    </div>
+                    <div class="faq-item" data-cat="payment">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>💳 Есть ли пробный период?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">Да, мы предоставляем 14-дневный пробный период с полным функционалом. Для активации зарегистрируйтесь и выберите тариф "Пробный".</div>
+                    </div>
+                    <div class="faq-item" data-cat="security">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🔒 Как сбросить пароль?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">На странице входа нажмите "Забыли пароль?". На указанную почту придёт ссылка для сброса.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleFAQ(element) {
+            const item = element.closest('.faq-item');
+            item.classList.toggle('active');
+        }
+        
+        function searchFAQ() {
+            const query = document.getElementById('faqSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.faq-item');
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(query) || query === '') {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const cat = this.dataset.cat;
+                const items = document.querySelectorAll('.faq-item');
+                items.forEach(item => {
+                    if (cat === 'all' || item.dataset.cat === cat) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        document.getElementById('faqSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchFAQ();
+        });
+    </script>
+    
+    <a href="/" class="back-button"><i class="fas fa-arrow-left"></i> На главную</a>
+</body>
+</html>
