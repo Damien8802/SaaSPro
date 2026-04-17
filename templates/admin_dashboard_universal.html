@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -142,8 +142,6 @@
         .btn-delete:hover { background: #ef4444; color: white; }
         .btn-view { background: rgba(16,185,129,0.2); color: #34d399; }
         .btn-view:hover { background: #10b981; color: white; }
-        .btn-hire { background: rgba(139,92,246,0.2); color: #a78bfa; }
-        .btn-hire:hover { background: #8b5cf6; color: white; }
         .btn-edit { background: rgba(59,130,246,0.2); color: #60a5fa; }
         .btn-edit:hover { background: #3b82f6; color: white; }
         
@@ -196,15 +194,12 @@
             backdrop-filter: blur(20px);
             border-radius: 32px;
             padding: 32px;
-            max-width: 600px;
+            max-width: 500px;
             width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
             border: 1px solid rgba(79,70,229,0.4);
         }
-        .modal-content h3 { color: white; margin-bottom: 24px; font-size: 24px; }
-        .modal-content label { color: rgba(255,255,255,0.7); display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; }
-        .modal-content input, .modal-content select, .modal-content textarea {
+        .modal-content h3 { color: white; margin-bottom: 24px; }
+        .modal-content input, .modal-content select {
             width: 100%;
             padding: 12px 16px;
             margin-bottom: 20px;
@@ -212,10 +207,8 @@
             border: 1px solid rgba(79,70,229,0.3);
             border-radius: 12px;
             color: white;
-            font-size: 14px;
         }
-        .modal-content textarea { resize: vertical; }
-        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
         .btn-save { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
         .btn-cancel { background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
         
@@ -234,626 +227,214 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="admin-card">
-            <div class="admin-header">
-                <h1><i class="fas fa-crown"></i> Админ-панель разработчика</h1>
-                <p><i class="fas fa-chart-line"></i> Полный контроль | Управление проектами, заявками, HR, Бухгалтерия | SaaSPro Premium</p>
+<div class="container">
+    <div class="admin-card">
+        <div class="admin-header">
+            <h1><i class="fas fa-crown"></i> Админ-панель разработчика</h1>
+            <p><i class="fas fa-chart-line"></i> Полный контроль | Управление проектами, заявками, HR, Бухгалтерия | SaaSPro Premium</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('dashboard')"><i class="fas fa-tachometer-alt"></i> Дашборд</button>
+            <button class="tab-btn" onclick="showTab('orders')"><i class="fas fa-clipboard-list"></i> Заявки</button>
+            <button class="tab-btn" onclick="showTab('finance')"><i class="fas fa-chart-line"></i> Бухгалтерия</button>
+            <button class="tab-btn" onclick="showTab('features')"><i class="fas fa-lightbulb"></i> Доработки</button>
+            <button class="tab-btn" onclick="showTab('users')"><i class="fas fa-users"></i> Пользователи</button>
+            <button class="tab-btn" onclick="showTab('hr')"><i class="fas fa-user-tie"></i> HR</button>
+        </div>
+        
+        <!-- ДАШБОРД -->
+        <div id="dashboardTab" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card" onclick="showTab('users')"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-number" id="totalUsers">0</div><div class="stat-label">👥 Пользователей</div></div>
+                <div class="stat-card" onclick="showTab('orders')"><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-number" id="totalOrders">0</div><div class="stat-label">📋 Заявок / Проектов</div></div>
+                <div class="stat-card" onclick="showTab('finance')"><div class="stat-icon"><i class="fas fa-ruble-sign"></i></div><div class="stat-number" id="totalRevenue">0 ₽</div><div class="stat-label">💰 Общий доход</div></div>
+                <div class="stat-card" onclick="showTab('hr')"><div class="stat-icon"><i class="fas fa-user-tie"></i></div><div class="stat-number" id="totalEmployees">0</div><div class="stat-label">👨‍💼 Сотрудников</div></div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-number" id="monthRevenue">0 ₽</div><div class="stat-label">📅 Доход за месяц</div></div>
+                <div class="stat-card"><div class="stat-number" id="activeProjects">0</div><div class="stat-label">🔧 Активных проектов</div></div>
+                <div class="stat-card"><div class="stat-number" id="completedProjects">0</div><div class="stat-label">✅ Завершённых</div></div>
+                <div class="stat-card"><div class="stat-number" id="completionRate">0%</div><div class="stat-label">📊 % завершения</div></div>
+            </div>
+            <div class="dashboard-row">
+                <div class="dashboard-card"><h3><i class="fas fa-chart-pie"></i> Распределение заявок</h3><div class="chart-container"><canvas id="ordersChart"></canvas></div></div>
+                <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> Динамика дохода</h3><div class="chart-container"><canvas id="revenueChart"></canvas></div></div>
+            </div>
+            <div class="dashboard-row">
+                <div class="dashboard-card"><h3><i class="fas fa-tasks"></i> Активные проекты</h3><div class="project-list" id="activeProjectsList"><div style="text-align:center; padding:20px;">Загрузка...</div></div></div>
+                <div class="dashboard-card"><h3><i class="fas fa-bell"></i> Последние действия</h3><div class="activity-list" id="recentActivity"><div style="text-align:center; padding:20px;">Загрузка...</div></div></div>
+            </div>
+        </div>
+        
+        <!-- ЗАЯВКИ -->
+        <div id="ordersTab" class="tab-content">
+            <div id="ordersList">Загрузка...</div>
+        </div>
+        
+        <!-- БУХГАЛТЕРИЯ -->
+        <div id="financeTab" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-number" id="totalIncome">0 ₽</div><div class="stat-label">📈 Общий доход</div></div>
+                <div class="stat-card"><div class="stat-number" id="totalExpenses">0 ₽</div><div class="stat-label">📉 Общие расходы</div></div>
+                <div class="stat-card"><div class="stat-number" id="totalTax">0 ₽</div><div class="stat-label">📊 Налоги (НДФЛ 13%)</div></div>
+                <div class="stat-card"><div class="stat-number" id="totalProfit">0 ₽</div><div class="stat-label">💰 Чистая прибыль</div></div>
+            </div>
+            <div class="dashboard-row">
+                <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> Динамика прибыли</h3><div class="chart-container"><canvas id="profitChart"></canvas></div></div>
+                <div class="dashboard-card"><h3><i class="fas fa-chart-pie"></i> Структура расходов</h3><div class="chart-container"><canvas id="expensesChart"></canvas></div></div>
+            </div>
+            <div class="card">
+                <h3 class="section-title"><i class="fas fa-calculator"></i> Детализация бухгалтерии</h3>
+                <div id="financeDetails">Загрузка...</div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><button class="btn-action btn-view" onclick="openExpenseModal()"><i class="fas fa-plus"></i> Добавить расход</button></div>
+                <div class="form-group"><button class="btn-action btn-view" onclick="openIncomeModal()"><i class="fas fa-plus-circle"></i> Добавить доход</button></div>
+                <div class="form-group"><button class="btn-action btn-edit" onclick="recalculateFinance()"><i class="fas fa-sync-alt"></i> Пересчитать</button></div>
+            </div>
+        </div>
+        
+        <!-- ДОРАБОТКИ -->
+        <div id="featuresTab" class="tab-content">
+            <div id="featuresList">Загрузка...</div>
+        </div>
+        
+        <!-- ПОЛЬЗОВАТЕЛИ -->
+        <div id="usersTab" class="tab-content">
+            <div id="usersList">Загрузка...</div>
+        </div>
+        
+        <!-- HR МОДУЛЬ -->
+        <div id="hrTab" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-number" id="hrEmployees">0</div><div class="stat-label">👨‍💼 Сотрудников</div></div>
+                <div class="stat-card"><div class="stat-number" id="hrCandidates">0</div><div class="stat-label">📋 Кандидатов</div></div>
+                <div class="stat-card"><div class="stat-number" id="hrVacancies">0</div><div class="stat-label">💼 Вакансий</div></div>
+                <div class="stat-card"><div class="stat-number" id="hrPayroll">0 ₽</div><div class="stat-label">💰 ФОТ</div></div>
             </div>
             
-            <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('dashboard')"><i class="fas fa-tachometer-alt"></i> Дашборд</button>
-                <button class="tab-btn" onclick="showTab('orders')"><i class="fas fa-clipboard-list"></i> Заявки</button>
-                <button class="tab-btn" onclick="showTab('finance')"><i class="fas fa-chart-line"></i> Бухгалтерия</button>
-                <button class="tab-btn" onclick="showTab('features')"><i class="fas fa-lightbulb"></i> Доработки</button>
-                <button class="tab-btn" onclick="showTab('users')"><i class="fas fa-users"></i> Пользователи</button>
-                <button class="tab-btn" onclick="showTab('hr')"><i class="fas fa-user-tie"></i> HR</button>
-            </div>
-            
-            <!-- ДАШБОРД -->
-            <div id="dashboardTab" class="tab-content active">
-                <div class="stats-grid">
-                    <div class="stat-card" onclick="showTab('users')"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-number" id="totalUsers">0</div><div class="stat-label">👥 Пользователей</div></div>
-                    <div class="stat-card" onclick="showTab('orders')"><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-number" id="totalOrders">0</div><div class="stat-label">📋 Заявок / Проектов</div></div>
-                    <div class="stat-card" onclick="showTab('finance')"><div class="stat-icon"><i class="fas fa-ruble-sign"></i></div><div class="stat-number" id="totalRevenue">0 ₽</div><div class="stat-label">💰 Общий доход</div></div>
-                    <div class="stat-card" onclick="showTab('hr')"><div class="stat-icon"><i class="fas fa-user-tie"></i></div><div class="stat-number" id="totalEmployees">0</div><div class="stat-label">👨‍💼 Сотрудников</div></div>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-number" id="monthRevenue">0 ₽</div><div class="stat-label">📅 Доход за месяц</div></div>
-                    <div class="stat-card"><div class="stat-number" id="activeProjects">0</div><div class="stat-label">🔧 Активных проектов</div></div>
-                    <div class="stat-card"><div class="stat-number" id="completedProjects">0</div><div class="stat-label">✅ Завершённых</div></div>
-                    <div class="stat-card"><div class="stat-number" id="completionRate">0%</div><div class="stat-label">📊 % завершения</div></div>
-                </div>
-                <div class="dashboard-row">
-                    <div class="dashboard-card"><h3><i class="fas fa-chart-pie"></i> Распределение заявок</h3><div class="chart-container"><canvas id="ordersChart"></canvas></div></div>
-                    <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> Динамика дохода</h3><div class="chart-container"><canvas id="revenueChart"></canvas></div></div>
-                </div>
-                <div class="dashboard-row">
-                    <div class="dashboard-card"><h3><i class="fas fa-tasks"></i> Активные проекты</h3><div class="project-list" id="activeProjectsList"><div style="text-align:center; padding:20px;">Загрузка...</div></div></div>
-                    <div class="dashboard-card"><h3><i class="fas fa-bell"></i> Последние действия</h3><div class="activity-list" id="recentActivity"><div style="text-align:center; padding:20px;">Загрузка...</div></div></div>
-                </div>
-            </div>
-            
-            <!-- ЗАЯВКИ -->
-            <div id="ordersTab" class="tab-content">
-                <div id="ordersList">Загрузка...</div>
-            </div>
-            
-            <!-- БУХГАЛТЕРИЯ (МАКСИМАЛЬНАЯ) -->
-            <div id="financeTab" class="tab-content">
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-number" id="totalIncome">0 ₽</div><div class="stat-label">📈 Общий доход</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalExpenses">0 ₽</div><div class="stat-label">📉 Общие расходы</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalTax">0 ₽</div><div class="stat-label">📊 Налоги (НДФЛ 13%)</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalProfit">0 ₽</div><div class="stat-label">💰 Чистая прибыль</div></div>
-                </div>
-                <div class="dashboard-row">
-                    <div class="dashboard-card"><h3><i class="fas fa-chart-line"></i> Динамика прибыли</h3><div class="chart-container"><canvas id="profitChart"></canvas></div></div>
-                    <div class="dashboard-card"><h3><i class="fas fa-chart-pie"></i> Структура расходов</h3><div class="chart-container"><canvas id="expensesChart"></canvas></div></div>
-                </div>
-                <div class="card">
-                    <h3 class="section-title"><i class="fas fa-calculator"></i> Детализация бухгалтерии</h3>
-                    <div id="financeDetails">Загрузка...</div>
-                </div>
+            <div class="card">
+                <h3 class="section-title"><i class="fas fa-bolt"></i> Быстрые действия HR</h3>
                 <div class="form-row">
-                    <div class="form-group"><button class="btn-action btn-view" onclick="openExpenseModal()"><i class="fas fa-plus"></i> Добавить расход</button></div>
-                    <div class="form-group"><button class="btn-action btn-view" onclick="openIncomeModal()"><i class="fas fa-plus-circle"></i> Добавить доход</button></div>
-                    <div class="form-group"><button class="btn-action btn-edit" onclick="recalculateFinance()"><i class="fas fa-sync-alt"></i> Пересчитать</button></div>
+                    <div class="form-group"><button class="btn-action btn-view" onclick="openCandidateModal()"><i class="fas fa-user-plus"></i> Добавить кандидата</button></div>
+                    <div class="form-group"><button class="btn-action btn-view" onclick="openVacancyModal()"><i class="fas fa-briefcase"></i> Создать вакансию</button></div>
+                    <div class="form-group"><button class="btn-action btn-edit" onclick="openPayrollModal()"><i class="fas fa-calculator"></i> Рассчитать ФОТ</button></div>
                 </div>
             </div>
             
-            <!-- ДОРАБОТКИ -->
-            <div id="featuresTab" class="tab-content">
-                <div id="featuresList">Загрузка...</div>
-            </div>
-            
-            <!-- ПОЛЬЗОВАТЕЛИ -->
-            <div id="usersTab" class="tab-content">
-                <div id="usersList">Загрузка...</div>
-            </div>
-            
-            <!-- HR МОДУЛЬ (ПОЛНЫЙ) -->
-            <div id="hrTab" class="tab-content">
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-number" id="hrEmployees">0</div><div class="stat-label">👨‍💼 Сотрудников</div></div>
-                    <div class="stat-card"><div class="stat-number" id="hrCandidates">0</div><div class="stat-label">📋 Кандидатов</div></div>
-                    <div class="stat-card"><div class="stat-number" id="hrVacancies">0</div><div class="stat-label">💼 Вакансий</div></div>
-                    <div class="stat-card"><div class="stat-number" id="hrPayroll">0 ₽</div><div class="stat-label">💰 ФОТ</div></div>
-                </div>
-                
-                <div class="card">
-                    <h3 class="section-title"><i class="fas fa-bolt"></i> Быстрые действия HR</h3>
-                    <div class="form-row">
-                        <div class="form-group"><button class="btn-action btn-view" onclick="openCandidateModal()"><i class="fas fa-user-plus"></i> Добавить кандидата</button></div>
-                        <div class="form-group"><button class="btn-action btn-view" onclick="openVacancyModal()"><i class="fas fa-briefcase"></i> Создать вакансию</button></div>
-                        <div class="form-group"><button class="btn-action btn-edit" onclick="openPayrollModal()"><i class="fas fa-calculator"></i> Рассчитать ФОТ</button></div>
-                    </div>
-                </div>
-                
-                <h3 class="section-title"><i class="fas fa-users"></i> Сотрудники</h3>
-                <div id="employeesList">Загрузка...</div>
-                <hr>
-                <h3 class="section-title"><i class="fas fa-user-plus"></i> Кандидаты</h3>
-                <div id="candidatesList">Загрузка...</div>
-                <hr>
-                <h3 class="section-title"><i class="fas fa-briefcase"></i> Вакансии</h3>
-                <div id="vacanciesList">Загрузка...</div>
-            </div>
+            <h3 class="section-title"><i class="fas fa-users"></i> Сотрудники</h3>
+            <div id="employeesList">Загрузка...</div>
+            <hr>
+            <h3 class="section-title"><i class="fas fa-user-plus"></i> Кандидаты</h3>
+            <div id="candidatesList">Загрузка...</div>
+            <hr>
+            <h3 class="section-title"><i class="fas fa-briefcase"></i> Вакансии</h3>
+            <div id="vacanciesList">Загрузка...</div>
         </div>
     </div>
+</div>
+
+<button class="refresh-btn" onclick="loadAllData()"><i class="fas fa-sync-alt"></i> Обновить</button>
+
+<!-- Модалки -->
+<div class="modal-overlay" id="expenseModal"><div class="modal-content"><h3><i class="fas fa-minus-circle"></i> Добавить расход</h3><label>Назначение</label><input type="text" id="expenseName"><label>Сумма</label><input type="number" id="expenseAmount"><div class="modal-buttons"><button class="btn-cancel" onclick="closeExpenseModal()">Отмена</button><button class="btn-save" onclick="saveExpense()">Добавить</button></div></div></div>
+<div class="modal-overlay" id="incomeModal"><div class="modal-content"><h3><i class="fas fa-plus-circle"></i> Добавить доход</h3><label>Источник</label><input type="text" id="incomeName"><label>Сумма</label><input type="number" id="incomeAmount"><div class="modal-buttons"><button class="btn-cancel" onclick="closeIncomeModal()">Отмена</button><button class="btn-save" onclick="saveIncome()">Добавить</button></div></div></div>
+<div class="modal-overlay" id="candidateModal"><div class="modal-content"><h3>➕ Добавить кандидата</h3><label>ФИО</label><input type="text" id="candidateName"><label>Вакансия</label><input type="text" id="candidateVacancy"><label>Опыт</label><input type="text" id="candidateExperience"><label>Зарплата</label><input type="number" id="candidateSalary"><label>Телефон</label><input type="text" id="candidatePhone"><label>Email</label><input type="email" id="candidateEmail"><div class="modal-buttons"><button class="btn-cancel" onclick="closeCandidateModal()">Отмена</button><button class="btn-save" onclick="addCandidate()">Добавить</button></div></div></div>
+<div class="modal-overlay" id="vacancyModal"><div class="modal-content"><h3>➕ Создать вакансию</h3><label>Название</label><input type="text" id="vacancyTitle"><label>ЗП от</label><input type="number" id="vacancySalaryFrom"><label>ЗП до</label><input type="number" id="vacancySalaryTo"><label>Описание</label><textarea id="vacancyDesc" rows="3"></textarea><div class="modal-buttons"><button class="btn-cancel" onclick="closeVacancyModal()">Отмена</button><button class="btn-save" onclick="createVacancy()">Создать</button></div></div></div>
+<div class="modal-overlay" id="payrollModal"><div class="modal-content" style="max-width:700px;"><h3>💰 Расчёт ФОТ</h3><div id="payrollResult"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closePayrollModal()">Закрыть</button><button class="btn-save" onclick="savePayroll()">Сохранить расчёт</button></div></div></div>
+
+<script>
+    let ordersChart, revenueChart, profitChart, expensesChart;
+    let expensesList = JSON.parse(localStorage.getItem('expensesList') || '[]');
+    let incomesList = JSON.parse(localStorage.getItem('incomesList') || '[]');
     
-    <button class="refresh-btn" onclick="loadAllData()"><i class="fas fa-sync-alt"></i> Обновить</button>
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabName + 'Tab').classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
+        if (tabName === 'hr') { loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
+        if (tabName === 'dashboard') loadDashboardData();
+        if (tabName === 'finance') loadFinanceData();
+    }
 
-    <!-- Модалка РЕДАКТИРОВАНИЯ ЗАЯВКИ -->
-    <div class="modal-overlay" id="editOrderModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-edit"></i> Редактирование заявки</h3>
-            <input type="hidden" id="editOrderId">
-            <label>📋 Название проекта</label>
-            <input type="text" id="editOrderName" placeholder="Название проекта">
-            <label>📞 Телефон клиента</label>
-            <input type="text" id="editOrderContact" placeholder="+7-xxx-xxx-xx-xx">
-            <label>⏰ Срок выполнения</label>
-            <input type="text" id="editOrderDeadline" placeholder="Например: 30 дней / 15.05.2025">
-            <label>💰 Бюджет (₽)</label>
-            <input type="number" id="editOrderBudget" placeholder="Сумма в рублях">
-            <label>🔧 Статус работы</label>
-            <select id="editWorkStatus">
-                <option value="waiting_deposit">⏳ Ожидает предоплату</option>
-                <option value="in_progress">🔧 В работе</option>
-                <option value="waiting_remaining">⏳ Ожидает остаток</option>
-                <option value="completed">🎉 Завершён</option>
-                <option value="cancelled">❌ Отменён</option>
-            </select>
-            <label>💳 Статус предоплаты</label>
-            <select id="editDepositStatus">
-                <option value="waiting">⏳ Ожидает предоплату 50%</option>
-                <option value="paid">✅ Предоплата внесена</option>
-                <option value="not_required">➖ Не требуется</option>
-            </select>
-            <label>💵 Сумма предоплаты (₽)</label>
-            <input type="number" id="editDepositAmount" placeholder="Сумма предоплаты">
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeEditOrderModal()">Отмена</button>
-                <button class="btn-save" onclick="saveOrderChanges()"><i class="fas fa-save"></i> Сохранить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модалка ДОБАВЛЕНИЯ РАСХОДА (МАКСИМАЛЬНАЯ) -->
-    <div class="modal-overlay" id="expenseModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-minus-circle"></i> Добавить расход</h3>
-            <label>📝 Назначение расхода</label>
-            <input type="text" id="expenseName" placeholder="Например: Аренда офиса, Сервера, Реклама, Зарплата">
-            <label>🏷️ Категория расхода</label>
-            <select id="expenseCategory">
-                <option value="Аренда">🏢 Аренда</option>
-                <option value="Зарплата">👨‍💼 Зарплата</option>
-                <option value="Реклама">📢 Реклама</option>
-                <option value="Сервера">🖥️ Сервера</option>
-                <option value="Налоги">📊 Налоги</option>
-                <option value="Прочее">📦 Прочее</option>
-            </select>
-            <label>💰 Сумма расхода (₽)</label>
-            <input type="number" id="expenseAmount" placeholder="Сумма в рублях">
-            <label>📅 Дата расхода</label>
-            <input type="date" id="expenseDate">
-            <label>📝 Комментарий</label>
-            <textarea id="expenseComment" rows="2" placeholder="Дополнительная информация..."></textarea>
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeExpenseModal()">Отмена</button>
-                <button class="btn-save" onclick="saveExpense()">Добавить расход</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модалка ДОБАВЛЕНИЯ ДОХОДА (МАКСИМАЛЬНАЯ) -->
-    <div class="modal-overlay" id="incomeModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-plus-circle"></i> Добавить доход</h3>
-            <label>📝 Источник дохода</label>
-            <input type="text" id="incomeName" placeholder="Например: Проект Сайт, Разработка CRM, Консультация">
-            <label>🏷️ Категория дохода</label>
-            <select id="incomeCategory">
-                <option value="Разработка">💻 Разработка</option>
-                <option value="Консультация">📞 Консультация</option>
-                <option value="Подписка">🔄 Подписка</option>
-                <option value="Разовая услуга">⚡ Разовая услуга</option>
-                <option value="Прочее">📦 Прочее</option>
-            </select>
-            <label>💰 Сумма дохода (₽)</label>
-            <input type="number" id="incomeAmount" placeholder="Сумма в рублях">
-            <label>📅 Дата получения</label>
-            <input type="date" id="incomeDate">
-            <label>👤 Клиент / Плательщик</label>
-            <input type="text" id="incomeClient" placeholder="Название компании или ФИО">
-            <label>📝 Комментарий</label>
-            <textarea id="incomeComment" rows="2" placeholder="Дополнительная информация..."></textarea>
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeIncomeModal()">Отмена</button>
-                <button class="btn-save" onclick="saveIncome()">Добавить доход</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модалка ДОБАВЛЕНИЯ КАНДИДАТА (МАКСИМАЛЬНАЯ) -->
-    <div class="modal-overlay" id="candidateModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-user-plus"></i> Добавить кандидата</h3>
-            <label>👤 ФИО кандидата</label>
-            <input type="text" id="candidateName" placeholder="Иванов Иван Иванович">
-            <label>💼 Желаемая должность</label>
-            <input type="text" id="candidateVacancy" placeholder="Senior Go разработчик">
-            <label>📅 Опыт работы</label>
-            <input type="text" id="candidateExperience" placeholder="5 лет">
-            <label>💰 Ожидаемая зарплата (₽)</label>
-            <input type="number" id="candidateSalary" placeholder="250000">
-            <label>📞 Телефон</label>
-            <input type="text" id="candidatePhone" placeholder="+7-999-123-45-67">
-            <label>📧 Email</label>
-            <input type="email" id="candidateEmail" placeholder="ivan@example.com">
-            <label>📄 Ссылка на резюме / LinkedIn</label>
-            <input type="text" id="candidateResume" placeholder="https://...">
-            <label>📝 Дополнительная информация</label>
-            <textarea id="candidateNotes" rows="2" placeholder="Навыки, сертификаты, рекомендации..."></textarea>
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeCandidateModal()">Отмена</button>
-                <button class="btn-save" onclick="addCandidate()">Добавить кандидата</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модалка СОЗДАНИЯ ВАКАНСИИ (МАКСИМАЛЬНАЯ) -->
-    <div class="modal-overlay" id="vacancyModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-briefcase"></i> Создать вакансию</h3>
-            <label>📋 Название вакансии</label>
-            <input type="text" id="vacancyTitle" placeholder="Senior Go разработчик">
-            <label>🏢 Отдел / Направление</label>
-            <input type="text" id="vacancyDepartment" placeholder="Разработка / Backend">
-            <label>💰 Зарплата от (₽)</label>
-            <input type="number" id="vacancySalaryFrom" placeholder="200000">
-            <label>💰 Зарплата до (₽)</label>
-            <input type="number" id="vacancySalaryTo" placeholder="300000">
-            <label>📍 Местоположение</label>
-            <input type="text" id="vacancyLocation" placeholder="Москва / Удалённо">
-            <label>⏰ Тип занятости</label>
-            <select id="vacancyType">
-                <option value="full">Полная занятость</option>
-                <option value="part">Частичная занятость</option>
-                <option value="project">Проектная работа</option>
-                <option value="remote">Удалённо</option>
-            </select>
-            <label>📝 Описание вакансии</label>
-            <textarea id="vacancyDesc" rows="4" placeholder="Обязанности, требования, условия работы..."></textarea>
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeVacancyModal()">Отмена</button>
-                <button class="btn-save" onclick="createVacancy()">Создать вакансию</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модалка РАСЧЁТА ФОТ (МАКСИМАЛЬНАЯ) -->
-    <div class="modal-overlay" id="payrollModal">
-        <div class="modal-content" style="max-width: 800px;">
-            <h3><i class="fas fa-calculator"></i> Расчёт фонда оплаты труда (ФОТ)</h3>
-            <div id="payrollResult"></div>
-            <div class="form-row" style="margin-top: 20px;">
-                <div class="form-group"><label>➕ Премии / Бонусы (₽)</label><input type="number" id="payrollBonus" placeholder="Сумма премий"></div>
-                <div class="form-group"><label>📊 Налоговая ставка (%)</label><input type="number" id="payrollTaxRate" value="13" placeholder="НДФЛ"></div>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closePayrollModal()">Закрыть</button>
-                <button class="btn-save" onclick="calculatePayrollWithBonus()">Пересчитать с бонусами</button>
-                <button class="btn-save" onclick="savePayroll()">Сохранить расчёт</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let ordersChart, revenueChart, profitChart, expensesChart;
-        let expensesList = JSON.parse(localStorage.getItem('expensesList') || '[]');
-        let incomesList = JSON.parse(localStorage.getItem('incomesList') || '[]');
+    async function loadDashboardData() {
+        try {
+            const res = await fetch('/api/admin/stats');
+            const data = await res.json();
+            document.getElementById('totalUsers').innerHTML = data.total_users || 0;
+            document.getElementById('totalOrders').innerHTML = data.total_orders || 0;
+            document.getElementById('totalRevenue').innerHTML = (data.total_revenue || 0).toLocaleString() + ' ₽';
+            document.getElementById('totalEmployees').innerHTML = data.total_employees || 0;
+            document.getElementById('monthRevenue').innerHTML = ((data.total_revenue || 0) * 0.3).toLocaleString() + ' ₽';
+        } catch(e) { console.error(e); }
         
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            if (event && event.target) event.target.classList.add('active');
-            if (tabName === 'hr') { loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
-            if (tabName === 'dashboard') loadDashboardData();
-            if (tabName === 'finance') loadFinanceData();
-        }
-
-        // ========== ДАШБОРД ==========
-        async function loadDashboardData() {
-            try {
-                const res = await fetch('/api/admin/stats');
-                const data = await res.json();
-                document.getElementById('totalUsers').innerHTML = data.total_users || 0;
-                document.getElementById('totalOrders').innerHTML = data.total_orders || 0;
-                document.getElementById('totalRevenue').innerHTML = (data.total_revenue || 0).toLocaleString() + ' ₽';
-                document.getElementById('totalEmployees').innerHTML = data.total_employees || 0;
-                document.getElementById('monthRevenue').innerHTML = ((data.total_revenue || 0) * 0.3).toLocaleString() + ' ₽';
-            } catch(e) { console.error(e); }
-            
-            try {
-                const res = await fetch('/api/orders/list');
-                const orders = await res.json();
-                if (orders && orders.length) {
-                    let inProgress = 0, completed = 0, totalBudget = 0, completedBudget = 0;
-                    orders.forEach(o => { totalBudget += o.budget || 0; if (o.work_status === 'in_progress') inProgress++; if (o.work_status === 'completed') { completed++; completedBudget += o.budget || 0; } });
-                    document.getElementById('activeProjects').innerHTML = inProgress;
-                    document.getElementById('completedProjects').innerHTML = completed;
-                    document.getElementById('completionRate').innerHTML = totalBudget > 0 ? Math.round((completedBudget / totalBudget) * 100) : 0;
-                    
-                    let newCount = orders.filter(o => o.status === 'new').length;
-                    if (ordersChart) ordersChart.destroy();
-                    ordersChart = new Chart(document.getElementById('ordersChart'), { type: 'doughnut', data: { labels: ['🆕 Новые', '🔧 В работе', '🎉 Завершённые'], datasets: [{ data: [newCount, inProgress, completed], backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } } });
-                    
-                    if (revenueChart) revenueChart.destroy();
-                    revenueChart = new Chart(document.getElementById('revenueChart'), { type: 'line', data: { labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'], datasets: [{ label: 'Доход (₽)', data: [totalBudget * 0.1, totalBudget * 0.15, totalBudget * 0.2, totalBudget * 0.25, totalBudget * 0.15, totalBudget * 0.15], borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#fff' } } }, scales: { y: { ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } } } });
-                    
-                    const active = orders.filter(o => o.work_status === 'in_progress').slice(0, 5);
-                    document.getElementById('activeProjectsList').innerHTML = active.length ? active.map(p => `<div class="project-item"><div class="project-title">${p.name || 'Проект'}</div><div style="display:flex; justify-content:space-between; font-size:12px;"><span>💰 ${(p.budget || 0).toLocaleString()} ₽</span><span>📞 ${p.contact || '—'}</span></div><div class="project-progress"><div class="project-progress-fill" style="width:50%"></div></div></div>`).join('') : '<div style="text-align:center; padding:20px;">Нет активных проектов</div>';
-                    
-                    const recent = orders.slice(0, 5);
-                    document.getElementById('recentActivity').innerHTML = recent.map(a => `<div class="activity-item"><div class="activity-icon"><i class="fas fa-file-alt"></i></div><div class="activity-text"><div>${a.status === 'new' ? '🆕 Новая заявка' : '📝 Обновление'}</div><div><strong>${a.name || 'Клиент'}</strong> | 📞 ${a.contact || '—'}</div><small>${a.date || '—'}</small></div></div>`).join('');
-                }
-            } catch(e) { console.error(e); }
-        }
-
-        // ========== ЗАЯВКИ ==========
-        async function loadOrders() {
-            try {
-                const res = await fetch('/api/orders/list');
-                const orders = await res.json();
-                const container = document.getElementById('ordersList');
-                if (!orders || orders.length === 0) { container.innerHTML = '<div class="card">📭 Нет заявок</div>'; return; }
+        try {
+            const res = await fetch('/api/orders/list');
+            const orders = await res.json();
+            if (orders && orders.length) {
+                let inProgress = 0, completed = 0, totalBudget = 0, completedBudget = 0;
+                orders.forEach(o => { totalBudget += o.budget || 0; if (o.work_status === 'in_progress') inProgress++; if (o.work_status === 'completed') { completed++; completedBudget += o.budget || 0; } });
+                document.getElementById('activeProjects').innerHTML = inProgress;
+                document.getElementById('completedProjects').innerHTML = completed;
+                document.getElementById('completionRate').innerHTML = totalBudget > 0 ? Math.round((completedBudget / totalBudget) * 100) : 0;
                 
-                container.innerHTML = orders.map(o => {
-                    let depositHtml = o.deposit_status === 'paid' ? '<span class="badge-success">✅ Предоплата внесена</span>' : '<span class="badge-warning">⏳ Ожидает предоплату 50%</span>';
-                    let workHtml = '', progress = 0;
-                    if (o.work_status === 'in_progress') { workHtml = '<span class="badge-info">🔧 В работе</span>'; progress = 50; }
-                    else if (o.work_status === 'completed') { workHtml = '<span class="badge-success">🎉 Завершён</span>'; progress = 100; }
-                    else if (o.work_status === 'waiting_deposit') { workHtml = '<span class="badge-warning">⏳ Ожидает предоплату</span>'; progress = 0; }
-                    else { workHtml = '<span class="badge-new">📝 Новая</span>'; progress = 10; }
-                    
-                    return `<div class="project-card">
-                        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
-                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                <span class="${o.status === 'new' ? 'badge-new' : 'badge-success'}">${o.status === 'new' ? '🆕 НОВАЯ' : '✓ ПРОСМОТРЕНА'}</span>
-                                ${workHtml} ${depositHtml}
-                            </div>
-                            <small>${o.date || '—'}</small>
-                        </div>
-                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin-bottom:15px;">
-                            <div><strong>📋 Проект:</strong><br> <span style="font-size:16px;">${o.name || '—'}</span></div>
-                            <div><strong>📞 Телефон:</strong><br> <span style="color:#34d399; font-size:16px;">${o.contact || '—'}</span> 
-                                <button class="btn-action btn-copy" onclick="copyText('${o.contact || ''}')"><i class="fas fa-copy"></i> Копировать</button>
-                            </div>
-                            <div><strong>⏰ Срок:</strong><br> ${o.deadline || 'Не указан'}</div>
-                            <div><strong>💰 Бюджет:</strong><br> <span style="color:#fbbf24; font-size:18px;">${(o.budget || 0).toLocaleString()} ₽</span></div>
-                        </div>
-                        <div style="background:rgba(0,0,0,0.3); border-radius:16px; padding:15px; margin-bottom:15px;">
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;">
-                                <div><small>💰 Предоплата 50%:</small><br> <strong>${((o.budget || 0) * 0.5).toLocaleString()} ₽</strong></div>
-                                <div><small>💵 Внесено:</small><br> <strong style="color:#34d399;">${(o.deposit_amount || 0).toLocaleString()} ₽</strong></div>
-                                <div><small>💎 Остаток:</small><br> <strong>${(o.remaining_amount || (o.budget || 0)).toLocaleString()} ₽</strong></div>
-                            </div>
-                        </div>
-                        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
-                        <div style="margin-top:15px; display:flex; gap:10px; justify-content:flex-end;">
-                            <button class="btn-action btn-edit" onclick="openEditOrderModal(${o.id}, '${escapeHtml(o.name || '')}', '${escapeHtml(o.contact || '')}', '${escapeHtml(o.deadline || '')}', ${o.budget || 0}, '${o.work_status || 'waiting_deposit'}', '${o.deposit_status || 'waiting'}', ${o.deposit_amount || 0})"><i class="fas fa-edit"></i> Редактировать</button>
-                            <button class="btn-action btn-delete" onclick="deleteOrder(${o.id}, '${escapeHtml(o.name || '')}')"><i class="fas fa-trash"></i> Удалить</button>
-                            ${o.status === 'new' ? `<button class="btn-action btn-view" onclick="markViewed(${o.id})"><i class="fas fa-check"></i> Просмотрено</button>` : ''}
-                        </div>
-                    </div>`;
-                }).join('');
-            } catch(e) { console.error(e); }
-        }
-
-        async function deleteOrder(id, name) {
-            if (confirm(`❌ Удалить заявку "${name}"? Это действие необратимо!`)) {
-                await fetch(`/api/orders/${id}/delete`, { method: 'DELETE' });
-                loadOrders();
-                loadDashboardData();
-                alert(`✅ Заявка "${name}" удалена`);
+                let newCount = orders.filter(o => o.status === 'new').length;
+                if (ordersChart) ordersChart.destroy();
+                ordersChart = new Chart(document.getElementById('ordersChart'), { type: 'doughnut', data: { labels: ['🆕 Новые', '🔧 В работе', '🎉 Завершённые'], datasets: [{ data: [newCount, inProgress, completed], backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } } });
+                
+                if (revenueChart) revenueChart.destroy();
+                revenueChart = new Chart(document.getElementById('revenueChart'), { type: 'line', data: { labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'], datasets: [{ label: 'Доход (₽)', data: [totalBudget * 0.1, totalBudget * 0.15, totalBudget * 0.2, totalBudget * 0.25, totalBudget * 0.15, totalBudget * 0.15], borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#fff' } } }, scales: { y: { ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } } } });
+                
+                const active = orders.filter(o => o.work_status === 'in_progress').slice(0, 5);
+                document.getElementById('activeProjectsList').innerHTML = active.length ? active.map(p => `<div class="project-item"><div class="project-title">${p.name || 'Проект'}</div><div style="display:flex; justify-content:space-between; font-size:12px;"><span>💰 ${(p.budget || 0).toLocaleString()} ₽</span><span>📞 ${p.contact || '—'}</span></div><div class="project-progress"><div class="project-progress-fill" style="width:50%"></div></div></div>`).join('') : '<div style="text-align:center; padding:20px;">Нет активных проектов</div>';
+                
+                const recent = orders.slice(0, 5);
+                document.getElementById('recentActivity').innerHTML = recent.map(a => `<div class="activity-item"><div class="activity-icon"><i class="fas fa-file-alt"></i></div><div class="activity-text"><div>${a.status === 'new' ? '🆕 Новая заявка' : '📝 Обновление'}</div><div><strong>${a.name || 'Клиент'}</strong> | 📞 ${a.contact || '—'}</div><small>${a.date || '—'}</small></div></div>`).join('');
             }
-        }
+        } catch(e) { console.error(e); }
+    }
 
-        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+    async function loadOrders() { try { const res = await fetch('/api/orders/list'); const orders = await res.json(); const container = document.getElementById('ordersList'); if (!orders || orders.length === 0) { container.innerHTML = '<div class="card">📭 Нет заявок</div>'; return; } container.innerHTML = orders.map(o => `<div class="project-card"><div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;"><span class="badge-new">📝 ${o.name || 'Проект'}</span><small>${o.date || '—'}</small></div><div><strong>💰 Бюджет:</strong> ${(o.budget || 0).toLocaleString()} ₽</div><div><strong>📞 Контакт:</strong> ${o.contact || '—'}</div><div><strong>⏰ Срок:</strong> ${o.deadline || '—'}</div></div>`).join(''); } catch(e) { console.error(e); } }
 
-        function openEditOrderModal(id, name, contact, deadline, budget, workStatus, depositStatus, depositAmount) {
-            document.getElementById('editOrderId').value = id;
-            document.getElementById('editOrderName').value = name;
-            document.getElementById('editOrderContact').value = contact;
-            document.getElementById('editOrderDeadline').value = deadline;
-            document.getElementById('editOrderBudget').value = budget;
-            document.getElementById('editWorkStatus').value = workStatus;
-            document.getElementById('editDepositStatus').value = depositStatus;
-            document.getElementById('editDepositAmount').value = depositAmount;
-            document.getElementById('editOrderModal').style.display = 'flex';
-        }
+    async function loadFeatures() { try { const res = await fetch('/api/feature-requests'); const features = await res.json(); const container = document.getElementById('featuresList'); if (!features || features.length === 0) { container.innerHTML = '<div class="card">💡 Нет идей</div>'; return; } container.innerHTML = features.map(f => `<div class="card"><div><span class="badge-new">${f.priority === 'high' ? '🔴 Высокий' : '🟡 Средний'}</span> <small>${f.date}</small></div><strong>${f.title}</strong><p>${f.description}</p><small>От: ${f.user_name}</small></div>`).join(''); } catch(e) { console.error(e); } }
 
-        function closeEditOrderModal() { document.getElementById('editOrderModal').style.display = 'none'; }
+    async function loadUsers() { try { const res = await fetch('/api/admin/users'); const users = await res.json(); const container = document.getElementById('usersList'); if (!users || users.length === 0) { container.innerHTML = '<div class="card">👤 Нет пользователей</div>'; return; } container.innerHTML = '<table><thead><tr><th>Email</th><th>Имя</th><th>Роль</th></tr></thead><tbody>' + users.map(u => `<tr><td>${u.email}</td><td>${u.name || '—'}</td><td>${u.role || 'user'}</td></tr>`).join('') + '</tbody></table>'; } catch(e) { console.error(e); } }
 
-        async function saveOrderChanges() {
-            const id = document.getElementById('editOrderId').value;
-            const name = document.getElementById('editOrderName').value;
-            const contact = document.getElementById('editOrderContact').value;
-            const deadline = document.getElementById('editOrderDeadline').value;
-            const budget = parseFloat(document.getElementById('editOrderBudget').value) || 0;
-            const workStatus = document.getElementById('editWorkStatus').value;
-            const depositAmount = parseFloat(document.getElementById('editDepositAmount').value) || 0;
-            
-            await fetch(`/api/orders/${id}/update`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name, contact: contact, deadline: deadline, budget: budget })
-            });
-            
-            if (depositAmount > 0 || workStatus !== 'waiting_deposit') {
-                await fetch(`/api/orders/${id}/deposit`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ deposit_amount: depositAmount, work_status: workStatus })
-                });
-            }
-            
-            closeEditOrderModal();
-            loadOrders();
-            loadDashboardData();
-            alert('✅ Заявка обновлена');
-        }
+    async function loadFinanceData() { try { const res = await fetch('/api/orders/list'); const orders = await res.json(); let totalIncome = 0; if (orders && orders.length) { orders.forEach(o => { totalIncome += o.budget || 0; }); } const totalExpenses = expensesList.reduce((s, e) => s + (e.amount || 0), 0); const totalTax = totalIncome * 0.13; const totalProfit = totalIncome - totalExpenses - totalTax; document.getElementById('totalIncome').innerHTML = totalIncome.toLocaleString() + ' ₽'; document.getElementById('totalExpenses').innerHTML = totalExpenses.toLocaleString() + ' ₽'; document.getElementById('totalTax').innerHTML = totalTax.toLocaleString() + ' ₽'; document.getElementById('totalProfit').innerHTML = totalProfit.toLocaleString() + ' ₽'; if (profitChart) profitChart.destroy(); profitChart = new Chart(document.getElementById('profitChart'), { type: 'line', data: { labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'], datasets: [{ label: 'Прибыль (₽)', data: [totalProfit * 0.1, totalProfit * 0.15, totalProfit * 0.2, totalProfit * 0.25, totalProfit * 0.15, totalProfit * 0.15], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#fff' } } }, scales: { y: { ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } } } }); if (expensesChart) expensesChart.destroy(); expensesChart = new Chart(document.getElementById('expensesChart'), { type: 'doughnut', data: { labels: ['Налоги', 'Расходы', 'Чистая прибыль'], datasets: [{ data: [totalTax, totalExpenses, totalProfit], backgroundColor: ['#ef4444', '#f59e0b', '#10b981'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } } }); document.getElementById('financeDetails').innerHTML = `<div><div>📈 Доход: ${totalIncome.toLocaleString()} ₽</div><div>📊 Налоги: ${totalTax.toLocaleString()} ₽</div><div>📉 Расходы: ${totalExpenses.toLocaleString()} ₽</div><div>💰 Прибыль: ${totalProfit.toLocaleString()} ₽</div></div>`; } catch(e) { console.error(e); } }
 
-        async function markViewed(id) { await fetch(`/api/orders/${id}/view`, { method: 'PUT' }); loadOrders(); loadDashboardData(); }
-        function copyText(text) { navigator.clipboard.writeText(text); alert('✅ Номер скопирован: ' + text); }
+    // HR функции
+    async function loadHRStats() { try { const res = await fetch('/api/hr/stats'); const data = await res.json(); document.getElementById('hrEmployees').innerHTML = data.total_employees || 0; document.getElementById('hrCandidates').innerHTML = data.total_candidates || 0; document.getElementById('hrVacancies').innerHTML = data.open_vacancies || 0; document.getElementById('hrPayroll').innerHTML = (data.total_payroll || 0).toLocaleString() + ' ₽'; } catch(e) { console.error(e); } }
+    async function loadEmployees() { try { const res = await fetch('/api/hr/employees'); const employees = await res.json(); const container = document.getElementById('employeesList'); if (!employees || employees.length === 0) { container.innerHTML = '<div class="card">👔 Нет сотрудников</div>'; return; } container.innerHTML = employees.map(e => `<div class="card"><div><strong>${e.full_name}</strong><br><small>${e.position}</small></div><div>${(e.salary || 0).toLocaleString()} ₽</div></div>`).join(''); } catch(e) { console.error(e); } }
+    async function loadCandidates() { try { const res = await fetch('/api/hr/candidates'); const candidates = await res.json(); const container = document.getElementById('candidatesList'); if (!candidates || candidates.length === 0) { container.innerHTML = '<div class="card">📋 Нет кандидатов</div>'; return; } container.innerHTML = candidates.map(c => `<div class="card"><div><strong>${c.full_name}</strong><br><small>${c.vacancy || '—'}</small></div><div>${(c.expected_salary || 0).toLocaleString()} ₽</div></div>`).join(''); } catch(e) { console.error(e); } }
+    async function loadVacancies() { try { const res = await fetch('/api/hr/vacancies'); const vacancies = await res.json(); const container = document.getElementById('vacanciesList'); if (!vacancies || vacancies.length === 0) { container.innerHTML = '<div class="card">💼 Нет вакансий</div>'; return; } container.innerHTML = vacancies.map(v => `<div class="card"><div><strong>${v.title}</strong><br><small>от ${(v.salary_from || 0).toLocaleString()} ₽</small></div></div>`).join(''); } catch(e) { console.error(e); } }
 
-        // ========== БУХГАЛТЕРИЯ (МАКСИМАЛЬНАЯ) ==========
-        async function loadFinanceData() {
-            try {
-                const res = await fetch('/api/orders/list');
-                const orders = await res.json();
-                let totalIncomeFromOrders = 0;
-                orders.forEach(o => { totalIncomeFromOrders += o.budget || 0; });
-                
-                const totalManualIncome = incomesList.reduce((sum, inc) => sum + (inc.amount || 0), 0);
-                const totalIncome = totalIncomeFromOrders + totalManualIncome;
-                const totalExpenses = expensesList.reduce((sum, exp) => sum + (exp.amount || 0), 0);
-                const totalTax = totalIncome * 0.13;
-                const totalProfit = totalIncome - totalExpenses - totalTax;
-                
-                document.getElementById('totalIncome').innerHTML = totalIncome.toLocaleString() + ' ₽';
-                document.getElementById('totalExpenses').innerHTML = totalExpenses.toLocaleString() + ' ₽';
-                document.getElementById('totalTax').innerHTML = totalTax.toLocaleString() + ' ₽';
-                document.getElementById('totalProfit').innerHTML = totalProfit.toLocaleString() + ' ₽';
-                
-                if (profitChart) profitChart.destroy();
-                profitChart = new Chart(document.getElementById('profitChart'), { type: 'line', data: { labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'], datasets: [{ label: 'Прибыль (₽)', data: [totalProfit * 0.1, totalProfit * 0.15, totalProfit * 0.2, totalProfit * 0.25, totalProfit * 0.15, totalProfit * 0.15], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#fff' } } }, scales: { y: { ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } } } });
-                
-                if (expensesChart) expensesChart.destroy();
-                expensesChart = new Chart(document.getElementById('expensesChart'), { type: 'doughnut', data: { labels: ['Налоги', 'Расходы', 'Чистая прибыль'], datasets: [{ data: [totalTax, totalExpenses, totalProfit], backgroundColor: ['#ef4444', '#f59e0b', '#10b981'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } } });
-                
-                document.getElementById('financeDetails').innerHTML = `
-                    <div style="display:grid; gap:10px;">
-                        <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;"><span>📈 Доход от проектов:</span><strong style="color:#34d399;">${totalIncomeFromOrders.toLocaleString()} ₽</strong></div>
-                        <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;"><span>➕ Ручной доход:</span><strong style="color:#34d399;">${totalManualIncome.toLocaleString()} ₽</strong></div>
-                        <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;"><span>📊 Налоги (НДФЛ 13%):</span><strong style="color:#f87171;">${totalTax.toLocaleString()} ₽</strong></div>
-                        <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;"><span>📉 Расходы:</span><strong style="color:#fbbf24;">${totalExpenses.toLocaleString()} ₽</strong></div>
-                        <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:12px;"><span>💰 Чистая прибыль:</span><strong style="color:#34d399; font-size:20px;">${totalProfit.toLocaleString()} ₽</strong></div>
-                        <div style="margin-top:10px;"><strong><i class="fas fa-arrow-down"></i> Список расходов:</strong></div>
-                        ${expensesList.map(e => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid rgba(255,255,255,0.1);"><span><strong>${e.category}</strong> — ${e.name}</span><span>${e.amount.toLocaleString()} ₽</span><button class="btn-action btn-delete" onclick="deleteExpense(${e.id})">Удалить</button></div>`).join('')}
-                        ${expensesList.length === 0 ? '<div style="text-align:center; padding:10px;">Нет добавленных расходов</div>' : ''}
-                        <div style="margin-top:10px;"><strong><i class="fas fa-arrow-up"></i> Список доходов:</strong></div>
-                        ${incomesList.map(i => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid rgba(255,255,255,0.1);"><span><strong>${i.category}</strong> — ${i.name} ${i.client ? `(${i.client})` : ''}</span><span>${i.amount.toLocaleString()} ₽</span><button class="btn-action btn-delete" onclick="deleteIncome(${i.id})">Удалить</button></div>`).join('')}
-                        ${incomesList.length === 0 ? '<div style="text-align:center; padding:10px;">Нет добавленных доходов</div>' : ''}
-                    </div>
-                `;
-            } catch(e) { console.error(e); }
-        }
-
-        function openExpenseModal() { document.getElementById('expenseModal').style.display = 'flex'; }
-        function closeExpenseModal() { document.getElementById('expenseModal').style.display = 'none'; document.getElementById('expenseName').value = ''; document.getElementById('expenseAmount').value = ''; document.getElementById('expenseDate').value = ''; document.getElementById('expenseComment').value = ''; }
-        
-        function saveExpense() {
-            const name = document.getElementById('expenseName').value;
-            const category = document.getElementById('expenseCategory').value;
-            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
-            if (!name || amount <= 0) { alert('Заполните название и сумму расхода'); return; }
-            expensesList.push({ id: Date.now(), name: name, category: category, amount: amount, date: document.getElementById('expenseDate').value || new Date().toISOString().slice(0,10), comment: document.getElementById('expenseComment').value });
-            localStorage.setItem('expensesList', JSON.stringify(expensesList));
-            closeExpenseModal();
-            loadFinanceData();
-            alert('✅ Расход добавлен');
-        }
-        
-        function deleteExpense(id) { expensesList = expensesList.filter(e => e.id !== id); localStorage.setItem('expensesList', JSON.stringify(expensesList)); loadFinanceData(); alert('✅ Расход удалён'); }
-        
-        function openIncomeModal() { document.getElementById('incomeModal').style.display = 'flex'; }
-        function closeIncomeModal() { document.getElementById('incomeModal').style.display = 'none'; document.getElementById('incomeName').value = ''; document.getElementById('incomeAmount').value = ''; document.getElementById('incomeDate').value = ''; document.getElementById('incomeClient').value = ''; document.getElementById('incomeComment').value = ''; }
-        
-        function saveIncome() {
-            const name = document.getElementById('incomeName').value;
-            const category = document.getElementById('incomeCategory').value;
-            const amount = parseFloat(document.getElementById('incomeAmount').value) || 0;
-            const client = document.getElementById('incomeClient').value;
-            if (!name || amount <= 0) { alert('Заполните название и сумму дохода'); return; }
-            incomesList.push({ id: Date.now(), name: name, category: category, amount: amount, date: document.getElementById('incomeDate').value || new Date().toISOString().slice(0,10), client: client, comment: document.getElementById('incomeComment').value });
-            localStorage.setItem('incomesList', JSON.stringify(incomesList));
-            closeIncomeModal();
-            loadFinanceData();
-            alert('✅ Доход добавлен');
-        }
-        
-        function deleteIncome(id) { incomesList = incomesList.filter(i => i.id !== id); localStorage.setItem('incomesList', JSON.stringify(incomesList)); loadFinanceData(); alert('✅ Доход удалён'); }
-        function recalculateFinance() { loadFinanceData(); alert('✅ Данные пересчитаны'); }
-
-        // ========== HR МОДУЛЬ ==========
-        async function loadHRStats() {
-            try { const res = await fetch('/api/hr/stats'); const data = await res.json();
-            document.getElementById('hrEmployees').innerHTML = data.total_employees || 0;
-            document.getElementById('hrCandidates').innerHTML = data.total_candidates || 0;
-            document.getElementById('hrVacancies').innerHTML = data.open_vacancies || 0;
-            document.getElementById('hrPayroll').innerHTML = (data.total_payroll || 0).toLocaleString() + ' ₽';
-            } catch(e) { console.error(e); }
-        }
-        
-        async function loadEmployees() {
-            try { const res = await fetch('/api/hr/employees'); const employees = await res.json();
-            const container = document.getElementById('employeesList');
-            if (!employees || employees.length === 0) { container.innerHTML = '<div class="card">👔 Нет сотрудников</div>'; return; }
-            container.innerHTML = employees.map(e => `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;"><div><strong>${e.full_name}</strong><br><small>${e.position} | ${e.department || '—'} | 📞 ${e.phone || '—'}</small></div><div style="text-align:right;"><strong style="color:#fbbf24;">${(e.salary || 0).toLocaleString()} ₽</strong><br><button class="btn-action btn-delete" onclick="fireEmployee(${e.id}, '${e.full_name}')"><i class="fas fa-user-slash"></i> Уволить</button></div></div></div>`).join('');
-            } catch(e) { console.error(e); }
-        }
-        
-        async function loadCandidates() {
-            try { const res = await fetch('/api/hr/candidates'); const candidates = await res.json();
-            const container = document.getElementById('candidatesList');
-            if (!candidates || candidates.length === 0) { container.innerHTML = '<div class="card">📋 Нет кандидатов</div>'; return; }
-            container.innerHTML = candidates.map(c => `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;"><div><strong>${c.full_name}</strong><br><small>${c.vacancy || '—'} | Опыт: ${c.experience || '—'} | 📞 ${c.phone || '—'}</small></div><div style="text-align:right;"><strong style="color:#fbbf24;">${(c.expected_salary || 0).toLocaleString()} ₽</strong><br><button class="btn-action btn-hire" onclick="hireCandidate(${c.id}, '${c.full_name}')"><i class="fas fa-user-check"></i> Принять</button> <button class="btn-action btn-delete" onclick="rejectCandidate(${c.id})"><i class="fas fa-times"></i> Отклонить</button></div></div></div>`).join('');
-            } catch(e) { console.error(e); }
-        }
-        
-        async function loadVacancies() {
-            try { const res = await fetch('/api/hr/vacancies'); const vacancies = await res.json();
-            const container = document.getElementById('vacanciesList');
-            if (!vacancies || vacancies.length === 0) { container.innerHTML = '<div class="card">💼 Нет вакансий</div>'; return; }
-            container.innerHTML = vacancies.map(v => `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;"><div><strong>${v.title}</strong><br><small>от ${(v.salary_from || 0).toLocaleString()} ₽ | ${v.status === 'open' ? '🟢 Открыта' : '🔴 Закрыта'}</small></div><div><button class="btn-action btn-delete" onclick="deleteVacancy(${v.id})"><i class="fas fa-trash"></i> Удалить</button></div></div></div>`).join('');
-            } catch(e) { console.error(e); }
-        }
-        
-        async function fireEmployee(id, name) { if (confirm(`Уволить ${name}?`)) { await fetch(`/api/hr/employees/${id}`, { method: 'DELETE' }); loadEmployees(); loadHRStats(); loadDashboardData(); alert(`✅ ${name} уволен`); } }
-        async function hireCandidate(id, name) { if (confirm(`Принять ${name} на работу?`)) { await fetch(`/api/hr/candidates/${id}/hire`, { method: 'POST' }); loadCandidates(); loadEmployees(); loadHRStats(); alert(`✅ ${name} принят на работу`); } }
-        async function rejectCandidate(id) { if (confirm('Отклонить кандидата?')) { await fetch(`/api/hr/candidates/${id}`, { method: 'DELETE' }); loadCandidates(); loadHRStats(); alert('✅ Кандидат отклонён'); } }
-        async function deleteVacancy(id) { if (confirm('Удалить вакансию?')) { await fetch(`/api/hr/vacancies/${id}`, { method: 'DELETE' }); loadVacancies(); loadHRStats(); alert('✅ Вакансия удалена'); } }
-        
-        async function addCandidate() {
-            await fetch('/api/hr/candidates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ full_name: document.getElementById('candidateName').value, vacancy: document.getElementById('candidateVacancy').value, experience: document.getElementById('candidateExperience').value, expected_salary: parseFloat(document.getElementById('candidateSalary').value) || 0, phone: document.getElementById('candidatePhone').value, email: document.getElementById('candidateEmail').value }) });
-            closeCandidateModal(); loadCandidates(); loadHRStats(); alert('✅ Кандидат добавлен');
-        }
-        async function createVacancy() {
-            await fetch('/api/hr/vacancies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: document.getElementById('vacancyTitle').value, department: document.getElementById('vacancyDepartment').value, salary_from: parseFloat(document.getElementById('vacancySalaryFrom').value) || 0, salary_to: parseFloat(document.getElementById('vacancySalaryTo').value) || 0, location: document.getElementById('vacancyLocation').value, type: document.getElementById('vacancyType').value, description: document.getElementById('vacancyDesc').value }) });
-            closeVacancyModal(); loadVacancies(); loadHRStats(); alert('✅ Вакансия создана');
-        }
-        
-        async function openPayrollModal() {
-            document.getElementById('payrollModal').style.display = 'flex';
-            await loadPayrollData();
-        }
-        
-        async function loadPayrollData() {
-            const res = await fetch('/api/hr/employees'); const employees = await res.json();
-            if (!employees || employees.length === 0) { document.getElementById('payrollResult').innerHTML = '<div style="text-align:center; padding:20px;">Нет сотрудников</div>'; return; }
-            let total = 0;
-            const html = employees.map(e => { total += e.salary || 0; return `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid rgba(255,255,255,0.1);"><div><strong>${e.full_name}</strong><br><small>${e.position}</small></div><div><strong style="color:#fbbf24;">${(e.salary || 0).toLocaleString()} ₽</strong></div></div>`; }).join('');
-            document.getElementById('payrollResult').innerHTML = `<div style="background:linear-gradient(135deg,#4f46e5,#7c3aed); border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;"><h2>💰 Итого ФОТ</h2><p style="font-size:32px; font-weight:800;" id="payrollTotal">${total.toLocaleString()} ₽</p><p>👥 Сотрудников: ${employees.length}</p><p id="payrollWithBonus"></p></div>${html}`;
-            document.getElementById('payrollBonus').value = 0;
-            document.getElementById('payrollTaxRate').value = 13;
-        }
-        
-        function calculatePayrollWithBonus() {
-            const bonus = parseFloat(document.getElementById('payrollBonus').value) || 0;
-            const taxRate = parseFloat(document.getElementById('payrollTaxRate').value) || 13;
-            let total = 0;
-            document.querySelectorAll('#payrollResult .payroll-item-total').forEach(el => { total += parseFloat(el.innerText.replace(/[^0-9]/g, '')) || 0; });
-            const totalWithBonus = total + bonus;
-            const tax = totalWithBonus * taxRate / 100;
-            const net = totalWithBonus - tax;
-            document.getElementById('payrollTotal').innerHTML = totalWithBonus.toLocaleString() + ' ₽';
-            document.getElementById('payrollWithBonus').innerHTML = `<small>➕ Бонусы: ${bonus.toLocaleString()} ₽ | 📊 Налог ${taxRate}%: ${tax.toLocaleString()} ₽ | 💵 К выплате: ${net.toLocaleString()} ₽</small>`;
-        }
-        
-        async function savePayroll() { await fetch('/api/hr/payroll/calculate', { method: 'POST' }); alert('✅ Расчёт сохранён'); closePayrollModal(); loadHRStats(); }
-        function closePayrollModal() { document.getElementById('payrollModal').style.display = 'none'; }
-        
-        function openCandidateModal() { document.getElementById('candidateModal').style.display = 'flex'; }
-        function closeCandidateModal() { document.getElementById('candidateModal').style.display = 'none'; document.getElementById('candidateName').value = ''; document.getElementById('candidateVacancy').value = ''; document.getElementById('candidateExperience').value = ''; document.getElementById('candidateSalary').value = ''; document.getElementById('candidatePhone').value = ''; document.getElementById('candidateEmail').value = ''; document.getElementById('candidateResume').value = ''; document.getElementById('candidateNotes').value = ''; }
-        
-        function openVacancyModal() { document.getElementById('vacancyModal').style.display = 'flex'; }
-        function closeVacancyModal() { document.getElementById('vacancyModal').style.display = 'none'; document.getElementById('vacancyTitle').value = ''; document.getElementById('vacancyDepartment').value = ''; document.getElementById('vacancySalaryFrom').value = ''; document.getElementById('vacancySalaryTo').value = ''; document.getElementById('vacancyLocation').value = ''; document.getElementById('vacancyDesc').value = ''; }
-
-        // ========== ПРОЧЕЕ ==========
-        async function loadFeatures() {
-            try { const res = await fetch('/api/feature-requests'); const features = await res.json();
-            const container = document.getElementById('featuresList');
-            if (!features || features.length === 0) { container.innerHTML = '<div class="card">💡 Нет идей</div>'; return; }
-            container.innerHTML = features.map(f => `<div class="card"><div><span class="badge-new">${f.priority === 'high' ? '🔴 Высокий' : '🟡 Средний'}</span> <small>${f.date}</small></div><strong>${f.title}</strong><p style="margin-top:8px;">${f.description}</p><small>От: ${f.user_name}</small></div>`).join('');
-            } catch(e) { console.error(e); }
-        }
-        
-        async function loadUsers() {
-            try { const res = await fetch('/api/admin/users'); const users = await res.json();
-            const container = document.getElementById('usersList');
-            if (!users || users.length === 0) { container.innerHTML = '<div class="card">👤 Нет пользователей</div>'; return; }
-            container.innerHTML = '<table style="width:100%; border-collapse:collapse;"><thead><tr><th style="text-align:left; padding:8px;">Email</th><th style="text-align:left; padding:8px;">Имя</th><th style="text-align:left; padding:8px;">Роль</th><th style="text-align:left; padding:8px;">Дата</th></tr></thead><tbody>' + users.map(u => `<tr><td style="padding:8px;">${u.email}</td><td style="padding:8px;">${u.name || '—'}</td><td style="padding:8px;">${u.role || 'user'}</td><td style="padding:8px;">${u.created_at?.slice(0,10) || '—'}</td></tr>`).join('') + '</tbody></table>';
-            } catch(e) { console.error(e); }
-        }
-        
-        function loadAllData() { loadDashboardData(); loadOrders(); loadFeatures(); loadUsers(); loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); loadFinanceData(); }
-        loadAllData();
-        setInterval(loadAllData, 30000);
-    </script>
+    function openExpenseModal() { document.getElementById('expenseModal').style.display = 'flex'; }
+    function closeExpenseModal() { document.getElementById('expenseModal').style.display = 'none'; }
+    function saveExpense() { const name = document.getElementById('expenseName').value; const amount = parseFloat(document.getElementById('expenseAmount').value) || 0; if (name && amount > 0) { expensesList.push({ id: Date.now(), name: name, amount: amount }); localStorage.setItem('expensesList', JSON.stringify(expensesList)); closeExpenseModal(); loadFinanceData(); alert('✅ Расход добавлен'); } else { alert('Заполните поля'); } }
+    
+    function openIncomeModal() { document.getElementById('incomeModal').style.display = 'flex'; }
+    function closeIncomeModal() { document.getElementById('incomeModal').style.display = 'none'; }
+    function saveIncome() { const name = document.getElementById('incomeName').value; const amount = parseFloat(document.getElementById('incomeAmount').value) || 0; if (name && amount > 0) { incomesList.push({ id: Date.now(), name: name, amount: amount }); localStorage.setItem('incomesList', JSON.stringify(incomesList)); closeIncomeModal(); loadFinanceData(); alert('✅ Доход добавлен'); } else { alert('Заполните поля'); } }
+    
+    function recalculateFinance() { loadFinanceData(); alert('✅ Данные пересчитаны'); }
+    
+    function openCandidateModal() { document.getElementById('candidateModal').style.display = 'flex'; }
+    function closeCandidateModal() { document.getElementById('candidateModal').style.display = 'none'; }
+    async function addCandidate() { await fetch('/api/hr/candidates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ full_name: document.getElementById('candidateName').value, vacancy: document.getElementById('candidateVacancy').value, experience: document.getElementById('candidateExperience').value, expected_salary: parseFloat(document.getElementById('candidateSalary').value) || 0, phone: document.getElementById('candidatePhone').value, email: document.getElementById('candidateEmail').value }) }); closeCandidateModal(); loadCandidates(); loadHRStats(); alert('✅ Кандидат добавлен'); }
+    
+    function openVacancyModal() { document.getElementById('vacancyModal').style.display = 'flex'; }
+    function closeVacancyModal() { document.getElementById('vacancyModal').style.display = 'none'; }
+    async function createVacancy() { await fetch('/api/hr/vacancies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: document.getElementById('vacancyTitle').value, salary_from: parseFloat(document.getElementById('vacancySalaryFrom').value) || 0, salary_to: parseFloat(document.getElementById('vacancySalaryTo').value) || 0, description: document.getElementById('vacancyDesc').value }) }); closeVacancyModal(); loadVacancies(); loadHRStats(); alert('✅ Вакансия создана'); }
+    
+    async function openPayrollModal() { document.getElementById('payrollModal').style.display = 'flex'; const res = await fetch('/api/hr/employees'); const employees = await res.json(); if (!employees || employees.length === 0) { document.getElementById('payrollResult').innerHTML = '<div>Нет сотрудников</div>'; return; } let total = 0; const html = employees.map(e => { total += e.salary || 0; return `<div><strong>${e.full_name}</strong> - ${(e.salary || 0).toLocaleString()} ₽</div>`; }).join(''); document.getElementById('payrollResult').innerHTML = `<div><h3>Итого ФОТ: ${total.toLocaleString()} ₽</h3>${html}</div>`; }
+    async function savePayroll() { await fetch('/api/hr/payroll/calculate', { method: 'POST' }); alert('✅ Расчёт сохранён'); closePayrollModal(); loadHRStats(); }
+    function closePayrollModal() { document.getElementById('payrollModal').style.display = 'none'; }
+    
+    function loadAllData() { loadDashboardData(); loadOrders(); loadFeatures(); loadUsers(); loadFinanceData(); loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
+    loadAllData();
+    setInterval(loadAllData, 30000);
+</script>
 </body>
 </html>

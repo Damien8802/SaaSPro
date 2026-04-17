@@ -96,6 +96,57 @@
             font-size: 12px;
             color: rgba(255,255,255,0.6);
         }
+        
+        /* Дашборд карточки */
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 0 30px 30px 30px;
+        }
+        .dashboard-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .dashboard-card h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+        .dashboard-card h3 i { color: #f59e0b; }
+        
+        .active-projects-list, .activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .project-item, .activity-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .project-item { flex-direction: column; align-items: stretch; }
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(79,70,229,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .activity-text { flex: 1; }
+        .activity-text small { color: #94a3b8; font-size: 11px; }
+        .project-title { font-weight: 600; margin-bottom: 8px; color: white; }
+        .project-progress { height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .project-progress-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #7c3aed); border-radius: 4px; }
+        
         .profile-info {
             padding: 30px;
         }
@@ -160,10 +211,20 @@
         .btn-outline:hover {
             background: rgba(255,255,255,0.2);
         }
+        .btn-dashboard {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        .btn-dashboard:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(16,185,129,0.4);
+        }
         .badge-dev { background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; display: inline-block; }
         .badge-admin { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; display: inline-block; }
+        
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-row { grid-template-columns: 1fr; }
             .info-row { flex-direction: column; gap: 5px; }
             .info-label { width: 100%; }
         }
@@ -180,13 +241,33 @@
                     <span class="badge-dev">⭐ Lead Developer</span>
                     <span class="badge-admin">🛡️ Администратор</span>
                 </div>
+                <!-- Кнопка Дашборд -->
+                <div style="margin-top: 25px;">
+                    <a href="/dashboard-improved" class="btn btn-dashboard" style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 28px; border-radius: 50px; text-decoration: none; font-weight: 600;">
+                        <i class="fas fa-chart-line"></i> 📊 Дашборд
+                    </a>
+                </div>
             </div>
+            
             <div class="stats-grid">
                 <div class="stat-item"><div class="stat-number" id="projectsCount">7</div><div class="stat-label">Проектов</div></div>
                 <div class="stat-item"><div class="stat-number" id="activeServices">3</div><div class="stat-label">Активных</div></div>
                 <div class="stat-item"><div class="stat-number">99.9%</div><div class="stat-label">Аптайм</div></div>
                 <div class="stat-item"><div class="stat-number">24/7</div><div class="stat-label">Поддержка</div></div>
             </div>
+            
+            <!-- Активные проекты и последние действия -->
+            <div class="dashboard-row">
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-tasks"></i> Активные проекты</h3>
+                    <div class="active-projects-list" id="activeProjectsList">Загрузка...</div>
+                </div>
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-bell"></i> Последние действия</h3>
+                    <div class="activity-list" id="recentActivityList">Загрузка...</div>
+                </div>
+            </div>
+            
             <div class="profile-info">
                 <div class="info-title"><i class="fas fa-user"></i> Личная информация</div>
                 <div class="info-row"><div class="info-label">Email</div><div class="info-value" id="userEmail">dev@saaspro.ru</div></div>
@@ -205,10 +286,22 @@
             </div>
         </div>
     </div>
+    
     <script>
+        // Получение токена и заголовков
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+            }
+            return { 'Content-Type': 'application/json' };
+        }
+
+        // Загрузка данных пользователя
         async function loadUserData() {
             try {
-                const response = await fetch('/api/current-user');
+                const headers = getAuthHeaders();
+                const response = await fetch('/api/current-user', { headers });
                 if (response.ok) {
                     const user = await response.json();
                     document.getElementById('userName').innerText = user.name || 'Разработчик';
@@ -220,12 +313,105 @@
                     avatar.style.fontSize = '48px';
                     avatar.style.fontWeight = 'bold';
                     avatar.style.color = '#667eea';
+                    avatar.style.display = 'flex';
+                    avatar.style.alignItems = 'center';
+                    avatar.style.justifyContent = 'center';
                 }
             } catch(e) { console.log(e); }
         }
+
+        // Загрузка активных проектов
+        async function loadActiveProjects() {
+            try {
+                const headers = getAuthHeaders();
+                const res = await fetch('/api/orders/list', { headers });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const orders = await res.json();
+                const container = document.getElementById('activeProjectsList');
+                if (!container) return;
+                
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px;">Нет активных проектов</div>';
+                    return;
+                }
+                
+                const activeProjects = orders.filter(o => o.work_status === 'in_progress' || o.status === 'new').slice(0, 5);
+                if (activeProjects.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px;">Нет активных проектов</div>';
+                    return;
+                }
+                
+                container.innerHTML = activeProjects.map(p => `
+                    <div class="project-item">
+                        <div class="project-title">${escapeHtml(p.name) || 'Проект'}</div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px;">
+                            <span>💰 ${(p.budget || 0).toLocaleString()} ₽</span>
+                            <span>📞 ${escapeHtml(p.contact) || '—'}</span>
+                        </div>
+                        <div class="project-progress"><div class="project-progress-fill" style="width:${p.work_status === 'in_progress' ? 50 : 10}%"></div></div>
+                    </div>
+                `).join('');
+            } catch(e) { 
+                console.error('loadActiveProjects error:', e);
+                const container = document.getElementById('activeProjectsList');
+                if (container) container.innerHTML = '<div style="text-align:center; padding:20px; color:#f87171;">Ошибка загрузки</div>';
+            }
+        }
+
+        // Загрузка последних действий
+        async function loadRecentActivity() {
+            try {
+                const headers = getAuthHeaders();
+                const res = await fetch('/api/orders/list', { headers });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const orders = await res.json();
+                const container = document.getElementById('recentActivityList');
+                if (!container) return;
+                
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px;">Нет активности</div>';
+                    return;
+                }
+                
+                const recent = orders.slice(0, 5);
+                container.innerHTML = recent.map(a => `
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-file-alt"></i></div>
+                        <div class="activity-text">
+                            <div>${a.status === 'new' ? '🆕 Новая заявка' : '📝 Обновление заявки'}</div>
+                            <div><strong>${escapeHtml(a.name) || 'Клиент'}</strong> | ${(a.budget || 0).toLocaleString()} ₽</div>
+                            <small>${a.date || '—'}</small>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { 
+                console.error('loadRecentActivity error:', e);
+                const container = document.getElementById('recentActivityList');
+                if (container) container.innerHTML = '<div style="text-align:center; padding:20px; color:#f87171;">Ошибка загрузки</div>';
+            }
+        }
+
+        // Функция для экранирования HTML
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Запуск всех функций
         loadUserData();
+        loadActiveProjects();
+        loadRecentActivity();
+        
+        // Обновление каждые 30 секунд
+        setInterval(() => {
+            loadActiveProjects();
+            loadRecentActivity();
+        }, 30000);
     </script>
-
-
 </body>
 </html>

@@ -204,12 +204,18 @@
 <body>
 <div class="container">
     <div class="profile-card">
-        <div class="profile-header">
-            <div class="profile-avatar" id="avatar">👤</div>
-            <h1 class="profile-name" id="userName">Загрузка...</h1>
-            <div class="profile-email" id="userEmail">-</div>
-            <div><span class="profile-role" id="userRole">Клиент</span></div>
-        </div>
+      <div class="profile-header">
+    <div class="profile-avatar" id="avatar">👤</div>
+    <h1 class="profile-name" id="userName">Загрузка...</h1>
+    <div class="profile-email" id="userEmail">-</div>
+    <div><span class="profile-role" id="userRole">Клиент</span></div>
+    <!-- Кнопка Дашборд -->
+    <div style="margin-top: 20px;">
+        <a href="/dashboard-improved" style="display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 28px; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16,185,129,0.4);">
+            <i class="fas fa-chart-line"></i> 📊 Дашборд
+        </a>
+    </div>
+</div>
         
         <div class="tabs">
             <button class="tab-btn active" onclick="showTab('overview')"><i class="fas fa-user"></i> Обзор</button>
@@ -217,6 +223,7 @@
             <button class="tab-btn" onclick="showTab('orders')"><i class="fas fa-clipboard-list"></i> Мои заявки</button>
             <button class="tab-btn" onclick="showTab('features')"><i class="fas fa-lightbulb"></i> Мои идеи</button>
             <button class="tab-btn" onclick="showTab('security')"><i class="fas fa-shield-alt"></i> Безопасность</button>
+            <button class="tab-btn" onclick="showTab('documents')"><i class="fas fa-file-pdf"></i> Документы</button>
         </div>
         
         <!-- Обзор -->
@@ -251,6 +258,49 @@
                 <div class="info-row"><div class="info-label">Статус</div><div class="info-value"><span class="badge badge-active" id="infoStatus">Активен</span></div></div>
                 <div style="margin-top: 20px;">
                     <button class="btn-action btn-save" onclick="openEditProfileModal()"><i class="fas fa-edit"></i> Редактировать профиль</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Документы -->
+        <div id="documentsTab" class="tab-content">
+            <div class="dashboard-card">
+                <h3><i class="fas fa-file-pdf"></i> Акт сверки с контрагентом</h3>
+                <p style="color: #94a3b8; margin-bottom: 20px;">Сформируйте PDF-документ о взаиморасчётах с контрагентом.</p>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #a5b4fc;">📋 Контрагент *</label>
+                    <input type="text" id="recCounterpartyName" placeholder="ООО Ромашка" style="width:100%; padding: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(79,70,229,0.3); border-radius: 12px; color: white;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #a5b4fc;">🆔 ИНН</label>
+                    <input type="text" id="recCounterpartyINN" placeholder="7701234567" style="width:100%; padding: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(79,70,229,0.3); border-radius: 12px; color: white;">
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 8px; color: #a5b4fc;">📅 Период с</label>
+                        <input type="date" id="recPeriodStart" style="width:100%; padding: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(79,70,229,0.3); border-radius: 12px; color: white;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 8px; color: #a5b4fc;">📅 Период по</label>
+                        <input type="date" id="recPeriodEnd" style="width:100%; padding: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(79,70,229,0.3); border-radius: 12px; color: white;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <button onclick="generateReconciliationAct()" style="flex:1; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 50px; color: white; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-file-pdf"></i> Сформировать PDF
+                    </button>
+                    <button onclick="loadMyReconciliationActs()" style="flex:1; padding: 12px; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3); border-radius: 50px; color: #60a5fa; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-history"></i> Мои акты
+                    </button>
+                </div>
+            </div>
+            
+            <div class="dashboard-card" style="margin-top: 20px;">
+                <h3><i class="fas fa-list"></i> История актов сверки</h3>
+                <div id="myReconciliationActsList" style="padding: 10px;">
+                    <div style="text-align:center; padding:20px; color:#94a3b8;">Нет сформированных актов</div>
                 </div>
             </div>
         </div>
@@ -354,46 +404,61 @@
     
     async function loadUserOrders() {
         try {
-            const res = await fetch('/api/orders/list');
+            const token = localStorage.getItem('token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/orders/list', { headers });
+            if (!res.ok) {
+                console.error('Failed to load orders:', res.status);
+                const container = document.getElementById('userOrdersList');
+                if (container) container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">❌ Ошибка загрузки заявок</div>';
+                return;
+            }
             const orders = await res.json();
             const userEmail = currentUser?.email;
-            const userOrders = orders.filter(o => o.contact?.includes(userEmail) || o.name === currentUser?.name);
+            // Проверяем, что orders существует и является массивом
+            const userOrders = (orders && Array.isArray(orders)) ? orders.filter(o => o.contact?.includes(userEmail) || o.name === currentUser?.name) : [];
             const container = document.getElementById('userOrdersList');
             const recentContainer = document.getElementById('recentOrders');
             
             if (!userOrders || userOrders.length === 0) {
-                container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">📭 У вас пока нет заявок</div>';
+                if (container) container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">📭 У вас пока нет заявок</div>';
                 if (recentContainer) recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет заявок</div>';
                 return;
             }
             
-            container.innerHTML = userOrders.map(o => `
-                <div class="dashboard-card" style="margin-bottom:15px;">
-                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
-                        <div><strong>📋 ${o.name || 'Проект'}</strong></div>
-                        <div><span class="badge ${o.status === 'new' ? 'badge-active' : ''}">${o.status === 'new' ? '🆕 Новая' : '✓ Просмотрена'}</span></div>
+            if (container) {
+                container.innerHTML = userOrders.map(o => `
+                    <div class="dashboard-card" style="margin-bottom:15px;">
+                        <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+                            <div><strong>📋 ${o.name || 'Проект'}</strong></div>
+                            <div><span class="badge ${o.status === 'new' ? 'badge-active' : ''}">${o.status === 'new' ? '🆕 Новая' : '✓ Просмотрена'}</span></div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px;">
+                            <div><small>⏰ Срок:</small> ${o.deadline || '—'}</div>
+                            <div><small>💰 Бюджет:</small> ${(o.budget || 0).toLocaleString()} ₽</div>
+                            <div><small>📅 Дата:</small> ${o.date || '—'}</div>
+                        </div>
+                        <div class="progress-bar" style="margin-top:10px;"><div class="progress-fill" style="width:${o.work_status === 'completed' ? 100 : 30}%"></div></div>
                     </div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px;">
-                        <div><small>⏰ Срок:</small> ${o.deadline || '—'}</div>
-                        <div><small>💰 Бюджет:</small> ${(o.budget || 0).toLocaleString()} ₽</div>
-                        <div><small>📅 Дата:</small> ${o.date || '—'}</div>
-                    </div>
-                    <div class="progress-bar" style="margin-top:10px;"><div class="progress-fill" style="width:${o.work_status === 'completed' ? 100 : 30}%"></div></div>
-                </div>
-            `).join('');
+                `).join('');
+            }
             
-            if (recentContainer) {
+            if (recentContainer && userOrders.length > 0) {
                 recentContainer.innerHTML = userOrders.slice(0,3).map(o => `
                     <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.1);">
                         <div><strong>${o.name || 'Проект'}</strong></div>
                         <small>💰 ${(o.budget || 0).toLocaleString()} ₽ | ${o.date || '—'}</small>
                     </div>
                 `).join('');
-                if (userOrders.length === 0) recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет заявок</div>';
+            } else if (recentContainer) {
+                recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет заявок</div>';
             }
-        } catch(e) { console.error(e); }
+        } catch(e) { 
+            console.error('loadUserOrders error:', e);
+            const container = document.getElementById('userOrdersList');
+            if (container) container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">❌ Ошибка загрузки</div>';
+        }
     }
-    
     async function loadUserIdeas() {
         try {
             const res = await fetch('/api/feature-requests');
@@ -528,6 +593,97 @@
     }
     
     loadUserData();
+
+    // ========== АКТЫ СВЕРКИ ==========
+    async function generateReconciliationAct() {
+        const token = localStorage.getItem('token');
+        const counterpartyName = document.getElementById('recCounterpartyName')?.value;
+        const counterpartyINN = document.getElementById('recCounterpartyINN')?.value;
+        const periodStart = document.getElementById('recPeriodStart')?.value;
+        const periodEnd = document.getElementById('recPeriodEnd')?.value;
+        
+        if (!counterpartyName) { alert('❌ Введите название контрагента'); return; }
+        if (!periodStart || !periodEnd) { alert('❌ Выберите период'); return; }
+        
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Формирование...';
+        
+        try {
+            const response = await fetch('/api/reconciliation/generate', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    counterparty_name: counterpartyName,
+                    counterparty_inn: counterpartyINN,
+                    period_start: periodStart,
+                    period_end: periodEnd
+                })
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `act_sverki_${counterpartyName}_${periodStart}_${periodEnd}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+                alert('✅ Акт сверки сформирован!');
+                loadMyReconciliationActs();
+            } else {
+                alert('❌ Ошибка формирования акта');
+            }
+        } catch(e) {
+            console.error(e);
+            alert('❌ Ошибка: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Сформировать PDF';
+        }
+    }
+    
+    async function loadMyReconciliationActs() {
+        const token = localStorage.getItem('token');
+        const container = document.getElementById('myReconciliationActsList');
+        if (!container) return;
+        
+        container.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
+        
+        try {
+            const response = await fetch('/api/reconciliation/acts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            
+            const data = await response.json();
+            
+            if (!data.acts || data.acts.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">📭 Нет сформированных актов сверки</div>';
+                return;
+            }
+            
+            container.innerHTML = data.acts.map(act => `
+                <div style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div>
+                            <strong style="color: #a5b4fc;">🏢 ${act.counterparty_name}</strong>
+                            ${act.counterparty_inn ? `<span style="font-size: 11px; color: #64748b; margin-left: 10px;">ИНН: ${act.counterparty_inn}</span>` : ''}
+                            <div style="font-size: 12px; color: #94a3b8;">📅 ${act.period_start} — ${act.period_end}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 16px; font-weight: 700; color: #34d399;">${(act.closing_balance || 0).toLocaleString()} ₽</div>
+                            <div style="font-size: 11px; color: #64748b;">${act.created_at}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            console.error(e);
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:#f87171;">❌ Ошибка загрузки</div>';
+        }
+    }
 </script>
 </body>
 </html>

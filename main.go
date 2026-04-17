@@ -2072,7 +2072,11 @@ r.PUT("/api/orders/:id/remaining", middleware.AuthMiddleware(cfg), middleware.Ad
     c.JSON(200, gin.H{"success": true})
 })
 
-      r.NoRoute(func(c *gin.Context) {
+          // Акты сверки
+    r.POST("/api/reconciliation/generate", middleware.AuthMiddleware(cfg), handlers.GenerateReconciliationAct)
+    r.GET("/api/reconciliation/acts", middleware.AuthMiddleware(cfg), handlers.GetReconciliationActs)
+
+    r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
             "Version": "3.0",
@@ -2261,3 +2265,5 @@ func handleSocks5Connection(client net.Conn) {
     io.Copy(client, target)
 
 }
+
+
