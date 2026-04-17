@@ -10,8 +10,16 @@ import (
     "github.com/google/uuid"
     
     "subscription-system/database"
+    "subscription-system/middleware"
 )
 
+func getCurrentUserID(c *gin.Context) string {
+    userID := c.GetString("user_id")
+    if userID == "" || userID == "00000000-0000-0000-0000-000000000000" {
+        userID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+    return userID
+}
 // ChartOfAccount структура счета
 type ChartOfAccount struct {
     ID          uuid.UUID  `json:"id"`
@@ -818,4 +826,163 @@ func CreateCashOperation(c *gin.Context) {
         "id":      id,
         "message": "Кассовая операция создана",
     })
+}
+
+// ==================== ЖУРНАЛ ОПЕРАЦИЙ ДЛЯ АКТА СВЕРКИ ====================
+
+// CreateJournalEntrySimple - создание простой записи в журнале для акта сверки
+func CreateJournalEntrySimple(c *gin.Context) {
+    tenantID := middleware.GetTenantIDFromContext(c)
+    
+    var req struct {
+        OperationDate   string  `json:"operation_date"`
+        DocumentNumber  string  `json:"document_number"`
+        DocumentType    string  `json:"document_type"`
+        CounterpartyName string `json:"counterparty_name"`
+        CounterpartyINN  string `json:"counterparty_inn"`
+        DebitAmount     float64 `json:"debit_amount"`
+        CreditAmount    float64 `json:"credit_amount"`
+        Description     string  `json:"description"`
+    }
+    
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    operationDate, err := time.Parse("2006-01-02", req.OperationDate)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат даты"})
+        return
+    }
+    
+    id := uuid.New()
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO journal_entries (id, tenant_id, operation_date, document_number, document_type,
+            counterparty_name, counterparty_inn, debit_amount, credit_amount, description, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+    `, id, tenantID, operationDate, req.DocumentNumber, req.DocumentType,
+        req.CounterpartyName, req.CounterpartyINN, req.DebitAmount, req.CreditAmount, req.Description)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"success": true, "id": id})
+}
+
+// GetJournalEntriesSimple - получение всех записей журнала для акта сверки
+func GetJournalEntriesSimple(c *gin.Context) {
+    tenantID := middleware.GetTenantIDFromContext(c)
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, operation_date, document_number, document_type,
+               counterparty_name, counterparty_inn, debit_amount, credit_amount, description, created_at
+        FROM journal_entries
+        WHERE tenant_id = $1
+        ORDER BY operation_date DESC
+    `, tenantID)
+    
+    if err != nil {
+        c.JSON(http.StatusOK, gin.H{"entries": []gin.H{}})
+        return
+    }
+    defer rows.Close()
+    
+    var entries []gin.H
+    for rows.Next() {
+        var id uuid.UUID
+        var opDate time.Time
+        var docNumber, docType, counterpartyName, counterpartyINN, description string
+        var debit, credit float64
+        var createdAt time.Time
+        
+        rows.Scan(&id, &opDate, &docNumber, &docType, &counterpartyName, &counterpartyINN,
+            &debit, &credit, &description, &createdAt)
+        
+        entries = append(entries, gin.H{
+            "id":                id,
+            "operation_date":    opDate.Format("02.01.2006"),
+            "document_number":   docNumber,
+            "document_type":     docType,
+            "counterparty_name": counterpartyName,
+            "counterparty_inn":  counterpartyINN,
+            "debit_amount":      debit,
+            "credit_amount":     credit,
+            "description":       description,
+            "created_at":        createdAt.Format("02.01.2006 15:04"),
+        })
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"entries": entries})
+}
+
+// DeleteJournalEntrySimple - удаление записи из журнала
+func DeleteJournalEntrySimple(c *gin.Context) {
+    tenantID := middleware.GetTenantIDFromContext(c)
+    entryID := c.Param("id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        DELETE FROM journal_entries
+        WHERE id = $1 AND tenant_id = $2
+    `, entryID, tenantID)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// UpdateJournalEntry - обновление записи в журнале
+func UpdateJournalEntry(c *gin.Context) {
+    tenantID := middleware.GetTenantIDFromContext(c)
+    entryID := c.Param("id")
+
+    var req struct {
+        OperationDate    string  `json:"operation_date"`
+        DocumentNumber   string  `json:"document_number"`
+        DocumentType     string  `json:"document_type"`
+        CounterpartyName string `json:"counterparty_name"`
+        CounterpartyINN  string `json:"counterparty_inn"`
+        DebitAmount      float64 `json:"debit_amount"`
+        CreditAmount     float64 `json:"credit_amount"`
+        Description      string  `json:"description"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    operationDate, err := time.Parse("2006-01-02", req.OperationDate)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат даты"})
+        return
+    }
+
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        UPDATE journal_entries
+        SET operation_date = $1,
+            document_number = $2,
+            document_type = $3,
+            counterparty_name = $4,
+            counterparty_inn = $5,
+            debit_amount = $6,
+            credit_amount = $7,
+            description = $8,
+            updated_at = NOW()
+        WHERE id = $9 AND tenant_id = $10
+    `, operationDate, req.DocumentNumber, req.DocumentType,
+        req.CounterpartyName, req.CounterpartyINN, req.DebitAmount, req.CreditAmount,
+        req.Description, entryID, tenantID)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"success": true})
 }

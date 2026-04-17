@@ -199,7 +199,18 @@
             .info-row { flex-direction: column; gap: 5px; }
             .info-label { width: 100%; }
         }
-    </style>
+            /* Белый календарь */
+        input[type="date"] {
+            color-scheme: dark;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            filter: invert(0.8);
+        }
+</style>
 </head>
 <body>
 <div class="container">
@@ -684,6 +695,62 @@
             container.innerHTML = '<div style="text-align:center; padding:20px; color:#f87171;">❌ Ошибка загрузки</div>';
         }
     }
+    
+    async function editReconciliationAct(actId) {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/reconciliation/act/${actId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const act = await response.json();
+            
+            const newName = prompt("Новое название контрагента:", act.counterparty_name);
+            if (!newName) return;
+            const newINN = prompt("Новый ИНН:", act.counterparty_inn);
+            const newStart = prompt("Новая дата начала (ГГГГ-ММ-ДД):", act.period_start.split('.').reverse().join('-'));
+            const newEnd = prompt("Новая дата окончания (ГГГГ-ММ-ДД):", act.period_end.split('.').reverse().join('-'));
+            
+            const updateResponse = await fetch(`/api/reconciliation/update/${actId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    counterparty_name: newName,
+                    counterparty_inn: newINN,
+                    period_start: newStart,
+                    period_end: newEnd
+                })
+            });
+            
+            if (updateResponse.ok) {
+                alert('✅ Акт обновлён');
+                loadMyReconciliationActs();
+            } else {
+                alert('❌ Ошибка обновления');
+            }
+        } catch(e) { alert('Ошибка: ' + e.message); }
+    }
+    
+    async function deleteReconciliationAct(actId) {
+        if (!confirm('⚠️ Удалить этот акт сверки? Действие необратимо!')) return;
+        
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/reconciliation/delete/${actId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                alert('✅ Акт удалён');
+                loadMyReconciliationActs();
+            } else {
+                alert('❌ Ошибка удаления');
+            }
+        } catch(e) { alert('Ошибка: ' + e.message); }
+    }
 </script>
 </body>
 </html>
+
+
+

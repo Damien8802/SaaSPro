@@ -129,6 +129,8 @@ if err != nil {
     log.Println("✅ tenant_id добавлен во все таблицы")
 }
 
+
+
 // ========== СОЗДАНИЕ ТАБЛИЦЫ ЗАЯВОК ==========
 _, err = database.Pool.Exec(ctx, `
     CREATE TABLE IF NOT EXISTS service_orders (
@@ -159,6 +161,29 @@ if err != nil {
     log.Println("✅ Таблица service_orders готова")
 }
 
+
+// ========== ТАБЛИЦА ЖУРНАЛА ОПЕРАЦИЙ ==========
+_, err = database.Pool.Exec(ctx, `
+    CREATE TABLE IF NOT EXISTS journal_entries (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL,
+        operation_date DATE NOT NULL,
+        document_number VARCHAR(100),
+        document_type VARCHAR(50),
+        counterparty_name VARCHAR(255),
+        counterparty_inn VARCHAR(12),
+        debit_amount DECIMAL(15,2) DEFAULT 0,
+        credit_amount DECIMAL(15,2) DEFAULT 0,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+    );
+`)
+if err != nil {
+    log.Printf("⚠️ Ошибка создания journal_entries: %v", err)
+} else {
+    log.Println("✅ Таблица journal_entries готова")
+}
 // ========== СОЗДАНИЕ ТАБЛИЦЫ ДОРАБОТОК ==========
 _, err = database.Pool.Exec(ctx, `
     CREATE TABLE IF NOT EXISTS feature_requests (
@@ -394,7 +419,19 @@ r.GET("/docs", func(c *gin.Context) {
     r.GET("/transcriptions", handlers.TranscriptionsPage)
     r.GET("/ai-agents", handlers.AIAgentsPage)
     r.GET("/advanced-analytics", handlers.AdvancedAnalyticsPage)
+// Акты сверки
+r.POST("/api/reconciliation/generate", middleware.AuthMiddleware(cfg), handlers.GenerateReconciliationAct)
+r.GET("/api/reconciliation/acts", middleware.AuthMiddleware(cfg), handlers.GetReconciliationActs)
+r.GET("/api/reconciliation/act/:id", middleware.AuthMiddleware(cfg), handlers.GetReconciliationAct)
+r.GET("/api/reconciliation/download/:id", middleware.AuthMiddleware(cfg), handlers.DownloadReconciliationAct)
+r.DELETE("/api/reconciliation/delete/:id", middleware.AuthMiddleware(cfg), handlers.DeleteReconciliationAct)
+r.PUT("/api/reconciliation/update/:id", middleware.AuthMiddleware(cfg), handlers.UpdateReconciliationAct)
 
+// Журнал операций (бухгалтерия)
+r.POST("/api/journal/entry", middleware.AuthMiddleware(cfg), handlers.CreateJournalEntry)
+r.GET("/api/journal/entries", middleware.AuthMiddleware(cfg), handlers.GetJournalEntries)
+r.PUT("/api/journal/entry/:id", middleware.AuthMiddleware(cfg), handlers.UpdateJournalEntry)
+r.DELETE("/api/journal/entry/:id", middleware.AuthMiddleware(cfg), handlers.DeleteJournalEntry)
 
 
     r.GET("/marketplace", handlers.MarketplacePageHandler)
@@ -2072,11 +2109,7 @@ r.PUT("/api/orders/:id/remaining", middleware.AuthMiddleware(cfg), middleware.Ad
     c.JSON(200, gin.H{"success": true})
 })
 
-          // Акты сверки
-    r.POST("/api/reconciliation/generate", middleware.AuthMiddleware(cfg), handlers.GenerateReconciliationAct)
-    r.GET("/api/reconciliation/acts", middleware.AuthMiddleware(cfg), handlers.GetReconciliationActs)
-
-    r.NoRoute(func(c *gin.Context) {
+      r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
             "Version": "3.0",
@@ -2265,5 +2298,3 @@ func handleSocks5Connection(client net.Conn) {
     io.Copy(client, target)
 
 }
-
-

@@ -238,6 +238,7 @@
             <button class="tab-btn active" onclick="showTab('dashboard')"><i class="fas fa-tachometer-alt"></i> Дашборд</button>
             <button class="tab-btn" onclick="showTab('orders')"><i class="fas fa-clipboard-list"></i> Заявки</button>
             <button class="tab-btn" onclick="showTab('finance')"><i class="fas fa-chart-line"></i> Бухгалтерия</button>
+            <button class="tab-btn" onclick="showTab('journal')"><i class="fas fa-book"></i> Журнал операций</button>
             <button class="tab-btn" onclick="showTab('features')"><i class="fas fa-lightbulb"></i> Доработки</button>
             <button class="tab-btn" onclick="showTab('users')"><i class="fas fa-users"></i> Пользователи</button>
             <button class="tab-btn" onclick="showTab('hr')"><i class="fas fa-user-tie"></i> HR</button>
@@ -294,6 +295,55 @@
                 <div class="form-group"><button class="btn-action btn-edit" onclick="recalculateFinance()"><i class="fas fa-sync-alt"></i> Пересчитать</button></div>
             </div>
         </div>
+
+<!-- Журнал операций -->
+<div id="journalTab" class="tab-content">
+    <div class="card">
+        <h3 class="section-title"><i class="fas fa-plus-circle"></i> Добавить операцию</h3>
+        <div class="form-row">
+            <div class="form-group"><input type="date" id="opDate" placeholder="Дата"></div>
+            <div class="form-group"><input type="text" id="opDocNumber" placeholder="Номер документа"></div>
+            <div class="form-group">
+                <select id="opDocType">
+                    <option value="Счет">Счет</option>
+                    <option value="Акт">Акт</option>
+                    <option value="Накладная">Накладная</option>
+                    <option value="Платеж">Платеж</option>
+                </select>
+            </div>
+            <div class="form-group"><input type="text" id="opCounterparty" placeholder="Контрагент"></div>
+            <div class="form-group"><input type="text" id="opINN" placeholder="ИНН"></div>
+            <div class="form-group"><input type="number" id="opDebit" placeholder="Дебет, ₽" step="0.01"></div>
+            <div class="form-group"><input type="number" id="opCredit" placeholder="Кредит, ₽" step="0.01"></div>
+            <div class="form-group"><input type="text" id="opDesc" placeholder="Описание"></div>
+            <div class="form-group"><button class="btn-action btn-save" onclick="addJournalEntry()">➕ Добавить</button></div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="section-title"><i class="fas fa-list"></i> Журнал хозяйственных операций</h3>
+        <div style="overflow-x: auto;">
+            <table class="users-table" id="journalTable">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Номер</th>
+                        <th>Тип</th>
+                        <th>Контрагент</th>
+                        <th>ИНН</th>
+                        <th>Дебет</th>
+                        <th>Кредит</th>
+                        <th>Описание</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="journalList">
+                    <tr><td colspan="9" style="text-align:center;">Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
         
         <!-- ДОРАБОТКИ -->
         <div id="featuresTab" class="tab-content">
@@ -435,6 +485,106 @@
     function loadAllData() { loadDashboardData(); loadOrders(); loadFeatures(); loadUsers(); loadFinanceData(); loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
     loadAllData();
     setInterval(loadAllData, 30000);
+
+    // ========== ЖУРНАЛ ОПЕРАЦИЙ ==========
+    async function loadJournalEntries() {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch('/api/journal/entries', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const tbody = document.getElementById('journalList');
+            
+            if (!data.entries || data.entries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Нет операций</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.entries.map(entry => `
+                <tr>
+                    <td>${entry.operation_date}</td>
+                    <td>${entry.document_number}</td>
+                    <td>${entry.document_type}</td>
+                    <td>${entry.counterparty_name || '—'}</td>
+                    <td>${entry.counterparty_inn || '—'}</td>
+                    <td style="color: #10b981;">${(entry.debit_amount || 0).toLocaleString()} ₽</td>
+                    <td style="color: #f87171;">${(entry.credit_amount || 0).toLocaleString()} ₽</td>
+                    <td>${entry.description || '—'}</td>
+                    <td>
+                        <button class="btn-action btn-delete" onclick="deleteJournalEntry('${entry.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    async function addJournalEntry() {
+        const token = localStorage.getItem('token');
+        const data = {
+            operation_date: document.getElementById('opDate').value,
+            document_number: document.getElementById('opDocNumber').value,
+            document_type: document.getElementById('opDocType').value,
+            counterparty_name: document.getElementById('opCounterparty').value,
+            counterparty_inn: document.getElementById('opINN').value,
+            debit_amount: parseFloat(document.getElementById('opDebit').value) || 0,
+            credit_amount: parseFloat(document.getElementById('opCredit').value) || 0,
+            description: document.getElementById('opDesc').value
+        };
+        
+        if (!data.operation_date) {
+            alert('Укажите дату операции');
+            return;
+        }
+        
+        const res = await fetch('/api/journal/entry', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (res.ok) {
+            alert('✅ Операция добавлена');
+            document.getElementById('opDate').value = '';
+            document.getElementById('opDocNumber').value = '';
+            document.getElementById('opCounterparty').value = '';
+            document.getElementById('opINN').value = '';
+            document.getElementById('opDebit').value = '';
+            document.getElementById('opCredit').value = '';
+            document.getElementById('opDesc').value = '';
+            loadJournalEntries();
+            loadFinanceData();
+        } else {
+            alert('❌ Ошибка добавления');
+        }
+    }
+
+    async function deleteJournalEntry(id) {
+        if (!confirm('Удалить операцию?')) return;
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/journal/entry/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            alert('✅ Операция удалена');
+            loadJournalEntries();
+            loadFinanceData();
+        } else {
+            alert('❌ Ошибка удаления');
+        }
+    }
 </script>
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
+    if (tabName === 'hr') { loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
+    if (tabName === 'dashboard') loadDashboardData();
+    if (tabName === 'finance') loadFinanceData();
+    if (tabName === 'journal') loadJournalEntries();  // <--- ДОБАВЬТЕ ЭТУ СТРОКУ
+}
 </body>
 </html>
