@@ -77,3 +77,7 @@ exports/
 *.backup_*
 project_files.txt
 project_structure.txt
+.env
+.env.local
+*.key
+*.pem
