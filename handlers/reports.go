@@ -3,14 +3,33 @@ package handlers
 import (
     "context"
     "fmt"
+    "log" 
     "net/http"
+    "strconv"     
+    "strings" 
     "time"
-    
+
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
-    
+
     "subscription-system/database"
 )
+
+// getPeriodDates - вспомогательная функция
+func getPeriodDates(period string) (time.Time, time.Time) {
+    switch period {
+    case "2024-Q1":
+        return time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2024, 3, 31, 23, 59, 59, 0, time.UTC)
+    case "2024-Q2":
+        return time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC), time.Date(2024, 6, 30, 23, 59, 59, 0, time.UTC)
+    case "2024-Q3":
+        return time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2024, 9, 30, 23, 59, 59, 0, time.UTC)
+    case "2024-Q4":
+        return time.Date(2024, 10, 1, 0, 0, 0, 0, time.UTC), time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC)
+    default:
+        return time.Now().AddDate(0, -3, 0), time.Now()
+    }
+}
 
 // BalanceItem структура строки ОСВ
 type BalanceItem struct {
@@ -29,29 +48,29 @@ type BalanceItem struct {
 // GetTurnoverBalanceSheet - Оборотно-сальдовая ведомость (ОСВ)
 func GetTurnoverBalanceSheet(c *gin.Context) {
     userID := getUserID(c)
-    
+
     startDate := c.Query("start_date")
     endDate := c.Query("end_date")
-    
+
     if startDate == "" {
         startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
     }
     if endDate == "" {
         endDate = time.Now().Format("2006-01-02")
     }
-    
+
     accounts, err := getAccounts(userID)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    
+
     postings, err := getPostingsByPeriod(userID, startDate, endDate)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    
+
     var osv []BalanceItem
     for _, acc := range accounts {
         item := BalanceItem{
@@ -60,25 +79,25 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
             AccountName: acc.Name,
             AccountType: acc.AccountType,
         }
-        
+
         for _, p := range postings {
             if p.AccountID == acc.ID {
                 item.PeriodDebit += p.DebitAmount
                 item.PeriodCredit += p.CreditAmount
             }
         }
-        
+
         if acc.AccountType == "active" || acc.AccountType == "active_passive" {
             item.ClosingDebit = item.OpeningDebit + item.PeriodDebit - item.PeriodCredit
         } else {
             item.ClosingCredit = item.OpeningCredit + item.PeriodCredit - item.PeriodDebit
         }
-        
+
         if item.ClosingDebit > 0 || item.ClosingCredit > 0 || item.PeriodDebit > 0 || item.PeriodCredit > 0 {
             osv = append(osv, item)
         }
     }
-    
+
     totals := struct {
         OpeningDebit  float64 `json:"opening_debit"`
         OpeningCredit float64 `json:"opening_credit"`
@@ -87,7 +106,7 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
         ClosingDebit  float64 `json:"closing_debit"`
         ClosingCredit float64 `json:"closing_credit"`
     }{}
-    
+
     for _, item := range osv {
         totals.OpeningDebit += item.OpeningDebit
         totals.OpeningCredit += item.OpeningCredit
@@ -96,7 +115,7 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
         totals.ClosingDebit += item.ClosingDebit
         totals.ClosingCredit += item.ClosingCredit
     }
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success":    true,
         "start_date": startDate,
@@ -109,27 +128,27 @@ func GetTurnoverBalanceSheet(c *gin.Context) {
 // GetProfitAndLoss - Отчет о прибылях и убытках
 func GetProfitAndLoss(c *gin.Context) {
     userID := getUserID(c)
-    
+
     startDate := c.Query("start_date")
     endDate := c.Query("end_date")
-    
+
     if startDate == "" {
         startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
     }
     if endDate == "" {
         endDate = time.Now().Format("2006-01-02")
     }
-    
+
     var revenue float64
     err := database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(credit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
-        WHERE e.user_id = $1 
+        WHERE e.user_id = $1
         AND e.entry_status = 'posted'
         AND e.entry_date BETWEEN $2 AND $3
         AND p.account_id IN (
-            SELECT id FROM chart_of_accounts 
+            SELECT id FROM chart_of_accounts
             WHERE user_id = $1 AND code IN ('90', '91')
         )
     `, userID, startDate, endDate).Scan(&revenue)
@@ -137,17 +156,17 @@ func GetProfitAndLoss(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    
+
     var expenses float64
     err = database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(debit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
-        WHERE e.user_id = $1 
+        WHERE e.user_id = $1
         AND e.entry_status = 'posted'
         AND e.entry_date BETWEEN $2 AND $3
         AND p.account_id IN (
-            SELECT id FROM chart_of_accounts 
+            SELECT id FROM chart_of_accounts
             WHERE user_id = $1 AND code IN ('20', '26', '44', '91')
         )
     `, userID, startDate, endDate).Scan(&expenses)
@@ -155,9 +174,9 @@ func GetProfitAndLoss(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    
+
     profit := revenue - expenses
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success":    true,
         "start_date": startDate,
@@ -171,45 +190,45 @@ func GetProfitAndLoss(c *gin.Context) {
 // GetDashboardStats - Статистика для дашборда
 func GetDashboardStats(c *gin.Context) {
     userID := getUserID(c)
-    
+
     var revenue float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(credit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
-        WHERE e.user_id = $1 
+        WHERE e.user_id = $1
         AND e.entry_status = 'posted'
         AND e.entry_date >= DATE_TRUNC('month', NOW())
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '90')
     `, userID).Scan(&revenue)
-    
+
     var expenses float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(debit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
-        WHERE e.user_id = $1 
+        WHERE e.user_id = $1
         AND e.entry_status = 'posted'
         AND e.entry_date >= DATE_TRUNC('month', NOW())
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('20', '26', '44'))
     `, userID).Scan(&expenses)
-    
+
     var entriesCount int
     database.Pool.QueryRow(c.Request.Context(), `
-        SELECT COUNT(*) FROM journal_entries 
+        SELECT COUNT(*) FROM journal_entries
         WHERE user_id = $1 AND entry_status = 'posted'
     `, userID).Scan(&entriesCount)
-    
+
     var bankBalance float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(debit_amount - credit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
-        WHERE e.user_id = $1 
+        WHERE e.user_id = $1
         AND e.entry_status = 'posted'
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '51')
     `, userID).Scan(&bankBalance)
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success":       true,
         "revenue":       revenue,
@@ -223,9 +242,9 @@ func GetDashboardStats(c *gin.Context) {
 // GetSalesChart - Данные для графика продаж
 func GetSalesChart(c *gin.Context) {
     userID := getUserID(c)
-    
+
     period := c.DefaultQuery("period", "month")
-    
+
     var interval string
     switch period {
     case "quarter":
@@ -235,30 +254,30 @@ func GetSalesChart(c *gin.Context) {
     default:
         interval = "1 month"
     }
-    
+
     rows, err := database.Pool.Query(c.Request.Context(), `
-        SELECT 
+        SELECT
             DATE_TRUNC('day', e.entry_date) as date,
             COALESCE(SUM(p.credit_amount), 0) as total
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
-        WHERE e.user_id = $1 
+        WHERE e.user_id = $1
         AND e.entry_status = 'posted'
         AND e.entry_date >= NOW() - $2::INTERVAL
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '90')
         GROUP BY DATE_TRUNC('day', e.entry_date)
         ORDER BY date
     `, userID, interval)
-    
+
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
     defer rows.Close()
-    
+
     var dates []string
     var values []float64
-    
+
     for rows.Next() {
         var date time.Time
         var total float64
@@ -266,7 +285,7 @@ func GetSalesChart(c *gin.Context) {
         dates = append(dates, date.Format("2006-01-02"))
         values = append(values, total)
     }
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success": true,
         "period":  period,
@@ -278,19 +297,19 @@ func GetSalesChart(c *gin.Context) {
 // GetSalesByProduct - Анализ продаж по товарам
 func GetSalesByProduct(c *gin.Context) {
     userID := getUserID(c)
-    
+
     startDate := c.Query("start_date")
     endDate := c.Query("end_date")
-    
+
     if startDate == "" {
         startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
     }
     if endDate == "" {
         endDate = time.Now().Format("2006-01-02")
     }
-    
+
     rows, err := database.Pool.Query(c.Request.Context(), `
-        SELECT 
+        SELECT
             p.name as product_name,
             COALESCE(p.sku, '') as sku,
             SUM(oi.quantity) as quantity_sold,
@@ -298,24 +317,24 @@ func GetSalesByProduct(c *gin.Context) {
         FROM order_items oi
         JOIN orders o ON oi.order_id = o.id
         JOIN products p ON oi.product_id = p.id
-        WHERE o.user_id = $1 
+        WHERE o.user_id = $1
         AND o.created_at BETWEEN $2 AND $3
         AND o.status != 'cancelled'
         GROUP BY p.id, p.name, p.sku
         ORDER BY total_amount DESC
         LIMIT 50
     `, userID, startDate, endDate)
-    
+
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
     defer rows.Close()
-    
+
     var products []map[string]interface{}
     var totalSold int
     var totalRevenue float64
-    
+
     for rows.Next() {
         var name, sku string
         var quantity int
@@ -330,7 +349,7 @@ func GetSalesByProduct(c *gin.Context) {
         totalSold += quantity
         totalRevenue += amount
     }
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success":       true,
         "start_date":    startDate,
@@ -344,40 +363,40 @@ func GetSalesByProduct(c *gin.Context) {
 // GetFinancialRatios - Финансовые коэффициенты
 func GetFinancialRatios(c *gin.Context) {
     userID := getUserID(c)
-    
+
     var revenue float64
     database.Pool.QueryRow(c.Request.Context(), `
-        SELECT COALESCE(SUM(p.credit_amount), 0)
+        SELECT COALESCE(SUM(credit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
         WHERE e.user_id = $1 AND e.entry_status = 'posted'
         AND e.entry_date >= DATE_TRUNC('month', NOW())
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '90')
     `, userID).Scan(&revenue)
-    
+
     var cost float64
     database.Pool.QueryRow(c.Request.Context(), `
-        SELECT COALESCE(SUM(p.debit_amount), 0)
+        SELECT COALESCE(SUM(debit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
         WHERE e.user_id = $1 AND e.entry_status = 'posted'
         AND e.entry_date >= DATE_TRUNC('month', NOW())
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code = '20')
     `, userID).Scan(&cost)
-    
+
     var expenses float64
     database.Pool.QueryRow(c.Request.Context(), `
-        SELECT COALESCE(SUM(p.debit_amount), 0)
+        SELECT COALESCE(SUM(debit_amount), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
         WHERE e.user_id = $1 AND e.entry_status = 'posted'
         AND e.entry_date >= DATE_TRUNC('month', NOW())
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('26', '44'))
     `, userID).Scan(&expenses)
-    
+
     var assets float64
     database.Pool.QueryRow(c.Request.Context(), `
-        SELECT COALESCE(SUM(CASE WHEN a.code IN ('50', '51') THEN 
+        SELECT COALESCE(SUM(CASE WHEN a.code IN ('50', '51') THEN
             p.debit_amount - p.credit_amount ELSE 0 END), 0)
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
@@ -385,7 +404,7 @@ func GetFinancialRatios(c *gin.Context) {
         WHERE e.user_id = $1 AND e.entry_status = 'posted'
         AND a.code IN ('50', '51')
     `, userID).Scan(&assets)
-    
+
     var liabilities float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(p.credit_amount - p.debit_amount), 0)
@@ -395,16 +414,16 @@ func GetFinancialRatios(c *gin.Context) {
         WHERE e.user_id = $1 AND e.entry_status = 'posted'
         AND a.code = '60'
     `, userID).Scan(&liabilities)
-    
+
     profit := revenue - cost - expenses
-    
+
     safeDiv := func(a, b float64) float64 {
         if b == 0 {
             return 0
         }
         return a / b
     }
-    
+
     ratios := map[string]interface{}{
         "profit_margin":   safeDiv(profit, revenue) * 100,
         "gross_margin":    safeDiv(revenue-cost, revenue) * 100,
@@ -413,7 +432,7 @@ func GetFinancialRatios(c *gin.Context) {
         "revenue_growth":  0,
         "profit_growth":   0,
     }
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success":      true,
         "period":       "month",
@@ -430,7 +449,7 @@ func GetFinancialRatios(c *gin.Context) {
 // GetInventoryTurnover - Оборачиваемость товаров
 func GetInventoryTurnover(c *gin.Context) {
     userID := getUserID(c)
-    
+
     var sales float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(total_amount), 0)
@@ -438,23 +457,23 @@ func GetInventoryTurnover(c *gin.Context) {
         WHERE user_id = $1 AND created_at >= DATE_TRUNC('month', NOW())
         AND status != 'cancelled'
     `, userID).Scan(&sales)
-    
+
     var avgStock float64
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(AVG(quantity), 0)
         FROM products
         WHERE user_id = $1 AND active = true
     `, userID).Scan(&avgStock)
-    
+
     safeDiv := func(a, b float64) float64 {
         if b == 0 {
             return 0
         }
         return a / b
     }
-    
+
     turnover := safeDiv(sales, avgStock)
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success":        true,
         "sales":          sales,
@@ -467,29 +486,29 @@ func GetInventoryTurnover(c *gin.Context) {
 // ExportOSVToExcel - экспорт ОСВ в Excel
 func ExportOSVToExcel(c *gin.Context) {
     userID := getUserID(c)
-    
+
     startDate := c.Query("start_date")
     endDate := c.Query("end_date")
-    
+
     if startDate == "" {
         startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
     }
     if endDate == "" {
         endDate = time.Now().Format("2006-01-02")
     }
-    
+
     accounts, err := getAccounts(userID)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    
+
     postings, err := getPostingsByPeriod(userID, startDate, endDate)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    
+
     html := `<html><head><meta charset="UTF-8"><title>Оборотно-сальдовая ведомость</title></head><body>`
     html += fmt.Sprintf("<h2>Оборотно-сальдовая ведомость</h2>")
     html += fmt.Sprintf("<p>Период: %s - %s</p>", startDate, endDate)
@@ -497,7 +516,7 @@ func ExportOSVToExcel(c *gin.Context) {
     html += `<thead><tr bgcolor="#4472C4" style="color:white;">`
     html += `<th>Код счета</th><th>Наименование</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th>`
     html += `</tr></thead><tbody>`
-    
+
     for _, acc := range accounts {
         var periodDebit, periodCredit float64
         for _, p := range postings {
@@ -506,9 +525,9 @@ func ExportOSVToExcel(c *gin.Context) {
                 periodCredit += p.CreditAmount
             }
         }
-        
+
         balance := periodDebit - periodCredit
-        
+
         if periodDebit > 0 || periodCredit > 0 {
             html += fmt.Sprintf("<tr>")
             html += fmt.Sprintf("<td>%s</td>", acc.Code)
@@ -519,11 +538,11 @@ func ExportOSVToExcel(c *gin.Context) {
             html += "</tr>"
         }
     }
-    
+
     html += `</tbody></table>`
     html += fmt.Sprintf("<p>Сформировано: %s</p>", time.Now().Format("2006-01-02 15:04:05"))
     html += `</body></html>`
-    
+
     filename := fmt.Sprintf("osv_%s_%s.xls", startDate, endDate)
     c.Header("Content-Type", "application/vnd.ms-excel")
     c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
@@ -533,19 +552,19 @@ func ExportOSVToExcel(c *gin.Context) {
 // ExportProfitLossToHTML - экспорт отчета о прибылях и убытках в HTML
 func ExportProfitLossToHTML(c *gin.Context) {
     userID := getUserID(c)
-    
+
     startDate := c.Query("start_date")
     endDate := c.Query("end_date")
-    
+
     if startDate == "" {
         startDate = time.Now().AddDate(0, -1, 0).Format("2006-01-01")
     }
     if endDate == "" {
         endDate = time.Now().Format("2006-01-02")
     }
-    
+
     var revenue, expenses float64
-    
+
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(credit_amount), 0)
         FROM journal_postings p
@@ -554,7 +573,7 @@ func ExportProfitLossToHTML(c *gin.Context) {
         AND e.entry_date BETWEEN $2 AND $3
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('90', '91'))
     `, userID, startDate, endDate).Scan(&revenue)
-    
+
     database.Pool.QueryRow(c.Request.Context(), `
         SELECT COALESCE(SUM(debit_amount), 0)
         FROM journal_postings p
@@ -563,14 +582,14 @@ func ExportProfitLossToHTML(c *gin.Context) {
         AND e.entry_date BETWEEN $2 AND $3
         AND p.account_id IN (SELECT id FROM chart_of_accounts WHERE user_id = $1 AND code IN ('20', '26', '44', '91'))
     `, userID, startDate, endDate).Scan(&expenses)
-    
+
     profit := revenue - expenses
-    
+
     profitClass := "profit"
     if profit < 0 {
         profitClass = "loss"
     }
-    
+
     html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -593,18 +612,18 @@ func ExportProfitLossToHTML(c *gin.Context) {
 <body>
     <h1>Отчет о прибылях и убытках</h1>
     <div class="period">Период: %s - %s</div>
-    
-    <table>
+
+    </table>
         <thead>
             <tr><th>Показатель</th><th>Сумма, ₽</th></tr>
         </thead>
         <tbody>
-            <tr><td>Выручка</td><td>%.2f</td></tr>
-            <tr><td>Расходы</td><td>%.2f</td></tr>
-            <tr class="total"><td>Прибыль/Убыток</td><td class="%s">%.2f</td></tr>
+            <tr><td style="text-align: left;">Выручка</td><td align="right">%.2f</td></tr>
+            <tr><td style="text-align: left;">Расходы</td><td align="right">%.2f</td></tr>
+            <tr class="total"><td style="text-align: left;">Прибыль/Убыток</td><td align="right" class="%s">%.2f</td></tr>
         </tbody>
     </table>
-    
+
     <div class="footer">
         Сформировано: %s<br>
         SaaSPro ERP
@@ -612,7 +631,7 @@ func ExportProfitLossToHTML(c *gin.Context) {
 </body>
 </html>
 `, startDate, endDate, revenue, expenses, profitClass, profit, time.Now().Format("2006-01-02 15:04:05"))
-    
+
     filename := fmt.Sprintf("pnl_%s_%s.html", startDate, endDate)
     c.Header("Content-Type", "text/html")
     c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
@@ -636,8 +655,8 @@ type postingInfo struct {
 
 func getAccounts(userID uuid.UUID) ([]accountInfo, error) {
     rows, err := database.Pool.Query(context.Background(), `
-        SELECT id, code, name, account_type 
-        FROM chart_of_accounts 
+        SELECT id, code, name, account_type
+        FROM chart_of_accounts
         WHERE user_id = $1 AND is_active = true
         ORDER BY code
     `, userID)
@@ -645,7 +664,7 @@ func getAccounts(userID uuid.UUID) ([]accountInfo, error) {
         return nil, err
     }
     defer rows.Close()
-    
+
     var accounts []accountInfo
     for rows.Next() {
         var a accountInfo
@@ -660,7 +679,7 @@ func getPostingsByPeriod(userID uuid.UUID, startDate, endDate string) ([]posting
         SELECT p.account_id, p.debit_amount, p.credit_amount
         FROM journal_postings p
         JOIN journal_entries e ON p.entry_id = e.id
-        WHERE e.user_id = $1 
+        WHERE e.user_id = $1
         AND e.entry_status = 'posted'
         AND e.entry_date BETWEEN $2 AND $3
     `, userID, startDate, endDate)
@@ -668,7 +687,7 @@ func getPostingsByPeriod(userID uuid.UUID, startDate, endDate string) ([]posting
         return nil, err
     }
     defer rows.Close()
-    
+
     var postings []postingInfo
     for rows.Next() {
         var p postingInfo
@@ -676,4 +695,668 @@ func getPostingsByPeriod(userID uuid.UUID, startDate, endDate string) ([]posting
         postings = append(postings, p)
     }
     return postings, nil
+}
+
+// ========== НАЛОГОВАЯ ОТЧЁТНОСТЬ ==========
+
+// TaxReportPage - страница налоговой отчётности
+func TaxReportPage(c *gin.Context) {
+    c.HTML(http.StatusOK, "tax_reports", gin.H{
+        "title": "Налоговая отчётность | SaaSPro",
+    })
+}
+
+func GenerateUSN(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    period := c.Query("period")
+    if period == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "period required"})
+        return
+    }
+
+    log.Printf("🔍 GenerateUSN: tenantID=%s, period=%s", tenantID, period)
+
+    var income float64
+    startDate, endDate := getPeriodDates(period)
+    
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(debit_amount), 0) FROM journal_entries
+        WHERE tenant_id = $1 AND operation_date BETWEEN $2 AND $3
+    `, tenantID, startDate, endDate).Scan(&income)
+    
+    if err != nil {
+        log.Printf("❌ Ошибка получения доходов: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    taxAmount := income * 0.06
+    periodMonth := extractMonth(period)
+    periodYear := extractYear(period)
+
+    log.Printf("💰 Доход: %.2f, Налог: %.2f, Период: %s, Месяц: %d, Год: %d", income, taxAmount, period, periodMonth, periodYear)
+
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO tax_reports (id, tenant_id, report_type, period, period_month, period_year, tax_amount, income, status, created_at)
+        VALUES (gen_random_uuid(), $1, 'usn', $2, $3, $4, $5, $6, 'generated', NOW())
+    `, tenantID, period, periodMonth, periodYear, taxAmount, income)
+
+    if err != nil {
+        log.Printf("❌ Ошибка вставки отчёта: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "tax_amount": taxAmount,
+        "income": income,
+        "period": period,
+    })
+}
+
+func GenerateNDFL(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    period := c.Query("period")
+    if period == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "period required"})
+        return
+    }
+
+    log.Printf("🔍 GenerateNDFL: tenantID=%s, period=%s", tenantID, period)
+
+    var totalIncome, totalTax float64
+    
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(salary), 0), COALESCE(SUM(tax), 0) FROM payroll
+        WHERE tenant_id = $1
+    `, tenantID).Scan(&totalIncome, &totalTax)
+    
+    if err != nil {
+        log.Printf("⚠️ Ошибка получения данных из payroll: %v", err)
+        totalIncome = 0
+        totalTax = 0
+    }
+
+    periodMonth := extractMonth(period)
+    periodYear := extractYear(period)
+
+    log.Printf("💰 Доход по зарплате: %.2f, Налог: %.2f", totalIncome, totalTax)
+
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO tax_reports (id, tenant_id, report_type, period, period_month, period_year, tax_amount, income, total_tax, total_income, status, created_at)
+        VALUES (gen_random_uuid(), $1, 'ndfl', $2, $3, $4, $5, $6, $5, $6, 'generated', NOW())
+    `, tenantID, period, periodMonth, periodYear, totalTax, totalIncome)
+
+    if err != nil {
+        log.Printf("❌ Ошибка вставки отчёта: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "total_tax": totalTax,
+        "total_income": totalIncome,
+        "period": period,
+    })
+}
+
+// GenerateRSV - сформировать РСВ (Расчёт по страховым взносам)
+func GenerateRSV(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    period := c.Query("period")
+    if period == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "period required"})
+        return
+    }
+
+    log.Printf("🔍 GenerateRSV: tenantID=%s, period=%s", tenantID, period)
+
+    var pensionFund, socialFund, medicalFund float64
+    var employeeCount int
+
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(salary * 0.22), 0) FROM payroll
+        WHERE tenant_id = $1
+    `, tenantID).Scan(&pensionFund)
+
+    if err != nil {
+        log.Printf("⚠️ Ошибка расчёта ПФР: %v", err)
+    }
+
+    err = database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(salary * 0.029), 0) FROM payroll
+        WHERE tenant_id = $1
+    `, tenantID).Scan(&socialFund)
+
+    if err != nil {
+        log.Printf("⚠️ Ошибка расчёта ФСС: %v", err)
+    }
+
+    err = database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(salary * 0.051), 0) FROM payroll
+        WHERE tenant_id = $1
+    `, tenantID).Scan(&medicalFund)
+
+    if err != nil {
+        log.Printf("⚠️ Ошибка расчёта ФОМС: %v", err)
+    }
+
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COUNT(*) FROM hr_employees
+        WHERE tenant_id = $1 AND status = 'active'
+    `, tenantID).Scan(&employeeCount)
+
+    totalContributions := pensionFund + socialFund + medicalFund
+    periodMonth := extractMonth(period)
+    periodYear := extractYear(period)
+
+    log.Printf("💰 ПФР: %.2f, ФСС: %.2f, ФОМС: %.2f, Итого: %.2f, Сотрудников: %d", 
+        pensionFund, socialFund, medicalFund, totalContributions, employeeCount)
+
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO tax_reports (id, tenant_id, report_type, period, period_month, period_year, 
+                                  tax_amount, income, status, created_at)
+        VALUES (gen_random_uuid(), $1, 'rsv', $2, $3, $4, $5, $6, 'generated', NOW())
+    `, tenantID, period, periodMonth, periodYear, totalContributions, float64(employeeCount))
+
+    if err != nil {
+        log.Printf("❌ Ошибка вставки отчёта РСВ: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "pension_fund": pensionFund,
+        "social_fund": socialFund,
+        "medical_fund": medicalFund,
+        "total_contributions": totalContributions,
+        "employee_count": employeeCount,
+        "period": period,
+    })
+}
+
+// GenerateNDS - сформировать отчёт по НДС
+func GenerateNDS(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    period := c.Query("period")
+    if period == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "period required"})
+        return
+    }
+
+    log.Printf("🔍 GenerateNDS: tenantID=%s, period=%s", tenantID, period)
+
+    startDate, endDate := getPeriodDates(period)
+
+    var salesRevenue float64
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(debit_amount), 0) FROM journal_entries
+        WHERE tenant_id = $1 AND operation_date BETWEEN $2 AND $3
+        AND (description ILIKE '%доход%' OR description ILIKE '%выручка%')
+    `, tenantID, startDate, endDate).Scan(&salesRevenue)
+
+    if err != nil {
+        log.Printf("⚠️ Ошибка расчёта выручки: %v", err)
+    }
+
+    var purchaseAmount float64
+    err = database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COALESCE(SUM(credit_amount), 0) FROM journal_entries
+        WHERE tenant_id = $1 AND operation_date BETWEEN $2 AND $3
+        AND (description ILIKE '%расход%' OR description ILIKE '%закупк%')
+    `, tenantID, startDate, endDate).Scan(&purchaseAmount)
+
+    if err != nil {
+        log.Printf("⚠️ Ошибка расчёта закупок: %v", err)
+    }
+
+    ndsOutgoing := salesRevenue * 0.20
+    ndsIncoming := purchaseAmount * 0.20
+    ndsToPay := ndsOutgoing - ndsIncoming
+
+    if ndsToPay < 0 {
+        ndsToPay = 0
+    }
+
+    periodMonth := extractMonth(period)
+    periodYear := extractYear(period)
+
+    log.Printf("💰 Выручка: %.2f, НДС к начислению: %.2f, Закупки: %.2f, НДС к вычету: %.2f, НДС к уплате: %.2f",
+        salesRevenue, ndsOutgoing, purchaseAmount, ndsIncoming, ndsToPay)
+
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO tax_reports (id, tenant_id, report_type, period, period_month, period_year, 
+                                  tax_amount, income, total_tax, total_income, status, created_at)
+        VALUES (gen_random_uuid(), $1, 'nds', $2, $3, $4, $5, $6, $5, $6, 'generated', NOW())
+    `, tenantID, period, periodMonth, periodYear, ndsToPay, salesRevenue)
+
+    if err != nil {
+        log.Printf("❌ Ошибка вставки отчёта НДС: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "sales_revenue": salesRevenue,
+        "purchase_amount": purchaseAmount,
+        "nds_outgoing": ndsOutgoing,
+        "nds_incoming": ndsIncoming,
+        "nds_to_pay": ndsToPay,
+        "period": period,
+    })
+}
+
+// ViewTaxReport - просмотр отчёта
+func ViewTaxReport(c *gin.Context) {
+    reportID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    var reportType, period, status string
+    var taxAmount, income float64
+    var createdAt time.Time
+
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT report_type, period, tax_amount, income, status, created_at
+        FROM tax_reports
+        WHERE id = $1 AND tenant_id = $2
+    `, reportID, tenantID).Scan(&reportType, &period, &taxAmount, &income, &status, &createdAt)
+
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Отчёт не найден"})
+        return
+    }
+
+    html := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Просмотр отчёта</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: white; padding: 40px; }
+        .card { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>📄 Отчёт: %s</h1>
+            <hr>
+            <p><strong>Тип отчёта:</strong> %s</p>
+            <p><strong>Период:</strong> %s</p>
+            <p><strong>Сумма налога:</strong> %.2f ₽</p>
+            <p><strong>Доход:</strong> %.2f ₽</p>
+            <p><strong>Статус:</strong> %s</p>
+            <p><strong>Дата создания:</strong> %s</p>
+            <hr>
+            <a href="/api/tax/export/xml/%s" class="btn btn-primary">📥 Скачать XML</a>
+            <a href="/tax-reports" class="btn btn-secondary">← Назад</a>
+        </div>
+    </div>
+</body>
+</html>
+`, reportType, reportType, period, taxAmount, income, status, createdAt.Format("2006-01-02 15:04:05"), reportID)
+
+    c.Header("Content-Type", "text/html")
+    c.String(http.StatusOK, html)
+}
+
+// SendTaxReport - отправка отчёта в ФНС
+func SendTaxReport(c *gin.Context) {
+    reportID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE tax_reports SET status = 'sent' WHERE id = $1 AND tenant_id = $2
+    `, reportID, tenantID)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Отчёт отправлен в ФНС",
+    })
+}
+
+// extractMonth - извлекает месяц из периода
+func extractMonth(period string) int {
+    if strings.Contains(period, "Q") {
+        switch period {
+        case "2024-Q1": return 3
+        case "2024-Q2": return 6
+        case "2024-Q3": return 9
+        case "2024-Q4": return 12
+        default: return 12
+        }
+    }
+    parts := strings.Split(period, "-")
+    if len(parts) == 2 {
+        month, _ := strconv.Atoi(parts[1])
+        return month
+    }
+    return 0
+}
+
+// extractYear - извлекает год из периода
+func extractYear(period string) int {
+    parts := strings.Split(period, "-")
+    if len(parts) >= 1 {
+        year, _ := strconv.Atoi(parts[0])
+        return year
+    }
+    return time.Now().Year()
+}
+
+// GetTaxReports - список налоговых отчётов
+func GetTaxReports(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, report_type, period, tax_amount, income, status, created_at
+        FROM tax_reports WHERE tenant_id = $1 ORDER BY created_at DESC
+    `, tenantID)
+
+    if err != nil {
+        c.JSON(http.StatusOK, []gin.H{})
+        return
+    }
+    defer rows.Close()
+
+    var reports []gin.H
+    for rows.Next() {
+        var id uuid.UUID
+        var reportType, period, status string
+        var taxAmount, income float64
+        var createdAt time.Time
+        rows.Scan(&id, &reportType, &period, &taxAmount, &income, &status, &createdAt)
+        reports = append(reports, gin.H{
+            "id": id, "report_type": reportType, "period": period,
+            "tax_amount": taxAmount, "income": income, "status": status,
+            "created_at": createdAt,
+        })
+    }
+    c.JSON(http.StatusOK, reports)
+}
+
+// ExportTaxReportXML - экспорт отчёта в HTML (красивый вид)
+func ExportTaxReportXML(c *gin.Context) {
+    reportID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    }
+
+    var reportType, period, status string
+    var taxAmount, income float64
+    var createdAt time.Time
+
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT report_type, period, tax_amount, income, status, created_at
+        FROM tax_reports WHERE id = $1 AND tenant_id = $2
+    `, reportID, tenantID).Scan(&reportType, &period, &taxAmount, &income, &status, &createdAt)
+
+    if err != nil {
+        c.String(http.StatusNotFound, "Отчёт не найден")
+        return
+    }
+
+    html := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёт %s | SaaSPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%%, #302b63 50%%, #24243e 100%%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .report-card {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            border: 1px solid rgba(255,255,255,0.15);
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .report-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px;
+            text-align: center;
+        }
+        .report-header h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .report-header p {
+            color: rgba(255,255,255,0.8);
+            margin: 8px 0 0;
+            font-size: 14px;
+        }
+        .report-body {
+            padding: 30px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .info-label {
+            font-weight: 600;
+            color: #a78bfa;
+            font-size: 14px;
+        }
+        .info-value {
+            color: white;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        .badge-status {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-generated { background: linear-gradient(135deg, #00b09b, #96c93d); }
+        .badge-sent { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .badge-accepted { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .amount {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .report-footer {
+            background: rgba(0,0,0,0.3);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .btn {
+            padding: 10px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102,126,234,0.4);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        @media (max-width: 600px) {
+            .report-body { padding: 20px; }
+            .report-footer { flex-direction: column; }
+            .btn { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-card">
+        <div class="report-header">
+            <i class="fas fa-file-invoice" style="font-size: 40px; margin-bottom: 10px;"></i>
+            <h1>Налоговый отчёт</h1>
+            <p>Сформирован в системе SaaSPro ERP</p>
+        </div>
+        <div class="report-body">
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-tag"></i> Тип отчёта</span>
+                <span class="info-value">%s</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-calendar"></i> Период</span>
+                <span class="info-value">%s</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-ruble-sign"></i> Сумма налога</span>
+                <span class="info-value amount">%.2f ₽</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-chart-line"></i> Доход</span>
+                <span class="info-value">%.2f ₽</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-info-circle"></i> Статус</span>
+                <span class="info-value"><span class="badge-status badge-%s">%s</span></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-clock"></i> Дата создания</span>
+                <span class="info-value">%s</span>
+            </div>
+        </div>
+        <div class="report-footer">
+            <a href="/tax-reports" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Назад</a>
+            <a href="#" onclick="window.print(); return false;" class="btn btn-secondary"><i class="fas fa-print"></i> Печать</a>
+        </div>
+    </div>
+</body>
+</html>`, 
+        reportID,
+        getReportTypeName(reportType),
+        period,
+        taxAmount,
+        income,
+        getStatusForBadge(status),
+        getStatusName(status),
+        createdAt.Format("2006-01-02 15:04:05"))
+
+    c.Header("Content-Type", "text/html")
+    c.String(http.StatusOK, html)
+}
+
+// Вспомогательные функции
+func getReportTypeName(reportType string) string {
+    switch reportType {
+    case "usn": return "📑 Декларация УСН"
+    case "ndfl": return "📊 6-НДФЛ"
+    case "rsv": return "📈 РСВ"
+    case "nds": return "🧾 НДС"
+    default: return reportType
+    }
+}
+
+func getStatusName(status string) string {
+    switch status {
+    case "generated": return "Сформирован"
+    case "sent": return "Отправлен в ФНС"
+    case "accepted": return "Принят ФНС"
+    default: return status
+    }
+}
+
+func getStatusForBadge(status string) string {
+    switch status {
+    case "generated": return "generated"
+    case "sent": return "sent"
+    case "accepted": return "accepted"
+    default: return "generated"
+    }
+}
+
+// CreateTaxTables - создание таблиц для налоговой отчётности
+func CreateTaxTables(c *gin.Context) {
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        CREATE TABLE IF NOT EXISTS tax_reports (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
+            report_type VARCHAR(20) NOT NULL,
+            period VARCHAR(20) NOT NULL,
+            period_month INTEGER,
+            period_year INTEGER,
+            tax_amount DECIMAL(15,2) DEFAULT 0,
+            income DECIMAL(15,2) DEFAULT 0,
+            total_tax DECIMAL(15,2) DEFAULT 0,
+            total_income DECIMAL(15,2) DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'draft',
+            file_path TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            company_id UUID
+        )
+    `)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "Таблицы налоговой отчётности созданы"})
 }

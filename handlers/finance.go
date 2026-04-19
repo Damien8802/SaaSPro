@@ -5,14 +5,13 @@ import (
     "fmt"
     "net/http"
     "time"
-    
+
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
-    
+
     "subscription-system/database"
     "subscription-system/middleware"
 )
-
 func getCurrentUserID(c *gin.Context) string {
     userID := c.GetString("user_id")
     if userID == "" || userID == "00000000-0000-0000-0000-000000000000" {
@@ -215,83 +214,87 @@ type JournalPosting struct {
     CreatedAt    time.Time `json:"created_at"`
 }
 
-// GetJournalEntries - получить журнал проводок
 func GetJournalEntries(c *gin.Context) {
-    userID := getUserID(c)
-    
+    tenantID := middleware.GetTenantIDFromContext(c)
+    if tenantID == uuid.Nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+    }
+
     startDate := c.Query("start_date")
     endDate := c.Query("end_date")
     status := c.Query("status")
-    
+
     query := `
-        SELECT id, entry_number, entry_date, description, source_type, source_id,
-               total_amount, entry_status, posted_by, posted_at, notes, created_at
+        SELECT id, operation_date, document_number, document_type,
+               counterparty_name, counterparty_inn, debit_amount, credit_amount, 
+               description, created_at, updated_at
         FROM journal_entries
-        WHERE user_id = $1
+        WHERE tenant_id = $1
     `
-    args := []interface{}{userID}
+    args := []interface{}{tenantID}
     argIndex := 2
-    
+
     if startDate != "" {
-        query += fmt.Sprintf(" AND entry_date >= $%d", argIndex)
+        query += fmt.Sprintf(" AND operation_date >= $%d", argIndex)
         args = append(args, startDate)
         argIndex++
     }
     if endDate != "" {
-        query += fmt.Sprintf(" AND entry_date <= $%d", argIndex)
+        query += fmt.Sprintf(" AND operation_date <= $%d", argIndex)
         args = append(args, endDate)
         argIndex++
     }
     if status != "" {
-        query += fmt.Sprintf(" AND entry_status = $%d", argIndex)
+        query += fmt.Sprintf(" AND status = $%d", argIndex)
         args = append(args, status)
         argIndex++
     }
-    
-    query += " ORDER BY entry_date DESC, created_at DESC"
-    
+
+    query += " ORDER BY operation_date DESC LIMIT 100"
+
     rows, err := database.Pool.Query(c.Request.Context(), query, args...)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
     defer rows.Close()
-    
-    var entries []JournalEntry
+
+    var entries []gin.H
     for rows.Next() {
-        var e JournalEntry
-        var sourceID sql.NullString
-        var postedBy sql.NullString
-        var postedAt sql.NullTime
-        
-        err := rows.Scan(
-            &e.ID, &e.EntryNumber, &e.EntryDate, &e.Description,
-            &e.SourceType, &sourceID, &e.TotalAmount, &e.Status,
-            &postedBy, &postedAt, &e.Notes, &e.CreatedAt,
-        )
+        var id uuid.UUID
+        var opDate time.Time
+        var docNumber, docType, counterpartyName, counterpartyINN, description string
+        var debit, credit float64
+        var createdAt, updatedAt time.Time
+
+        err := rows.Scan(&id, &opDate, &docNumber, &docType, &counterpartyName, &counterpartyINN,
+            &debit, &credit, &description, &createdAt, &updatedAt)
         if err != nil {
             continue
         }
-        if sourceID.Valid {
-            id, _ := uuid.Parse(sourceID.String)
-            e.SourceID = &id
-        }
-        if postedBy.Valid {
-            id, _ := uuid.Parse(postedBy.String)
-            e.PostedBy = &id
-        }
-        if postedAt.Valid {
-            e.PostedAt = &postedAt.Time
-        }
-        entries = append(entries, e)
+
+        entries = append(entries, gin.H{
+            "id":                id,
+            "operation_date":    opDate.Format("2006-01-02"),
+            "document_number":   docNumber,
+            "document_type":     docType,
+            "counterparty_name": counterpartyName,
+            "counterparty_inn":  counterpartyINN,
+            "debit_amount":      debit,
+            "credit_amount":     credit,
+            "description":       description,
+            "created_at":        createdAt.Format("2006-01-02 15:04:05"),
+            "updated_at":        updatedAt.Format("2006-01-02 15:04:05"),
+        })
     }
-    
+
     c.JSON(http.StatusOK, gin.H{
         "success": true,
         "entries": entries,
+        "total":   len(entries),
     })
 }
-
 // GetJournalEntry - получить проводку по ID
 func GetJournalEntry(c *gin.Context) {
     userID := getUserID(c)

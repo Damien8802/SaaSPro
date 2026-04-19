@@ -1,0 +1,291 @@
+{{define "scrum_board"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamSphere - Scrum доска | SaaSPro</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        .hero-icon {
+            font-size: 70px;
+            background: linear-gradient(135deg, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .hero-title {
+            font-size: 44px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sprint-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border-radius: 20px;
+            padding: 15px 20px;
+            min-width: 200px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .sprint-card:hover { transform: translateY(-3px); border-color: #a78bfa; }
+        .sprint-card.active { border-color: #a78bfa; background: linear-gradient(135deg, rgba(167,139,250,0.2), rgba(167,139,250,0.1)); }
+        .board-column {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        .column-header { padding: 15px; text-align: center; font-weight: 700; }
+        .column-header.todo { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .column-header.in_progress { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .column-header.review { background: linear-gradient(135deg, #a78bfa, #c084fc); }
+        .column-header.done { background: linear-gradient(135deg, #00b09b, #96c93d); }
+        .column-tasks { min-height: 500px; padding: 15px; }
+        .task-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: grab;
+            transition: all 0.3s;
+            border-left: 3px solid;
+        }
+        .task-card:hover { transform: translateX(5px); background: rgba(255,255,255,0.15); }
+        .priority-high { border-left-color: #f5576c; }
+        .priority-medium { border-left-color: #fee140; }
+        .priority-low { border-left-color: #4facfe; }
+        .btn-grandiose {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-grandiose:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(102,126,234,0.4); }
+        .btn-outline-grandiose {
+            background: transparent;
+            border: 2px solid #a78bfa;
+            padding: 10px 24px;
+            border-radius: 50px;
+            color: #a78bfa;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-outline-grandiose:hover { background: #a78bfa; color: white; }
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+        }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.15);
+            border-color: #a78bfa;
+            color: white;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+        @media (max-width: 1200px) { .board-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .board-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    {{template "navbar" .}}
+    
+    <div class="container mt-4">
+        <div class="text-center py-4 fade-in-up">
+            <i class="fas fa-tasks hero-icon"></i>
+            <h1 class="hero-title mt-3">Scrum доска</h1>
+            <p class="text-muted">Управление спринтами, задачами и командой в Agile формате</p>
+        </div>
+        
+        <div class="row mb-4 fade-in-up" style="animation-delay: 0.1s">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h3><i class="fas fa-rocket" style="color: #a78bfa;"></i> Спринты</h3>
+                    <button class="btn-grandiose" onclick="openSprintModal()">
+                        <i class="fas fa-plus"></i> Новый спринт
+                    </button>
+                </div>
+                <hr>
+                <div id="sprintsList" class="d-flex flex-wrap gap-3 mt-3"></div>
+            </div>
+        </div>
+        
+        <div id="boardContainer" style="display: none;">
+            <div class="board-container" id="scrumBoard" style="display: grid; gap: 20px;"></div>
+        </div>
+        
+        <div id="noSprintMessage" class="text-center py-5 fade-in-up">
+            <i class="fas fa-folder-open fa-4x" style="color: rgba(255,255,255,0.3);"></i>
+            <h4 class="mt-3">Нет выбранного спринта</h4>
+            <p class="text-muted">Выберите спринт из списка выше или создайте новый</p>
+        </div>
+        
+        <div id="analyticsSection" class="row mt-4" style="display: none;">
+            <div class="col-md-6 mb-3">
+                <div class="card" style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px;">
+                    <h5><i class="fas fa-chart-line" style="color: #4facfe;"></i> Burndown Chart</h5>
+                    <canvas id="burndownChart" height="200"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card" style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px;">
+                    <h5><i class="fas fa-tachometer-alt" style="color: #00b09b;"></i> Velocity команды</h5>
+                    <canvas id="velocityChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно спринта -->
+    <div class="modal fade" id="sprintModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Новый спринт</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Название спринта</label><input type="text" class="form-control" id="sprintName" placeholder="Спринт 1"></div>
+                    <div class="mb-3"><label class="form-label">Цель спринта</label><textarea class="form-control" id="sprintGoal" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="form-label">Дата начала</label><input type="date" class="form-control" id="sprintStart"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Дата окончания</label><input type="date" class="form-control" id="sprintEnd"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline-grandiose" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn-grandiose" onclick="createSprint()">Создать спринт</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно задачи -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Новая задача</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Название задачи</label><input type="text" class="form-control" id="taskTitle"></div>
+                    <div class="mb-3"><label class="form-label">Описание</label><textarea class="form-control" id="taskDesc" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="form-label">Story Points</label><select class="form-select" id="taskPoints"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option><option value="8">8</option><option value="13">13</option></select></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Приоритет</label><select class="form-select" id="taskPriority"><option value="low">Низкий</option><option value="medium" selected>Средний</option><option value="high">Высокий</option><option value="critical">Критический</option></select></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline-grandiose" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn-grandiose" onclick="createTask()">Создать задачу</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        let currentSprintId = null;
+        
+        async function loadSprints() {
+            try {
+                const res = await fetch('/api/scrum/sprints', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!res.ok) throw new Error();
+                const sprints = await res.json();
+                const container = document.getElementById('sprintsList');
+                if (!sprints.length) { container.innerHTML = '<div class="text-muted">Нет спринтов. Создайте первый!</div>'; return; }
+                container.innerHTML = sprints.map(s => `<div class="sprint-card ${currentSprintId === s.id ? 'active' : ''}" onclick="selectSprint('${s.id}')"><div class="fw-bold">${s.name}</div><small class="text-muted">${s.status}</small><div class="progress mt-2" style="height:4px"><div class="progress-bar bg-success" style="width:${s.total_points ? (s.completed_points/s.total_points*100) : 0}%"></div></div></div>`).join('');
+            } catch(e) { document.getElementById('sprintsList').innerHTML = '<div class="text-danger">Ошибка загрузки</div>'; }
+        }
+        
+        async function selectSprint(sprintId) {
+            currentSprintId = sprintId;
+            await loadSprints();
+            await loadBoard(sprintId);
+            document.getElementById('boardContainer').style.display = 'block';
+            document.getElementById('noSprintMessage').style.display = 'none';
+            document.getElementById('analyticsSection').style.display = 'flex';
+        }
+        
+        async function loadBoard(sprintId) {
+            try {
+                const res = await fetch(`/api/scrum/board/${sprintId}`, { headers: { 'Authorization': 'Bearer ' + token } });
+                const board = await res.json();
+                const columns = [{key:'todo',title:'📋 To Do'},{key:'in_progress',title:'⚙️ In Progress'},{key:'review',title:'🔍 Review'},{key:'done',title:'✅ Done'}];
+                document.getElementById('scrumBoard').style.gridTemplateColumns = `repeat(${columns.length}, 1fr)`;
+                document.getElementById('scrumBoard').innerHTML = columns.map(col => `<div class="board-column"><div class="column-header ${col.key}">${col.title}</div><div class="column-tasks" data-column="${col.key}">${(board[col.key]||[]).map(t => `<div class="task-card priority-${t.priority}" draggable="true" data-task-id="${t.id}"><div class="fw-bold">${escapeHtml(t.title)}</div><span class="badge bg-secondary">${t.story_points} SP</span><div class="small text-muted mt-1"><i class="fas fa-user"></i> ${t.assignee_name || 'Unassigned'}</div></div>`).join('') || '<div class="text-center text-muted py-3">Нет задач</div>'}</div><div class="p-2 text-center"><button class="btn-outline-grandiose btn-sm" onclick="openTaskModal()">+ Добавить</button></div></div>`).join('');
+                setupDragAndDrop();
+            } catch(e) { console.error(e); }
+        }
+        
+        function setupDragAndDrop() {
+            document.querySelectorAll('.task-card').forEach(t => { t.addEventListener('dragstart', e => e.dataTransfer.setData('taskId', t.dataset.taskId)); });
+            document.querySelectorAll('.column-tasks').forEach(col => { col.addEventListener('dragover', e => e.preventDefault()); col.addEventListener('drop', async e => { e.preventDefault(); const taskId = e.dataTransfer.getData('taskId'); const newStatus = col.dataset.column; await updateTaskStatus(taskId, newStatus); }); });
+        }
+        
+        async function updateTaskStatus(taskId, status) {
+            await fetch(`/api/scrum/task/${taskId}/status`, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+            await loadBoard(currentSprintId);
+        }
+        
+        async function createSprint() {
+            const name = document.getElementById('sprintName').value, goal = document.getElementById('sprintGoal').value, startDate = document.getElementById('sprintStart').value, endDate = document.getElementById('sprintEnd').value;
+            if (!name || !startDate || !endDate) { alert('Заполните все поля'); return; }
+            await fetch('/api/scrum/sprint', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, goal, start_date: startDate, end_date: endDate }) });
+            bootstrap.Modal.getInstance(document.getElementById('sprintModal')).hide();
+            await loadSprints();
+        }
+        
+        async function createTask() {
+            const title = document.getElementById('taskTitle').value, description = document.getElementById('taskDesc').value, storyPoints = parseInt(document.getElementById('taskPoints').value), priority = document.getElementById('taskPriority').value;
+            if (!title) { alert('Введите название'); return; }
+            await fetch('/api/scrum/task', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ sprint_id: currentSprintId, title, description, story_points: storyPoints, priority }) });
+            bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+            await loadBoard(currentSprintId);
+        }
+        
+        function openSprintModal() {
+            const today = new Date().toISOString().split('T')[0];
+            const nextWeek = new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0];
+            document.getElementById('sprintStart').value = today;
+            document.getElementById('sprintEnd').value = nextWeek;
+            new bootstrap.Modal(document.getElementById('sprintModal')).show();
+        }
+        function openTaskModal() { new bootstrap.Modal(document.getElementById('taskModal')).show(); }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        document.addEventListener('DOMContentLoaded', () => { loadSprints(); });
+    </script>
+</body>
+</html>
+{{end}}

@@ -374,6 +374,27 @@ public := r.Group("/")
     })
 }
 
+// Страница скрам-доски
+r.GET("/scrum", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "scrum_board", gin.H{
+        "title": "Scrum Board | TeamSphere",
+    })
+})
+
+// Страница налоговой отчётности
+r.GET("/tax-reports", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "tax_reports", gin.H{
+        "title": "Налоговая отчётность | SaaSPro",
+    })
+})
+
+// Страница расчёта зарплаты
+r.GET("/payroll", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "payroll.html", gin.H{
+        "title": "Расчёт зарплаты | SaaSPro",
+    })
+})
+
 // ========== СТРАНИЦЫ ДОКУМЕНТОВ ==========
 r.GET("/offer", func(c *gin.Context) {
     c.HTML(http.StatusOK, "offer.html", gin.H{
@@ -836,23 +857,86 @@ r.GET("/suppliers", func(c *gin.Context) {
         })
     })
 
-    // ========== РАСЧЁТ ЗАРПЛАТЫ ==========
-    payrollAPI := r.Group("/api/payroll")
-    payrollAPI.Use(middleware.AuthMiddleware(cfg))
-    {
-        payrollAPI.GET("/employees", handlers.GetEmployeesForPayroll)
-        payrollAPI.POST("/calculate", handlers.CalculatePayroll)
-        payrollAPI.GET("/history", handlers.GetPayrollHistory)
-        payrollAPI.POST("/pay", handlers.ProcessPayrollPayment)
-        payrollAPI.POST("/tax-report", handlers.GenerateTaxReport)
-    }
-
-    // Страница расчёта зарплаты
-    r.GET("/payroll", func(c *gin.Context) {
-        c.HTML(http.StatusOK, "payroll.html", gin.H{
-            "title": "Расчёт зарплаты | SaaSPro",
-        })
+// Страница актов сверки
+r.GET("/reconciliation-acts", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "reconciliation_acts", gin.H{
+        "title": "Акты сверки | FinCore",
     })
+})
+
+    // ========== РАСЧЁТ ЗАРПЛАТЫ ==========
+   // ========== РАСШИРЕННЫЙ ЗУП ==========
+payrollAPI := r.Group("/api/payroll")
+payrollAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    payrollAPI.GET("/employees", handlers.GetEmployeesForPayroll)
+    payrollAPI.POST("/calculate", handlers.CalculatePayroll)
+    payrollAPI.GET("/history", handlers.GetPayrollHistory)
+    payrollAPI.POST("/pay", handlers.ProcessPayrollPayment)
+    payrollAPI.POST("/tax-report", handlers.GenerateTaxReport)
+    
+    // НОВЫЕ МАРШРУТЫ
+    payrollAPI.POST("/sick-leave", handlers.CalculateSickLeave)
+    payrollAPI.POST("/vacation", handlers.CalculateVacation)
+    payrollAPI.POST("/alimony", handlers.CalculateAlimony)
+    payrollAPI.POST("/payment-order", handlers.GeneratePaymentOrder)
+    payrollAPI.GET("/employee/:id", handlers.GetEmployeePayrollDetails)
+    payrollAPI.POST("/create-tables", handlers.CreatePayrollTables)
+}
+
+
+// ========== МАССОВЫЙ ИМПОРТ EXCEL ==========
+importAPI := r.Group("/api/import")
+importAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    // Импорт банковских выписок
+    importAPI.POST("/bank-statement", handlers.ImportBankStatement)
+    importAPI.POST("/invoices", handlers.ImportInvoices)
+    importAPI.POST("/acts", handlers.ImportActs)
+    
+    // Шаблоны
+    importAPI.GET("/templates", handlers.GetImportTemplates)
+    importAPI.POST("/create-tables", handlers.CreateImportTables)
+}
+
+
+// ========== ПОМОЩНИК ЗАКРЫТИЯ МЕСЯЦА ==========
+monthEndAPI := r.Group("/api/month-end")
+monthEndAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    monthEndAPI.POST("/start", handlers.StartMonthEndClosing)
+    monthEndAPI.GET("/status", handlers.GetMonthEndStatus)
+    monthEndAPI.GET("/history", handlers.GetMonthEndHistory)
+    monthEndAPI.POST("/create-tables", handlers.CreateMonthEndTables)
+}
+
+// ========== TEAMSPHERE - СКРАМ-ДОСКА ==========
+scrumAPI := r.Group("/api/scrum")
+scrumAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    // Спринты
+    scrumAPI.POST("/sprint", handlers.CreateSprint)
+    scrumAPI.GET("/sprints", handlers.GetSprints)
+    scrumAPI.POST("/sprint/:id/start", handlers.StartSprint)
+    scrumAPI.POST("/sprint/:id/complete", handlers.CompleteSprint)
+    
+    // Задачи
+    scrumAPI.POST("/task", handlers.CreateScrumTask)
+    scrumAPI.GET("/board/:sprint_id", handlers.GetScrumBoard)
+    scrumAPI.PUT("/task/:id/status", handlers.UpdateTaskStatus)
+    scrumAPI.POST("/tasks/reorder", handlers.ReorderTasks)
+    
+    // Комментарии
+    scrumAPI.POST("/task/:id/comment", handlers.AddTaskComment)
+    scrumAPI.GET("/task/:id/comments", handlers.GetTaskComments)
+    
+    // Аналитика
+    scrumAPI.GET("/burndown/:sprint_id", handlers.GetBurndownChart)
+    scrumAPI.GET("/velocity", handlers.GetVelocityChart)
+    
+    // Таблицы
+    scrumAPI.POST("/create-tables", handlers.CreateScrumTables)
+}
 
     // ========== EMAIL-МАРКЕТИНГ ==========
     emailAPI := r.Group("/api/email")
@@ -864,6 +948,20 @@ r.GET("/suppliers", func(c *gin.Context) {
         emailAPI.GET("/templates", handlers.GetEmailTemplates)
         emailAPI.POST("/templates", handlers.CreateEmailTemplate)
     }
+// ========== НАЛОГОВАЯ ОТЧЁТНОСТЬ API ==========
+taxAPI := r.Group("/api/tax")
+taxAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    taxAPI.POST("/generate/usn", handlers.GenerateUSN)
+    taxAPI.POST("/generate/ndfl", handlers.GenerateNDFL)
+    taxAPI.POST("/generate/rsv", handlers.GenerateRSV)      
+    taxAPI.POST("/generate/nds", handlers.GenerateNDS)  
+    taxAPI.GET("/reports", handlers.GetTaxReports)
+    taxAPI.GET("/export/xml/:id", handlers.ExportTaxReportXML)
+    taxAPI.GET("/view/:id", handlers.ViewTaxReport)      
+    taxAPI.POST("/send/:id", handlers.SendTaxReport)      
+    taxAPI.POST("/create-tables", handlers.CreateTaxTables)
+}
 
     // Страница email-маркетинга
     r.GET("/email-marketing", func(c *gin.Context) {
@@ -1133,6 +1231,8 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         logisticsAPI.GET("/stats", handlers.APIGetStats)
         logisticsAPI.GET("/track/:trackingNumber", handlers.TrackAPIHandler)
     }
+
+
     
     // Доставка (оставляем для обратной совместимости)
     deliveryAPI := r.Group("/api/delivery")
