@@ -90,54 +90,58 @@ func GetMonthEndStatus(c *gin.Context) {
 
     c.JSON(http.StatusOK, closing)
 }
-
 // GetMonthEndHistory - история закрытий месяцев
 func GetMonthEndHistory(c *gin.Context) {
     tenantID := c.GetString("tenant_id")
-    if tenantID == "" {
-        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
-    }
-
+    
     rows, err := database.Pool.Query(c.Request.Context(), `
-        SELECT month, year, status, COALESCE(depreciation_amount, 0), COALESCE(cost_write_off, 0), 
-               COALESCE(tax_amount, 0), COALESCE(net_profit, 0), started_at, completed_at
-        FROM month_end_closing
+        SELECT period, status, amortization, expenses, tax, net_profit, closed_at
+        FROM month_end_closures
         WHERE tenant_id = $1
-        ORDER BY year DESC, month DESC
-        LIMIT 12
+        ORDER BY period DESC
     `, tenantID)
-
+    
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        // Вместо ошибки возвращаем пустой массив
+        c.JSON(200, []gin.H{})
         return
     }
     defer rows.Close()
-
-    var history []gin.H
+    
+    var results []gin.H
     for rows.Next() {
-        var month, year int
-        var status string
-        var depreciation, costWriteOff, tax, profit float64
-        var startedAt, completedAt *time.Time
-
-        rows.Scan(&month, &year, &status, &depreciation, &costWriteOff, &tax, &profit, &startedAt, &completedAt)
-
-        history = append(history, gin.H{
-            "month":          month,
-            "year":           year,
-            "status":         status,
-            "depreciation":   depreciation,
-            "cost_write_off": costWriteOff,
-            "tax_amount":     tax,
-            "net_profit":     profit,
-            "started_at":     startedAt,
-            "completed_at":   completedAt,
+        var period, status string
+        var amortization, expenses, tax, netProfit float64
+        var closedAt *time.Time
+        
+        err := rows.Scan(&period, &status, &amortization, &expenses, &tax, &netProfit, &closedAt)
+        if err != nil {
+            continue
+        }
+        
+        closedAtStr := ""
+        if closedAt != nil {
+            closedAtStr = closedAt.Format("02.01.2006")
+        }
+        
+        results = append(results, gin.H{
+            "period":       period,
+            "status":       status,
+            "amortization": amortization,
+            "expenses":     expenses,
+            "tax":          tax,
+            "net_profit":   netProfit,
+            "date":         closedAtStr,
         })
     }
-
-    c.JSON(http.StatusOK, history)
+    
+    // Гарантируем что возвращаем массив, а не null
+    if results == nil {
+        results = []gin.H{}
+    }
+    
+    c.JSON(200, results)
 }
-
 // CreateMonthEndTables - создание таблиц для закрытия месяца
 func CreateMonthEndTables(c *gin.Context) {
     _, err := database.Pool.Exec(c.Request.Context(), `

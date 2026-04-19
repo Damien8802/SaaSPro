@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Импорт данных | FinCore</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102,126,234,0.1) 0%, transparent 50%);
+            animation: rotate 40s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .particle {
+            position: absolute;
+            background: rgba(167, 139, 250, 0.3);
+            border-radius: 50%;
+            animation: floatParticle linear infinite;
+        }
+        @keyframes floatParticle {
+            from { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            to { transform: translateY(-100vh) rotate(360deg); opacity: 1; }
+        }
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        .hero-section {
+            text-align: center;
+            padding: 40px 0 30px;
+        }
+        .hero-icon {
+            font-size: 70px;
+            background: linear-gradient(135deg, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+        @keyframes floatIcon {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .hero-title {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 15px 0 10px;
+        }
+        .hero-subtitle {
+            font-size: 16px;
+            color: rgba(255,255,255,0.6);
+        }
+        .card-modern {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+        .card-modern:hover {
+            border-color: rgba(167,139,250,0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px rgba(102,126,234,0.4);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 24px;
+            border-radius: 50px;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #a78bfa;
+        }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 14px;
+            padding: 12px 16px;
+            color: white;
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.15);
+            border-color: #a78bfa;
+            color: white;
+            outline: none;
+        }
+        .template-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .template-card:hover {
+            transform: translateY(-5px);
+            border-color: #a78bfa;
+            background: rgba(255,255,255,0.08);
+        }
+        .upload-area {
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #a78bfa;
+            background: rgba(255,255,255,0.05);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate { animation: fadeInUp 0.5s ease forwards; }
+        @media (max-width: 768px) {
+            .hero-title { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    <div class="particles" id="particles"></div>
+    {{template "navbar" .}}
+    
+    <div class="main-container">
+        <div class="hero-section animate">
+            <i class="fas fa-file-import hero-icon"></i>
+            <h1 class="hero-title">Импорт данных</h1>
+            <p class="hero-subtitle">Загрузка банковских выписок, счетов и актов из Excel</p>
+        </div>
+        
+        <div class="card-modern animate" style="animation-delay: 0.1s">
+            <h3 class="mb-4"><i class="fas fa-database me-2" style="color: #a78bfa;"></i>Выберите тип данных</h3>
+            <div class="row g-4" id="templatesList">
+                <div class="col-md-3">
+                    <div class="template-card text-center" onclick="selectTemplate('sberbank')">
+                        <i class="fas fa-university" style="font-size: 40px; color: #a78bfa;"></i>
+                        <h5 class="mt-3">Сбербанк</h5>
+                        <p class="small text-muted">Выписка Сбербанк Бизнес</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="template-card text-center" onclick="selectTemplate('tinkoff')">
+                        <i class="fas fa-credit-card" style="font-size: 40px; color: #a78bfa;"></i>
+                        <h5 class="mt-3">Тинькофф</h5>
+                        <p class="small text-muted">Выписка Тинькофф Бизнес</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="template-card text-center" onclick="selectTemplate('invoices')">
+                        <i class="fas fa-file-invoice" style="font-size: 40px; color: #a78bfa;"></i>
+                        <h5 class="mt-3">Счета</h5>
+                        <p class="small text-muted">Счета от поставщиков</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="template-card text-center" onclick="selectTemplate('acts')">
+                        <i class="fas fa-file-signature" style="font-size: 40px; color: #a78bfa;"></i>
+                        <h5 class="mt-3">Акты</h5>
+                        <p class="small text-muted">Акты выполненных работ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-modern animate" style="animation-delay: 0.2s" id="uploadCard" style="display: none;">
+            <h3 class="mb-4"><i class="fas fa-cloud-upload-alt me-2" style="color: #a78bfa;"></i>Загрузить файл</h3>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-file-excel" style="font-size: 48px; color: #10b981;"></i>
+                <p class="mt-3 mb-0">Нажмите или перетащите файл Excel</p>
+                <small class="text-muted">Поддерживаются форматы .xlsx, .xls</small>
+            </div>
+            <input type="file" id="fileInput" style="display: none;" accept=".xlsx,.xls" onchange="uploadFile()">
+            <div id="selectedTemplateInfo" class="mt-3 text-center"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        for(let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = Math.random() * 5 + 2 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 10 + 5 + 's';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            document.getElementById('particles').appendChild(particle);
+        }
+        
+        const token = localStorage.getItem('token');
+        let selectedType = null;
+        
+        async function selectTemplate(type) {
+            selectedType = type;
+            const names = { sberbank: 'Сбербанк', tinkoff: 'Тинькофф', invoices: 'Счета от поставщиков', acts: 'Акты выполненных работ' };
+            document.getElementById('selectedTemplateInfo').innerHTML = `<div class="alert alert-info">Выбран шаблон: <strong>${names[type]}</strong></div>`;
+            document.getElementById('uploadCard').style.display = 'block';
+            document.getElementById('uploadCard').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        async function uploadFile() {
+            const file = document.getElementById('fileInput').files[0];
+            if (!file || !selectedType) return;
+            
+            let url = '';
+            if (selectedType === 'sberbank') url = '/api/import/bank-statement?bank=sberbank';
+            else if (selectedType === 'tinkoff') url = '/api/import/bank-statement?bank=tinkoff';
+            else if (selectedType === 'invoices') url = '/api/import/invoices';
+            else if (selectedType === 'acts') url = '/api/import/acts';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            showNotification('Загрузка файла...', 'info');
+            
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showNotification(`Импортировано ${data.imported_count || 0} записей`, 'success');
+                    document.getElementById('fileInput').value = '';
+                    document.getElementById('uploadCard').style.display = 'none';
+                    document.getElementById('selectedTemplateInfo').innerHTML = '';
+                    selectedType = null;
+                } else {
+                    showNotification(data.error || 'Ошибка импорта', 'error');
+                }
+            } catch(e) {
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+        
+        function showNotification(msg, type) {
+            const colors = { success: '#10b981', error: '#ef4444', info: '#3b82f6' };
+            const div = document.createElement('div');
+            div.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle')} me-2"></i>${msg}`;
+            div.style.cssText = `position:fixed; bottom:30px; right:30px; background:${colors[type]}; color:white; padding:12px 24px; border-radius:12px; z-index:9999; animation:fadeInUp 0.3s; cursor:pointer;`;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+        
+        async function loadTemplates() {
+            try {
+                const res = await fetch('/api/import/templates', { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                console.log('Шаблоны загружены:', data);
+            } catch(e) {}
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadTemplates);
+    </script>
+</body>
+</html>

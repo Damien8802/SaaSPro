@@ -2321,6 +2321,20 @@ r.GET("/api/ai/widget", func(c *gin.Context) {
             "title": "Analytics Center | SaaSPro",
         })
     })
+
+// Страница импорта Excel
+r.GET("/import-excel", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "import-excel.html", gin.H{
+        "title": "Импорт Excel | FinCore",
+    })
+})
+
+// Страница закрытия месяца
+r.GET("/month-end", func(c *gin.Context) {
+    c.HTML(http.StatusOK, "month_end", gin.H{
+        "title": "Закрытие месяца | FinCore",
+    })
+})
     
     // Страница "Мои приложения"
     r.GET("/my-apps", handlers.GetMyApps)
