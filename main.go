@@ -1338,6 +1338,26 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         api.GET("/analytics/insights", handlers.GetInsights)
         api.GET("/analytics/segments", handlers.GetSegmentSummary)
         api.GET("/analytics/cohorts/run", handlers.RunCohortAnalysis)
+
+    // Отмена подписки
+    api.POST("/subscriptions/:id/cancel", func(c *gin.Context) {
+        id := c.Param("id")
+        userID := c.GetString("user_id")
+        
+        log.Printf("📝 Отмена подписки: id=%s, userID=%s", id, userID)
+        
+        _, err := database.Pool.Exec(c.Request.Context(), 
+            "UPDATE subscriptions SET status = 'canceled' WHERE id = $1 AND user_id = $2",
+            id, userID)
+        
+        if err != nil {
+            log.Printf("❌ Ошибка: %v", err)
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка отмены подписки"})
+            return
+        }
+        
+        c.JSON(http.StatusOK, gin.H{"success": true, "message": "Подписка отменена"})
+    })
     }
 
     // ========== API KEYS MANAGEMENT ==========
