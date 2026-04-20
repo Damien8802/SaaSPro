@@ -16,7 +16,7 @@ import (
 // MigrationProject - проект миграции
 type MigrationProject struct {
     ID              int                    `json:"id"`
-    CompanyID       string                 `json:"company_id"`
+    tenantID       string                 `json:"tenant_id"`
     Name            string                 `json:"name"`
     SourceType      string                 `json:"source_type"`
     Status          string                 `json:"status"`
@@ -28,9 +28,9 @@ type MigrationProject struct {
 
 // CreateMigrationProject - создание проекта миграции (ФАЗА 1)
 func CreateMigrationProject(c *gin.Context) {
-    companyID := c.GetString("company_id")
-    if companyID == "" {
-        companyID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
     }
 
     var req struct {
@@ -53,10 +53,10 @@ func CreateMigrationProject(c *gin.Context) {
 
     var id int
     err := database.Pool.QueryRow(c.Request.Context(), `
-        INSERT INTO migration_projects (company_id, name, source_type, status, phase, source_config, sync_direction, created_at)
+        INSERT INTO migration_projects (tenant_id, name, source_type, status, phase, source_config, sync_direction, created_at)
         VALUES ($1, $2, $3, 'planning', 1, $4, $5, NOW())
         RETURNING id
-    `, companyID, req.Name, req.SourceType, configJSON, req.SyncDirection).Scan(&id)
+    `, tenantID, req.Name, req.SourceType, configJSON, req.SyncDirection).Scan(&id)
 
     if err != nil {
         log.Printf("❌ Ошибка создания проекта: %v", err)
@@ -65,7 +65,7 @@ func CreateMigrationProject(c *gin.Context) {
     }
 
     // Запускаем синхронизацию в зависимости от фазы
-    go startSyncPhase(companyID, id, 1)
+    go startSyncPhase(tenantID, id, 1)
 
     c.JSON(http.StatusOK, gin.H{
         "success": true,
@@ -76,17 +76,17 @@ func CreateMigrationProject(c *gin.Context) {
 
 // GetMigrationProjects - список проектов миграции
 func GetMigrationProjects(c *gin.Context) {
-    companyID := c.GetString("company_id")
-    if companyID == "" {
-        companyID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
     }
 
     rows, err := database.Pool.Query(c.Request.Context(), `
         SELECT id, name, source_type, status, phase, sync_direction, created_at
         FROM migration_projects
-        WHERE company_id = $1
+        WHERE tenant_id = $1
         ORDER BY created_at DESC
-    `, companyID)
+    `, tenantID)
 
     if err != nil {
         c.JSON(http.StatusOK, gin.H{"projects": []MigrationProject{}})
@@ -98,7 +98,7 @@ func GetMigrationProjects(c *gin.Context) {
     for rows.Next() {
         var p MigrationProject
         rows.Scan(&p.ID, &p.Name, &p.SourceType, &p.Status, &p.Phase, &p.SyncDirection, &p.CreatedAt)
-        p.CompanyID = companyID
+        p.tenantID = tenantID
         projects = append(projects, p)
     }
 
@@ -108,9 +108,9 @@ func GetMigrationProjects(c *gin.Context) {
 // StartPhase2 - переход к фазе 2 (полный перенос)
 func StartPhase2(c *gin.Context) {
     projectIDStr := c.Param("id")
-    companyID := c.GetString("company_id")
-    if companyID == "" {
-        companyID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
     }
 
     projectID, err := strconv.Atoi(projectIDStr)
@@ -123,8 +123,8 @@ func StartPhase2(c *gin.Context) {
     _, err = database.Pool.Exec(c.Request.Context(), `
         UPDATE migration_projects 
         SET phase = 2, status = 'migrating', updated_at = NOW()
-        WHERE id = $1 AND company_id = $2
-    `, projectID, companyID)
+        WHERE id = $1 AND tenant_id = $2
+    `, projectID, tenantID)
 
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -132,7 +132,7 @@ func StartPhase2(c *gin.Context) {
     }
 
     // Запускаем полную миграцию
-    go startFullMigration(companyID, projectID)
+    go startFullMigration(tenantID, projectID)
 
     c.JSON(http.StatusOK, gin.H{
         "success": true,
@@ -144,9 +144,9 @@ func StartPhase2(c *gin.Context) {
 // StartPhase3 - переход к фазе 3 (постепенный перенос)
 func StartPhase3(c *gin.Context) {
     projectIDStr := c.Param("id")
-    companyID := c.GetString("company_id")
-    if companyID == "" {
-        companyID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
     }
 
     projectID, err := strconv.Atoi(projectIDStr)
@@ -164,8 +164,8 @@ func StartPhase3(c *gin.Context) {
     _, err = database.Pool.Exec(c.Request.Context(), `
         UPDATE migration_projects 
         SET phase = 3, status = 'migrating', updated_at = NOW()
-        WHERE id = $1 AND company_id = $2
-    `, projectID, companyID)
+        WHERE id = $1 AND tenant_id = $2
+    `, projectID, tenantID)
 
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -173,7 +173,7 @@ func StartPhase3(c *gin.Context) {
     }
 
     // Запускаем постепенную миграцию выбранных сущностей
-    go startGradualMigration(companyID, projectID, req.Entities)
+    go startGradualMigration(tenantID, projectID, req.Entities)
 
     c.JSON(http.StatusOK, gin.H{
         "success": true,
@@ -186,9 +186,9 @@ func StartPhase3(c *gin.Context) {
 // GetMigrationStatus - статус миграции
 func GetMigrationStatus(c *gin.Context) {
     projectIDStr := c.Param("id")
-    companyID := c.GetString("company_id")
-    if companyID == "" {
-        companyID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
     }
 
     projectID, err := strconv.Atoi(projectIDStr)
@@ -202,8 +202,8 @@ func GetMigrationStatus(c *gin.Context) {
     err = database.Pool.QueryRow(c.Request.Context(), `
         SELECT id, name, source_type, status, phase, source_config, sync_direction, created_at
         FROM migration_projects
-        WHERE id = $1 AND company_id = $2
-    `, projectID, companyID).Scan(
+       WHERE id = $1 AND tenant_id = $2
+    `, projectID, tenantID).Scan(
         &project.ID, &project.Name, &project.SourceType, &project.Status,
         &project.Phase, &sourceConfigJSON, &project.SyncDirection, &project.CreatedAt,
     )
@@ -241,9 +241,9 @@ func GetMigrationStatus(c *gin.Context) {
 // SyncEntities - ручная синхронизация выбранных сущностей
 func SyncEntities(c *gin.Context) {
     projectIDStr := c.Param("id")
-    companyID := c.GetString("company_id")
-    if companyID == "" {
-        companyID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
     }
 
     projectID, err := strconv.Atoi(projectIDStr)
@@ -261,7 +261,7 @@ func SyncEntities(c *gin.Context) {
         return
     }
 
-    go syncSpecificEntities(companyID, projectID, req.Entities)
+    go syncSpecificEntities(tenantID, projectID, req.Entities)
 
     c.JSON(http.StatusOK, gin.H{
         "success": true,
@@ -271,7 +271,7 @@ func SyncEntities(c *gin.Context) {
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
-func startSyncPhase(companyID string, projectID int, phase int) {
+func startSyncPhase(tenantID string, projectID int, phase int) {
     log.Printf("🔄 Запуск ФАЗЫ %d для проекта %d", phase, projectID)
 
     // Получаем конфигурацию проекта
@@ -290,20 +290,20 @@ func startSyncPhase(companyID string, projectID int, phase int) {
     updateSyncQueue(projectID, "system", "initial_sync", "pending")
 }
 
-func startFullMigration(companyID string, projectID int) {
+func startFullMigration(tenantID string, projectID int) {
     log.Printf("🚀 Запуск ПОЛНОЙ миграции для проекта %d", projectID)
     
     // Мигрируем все данные
     entities := []string{"leads", "contacts", "deals", "products", "invoices", "employees", "departments"}
-    syncSpecificEntities(companyID, projectID, entities)
+    syncSpecificEntities(tenantID, projectID, entities)
 }
 
-func startGradualMigration(companyID string, projectID int, entities []string) {
+func startGradualMigration(tenantID string, projectID int, entities []string) {
     log.Printf("📦 Запуск ПОСТЕПЕННОЙ миграции для проекта %d, сущности: %v", projectID, entities)
-    syncSpecificEntities(companyID, projectID, entities)
+    syncSpecificEntities(tenantID, projectID, entities)
 }
 
-func syncSpecificEntities(companyID string, projectID int, entities []string) {
+func syncSpecificEntities(tenantID string, projectID int, entities []string) {
     // Получаем конфигурацию
     var sourceType string
     var sourceConfigJSON []byte
@@ -369,4 +369,70 @@ func getPhaseDescription(phase int) string {
     default:
         return "Неизвестная фаза"
     }
+}
+
+// StopMigration - остановка миграции
+func StopMigration(c *gin.Context) {
+    id := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        "UPDATE migration_projects SET status = 'stopped', updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        id, tenantID)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"success": true, "message": "Миграция остановлена"})
+}
+
+// DeleteMigrationProject - удаление проекта миграции
+func DeleteMigrationProject(c *gin.Context) {
+    id := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    // Удаляем связанные данные
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        "DELETE FROM migration_stats WHERE project_id = $1", id)
+    if err != nil {
+        // Игнорируем ошибку, если таблицы нет
+    }
+    
+    _, err = database.Pool.Exec(c.Request.Context(), 
+        "DELETE FROM migration_projects WHERE id = $1 AND tenant_id = $2",
+        id, tenantID)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"success": true, "message": "Проект удален"})
+}
+
+// ForcePhaseTransition - принудительный переход на следующую фазу
+func ForcePhaseTransition(c *gin.Context) {
+    id := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    var req struct {
+        Phase int `json:"phase"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+        return
+    }
+    
+    _, err := database.Pool.Exec(c.Request.Context(), 
+        "UPDATE migration_projects SET phase = $1, status = 'phase_active', updated_at = NOW() WHERE id = $2 AND tenant_id = $3",
+        req.Phase, id, tenantID)
+    
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"success": true, "message": fmt.Sprintf("Переход на фазу %d выполнен", req.Phase)})
 }

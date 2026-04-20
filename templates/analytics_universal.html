@@ -226,6 +226,61 @@ function openAIAssistant() {
     window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
 }
 </script>
+<script>
+    function openAIAssistant() {
+        window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
+    }
+    
+    // Функция экспорта данных
+    function exportData(format) {
+        const startDate = document.getElementById('startDate')?.value || '';
+        const endDate = document.getElementById('endDate')?.value || '';
+        
+        let url = '/api/analytics/export/' + format;
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        if (params.toString()) url += '?' + params.toString();
+        
+        window.location.href = url;
+    }
+    
+    // Загрузка аналитики
+    function loadAnalytics() {
+        const startDate = document.getElementById('startDate')?.value || '';
+        const endDate = document.getElementById('endDate')?.value || '';
+        
+        let url = '/api/analytics/data?' + new URLSearchParams({start_date: startDate, end_date: endDate});
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.total_users) document.getElementById('totalUsers').innerText = formatNumber(data.total_users);
+                if (data.total_revenue) document.getElementById('totalRevenue').innerText = formatCurrency(data.total_revenue);
+                if (data.conversion_rate) document.getElementById('conversionRate').innerText = data.conversion_rate + '%';
+                if (data.active_subscriptions) document.getElementById('activeSubscriptions').innerText = formatNumber(data.active_subscriptions);
+            })
+            .catch(err => console.error('Ошибка загрузки:', err));
+    }
+    
+    function formatNumber(num) {
+        return new Intl.NumberFormat('ru-RU').format(num);
+    }
+    
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB', minimumFractionDigits: 0}).format(amount);
+    }
+    
+    // Установка дат по умолчанию
+    const today = new Date();
+    const monthAgo = new Date();
+    monthAgo.setDate(today.getDate() - 30);
+    if (document.getElementById('startDate')) document.getElementById('startDate').value = monthAgo.toISOString().split('T')[0];
+    if (document.getElementById('endDate')) document.getElementById('endDate').value = today.toISOString().split('T')[0];
+    
+    // Загружаем данные при загрузке страницы
+    document.addEventListener('DOMContentLoaded', loadAnalytics);
+</script>
 </body>
 </html>
 

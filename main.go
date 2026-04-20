@@ -1044,6 +1044,11 @@ taxAPI.Use(middleware.AuthMiddleware(cfg))
         migrationAPI.POST("/project/:id/phase2", handlers.StartPhase2)
         migrationAPI.POST("/project/:id/phase3", handlers.StartPhase3)
         migrationAPI.POST("/project/:id/sync", handlers.SyncEntities)
+
+ // НОВЫЕ МАРШРУТЫ ДЛЯ УПРАВЛЕНИЯ МИГРАЦИЕЙ
+    migrationAPI.POST("/project/:id/stop", handlers.StopMigration)
+    migrationAPI.DELETE("/project/:id", handlers.DeleteMigrationProject)
+    migrationAPI.POST("/project/:id/force-phase", handlers.ForcePhaseTransition)
     }
 
     // Страница миграции
@@ -1338,6 +1343,11 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         api.GET("/analytics/insights", handlers.GetInsights)
         api.GET("/analytics/segments", handlers.GetSegmentSummary)
         api.GET("/analytics/cohorts/run", handlers.RunCohortAnalysis)
+    // Экспорт аналитики
+    api.GET("/analytics/export/csv", handlers.ExportAnalyticsCSV)
+    api.GET("/analytics/export/excel", handlers.ExportAnalyticsExcel)
+    api.GET("/analytics/export/pdf", handlers.ExportAnalyticsPDF)
+    api.GET("/analytics/data", handlers.GetAnalyticsData)
 
     // Отмена подписки
     api.POST("/subscriptions/:id/cancel", func(c *gin.Context) {

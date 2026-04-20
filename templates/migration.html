@@ -44,12 +44,10 @@
         @keyframes float2 { 0%,100% { transform: translate(-25%,-25%) scale(1.2); } 50% { transform: translate(-25%,-25%) scale(1); } }
         .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 40px 24px; }
         
-        /* Хедер */
         .page-header { text-align: center; margin-bottom: 50px; }
         .page-title { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #a78bfa, #667eea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
         .page-subtitle { color: rgba(255,255,255,0.5); font-size: 18px; }
         
-        /* 3 Фазы - Timeline */
         .phases-container { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 50px; flex-wrap: wrap; }
         .phase-card {
             flex: 1;
@@ -97,8 +95,8 @@
         .status-pending { background: rgba(245,158,11,0.2); color: #f59e0b; }
         .status-active { background: rgba(16,185,129,0.2); color: #10b981; }
         .status-completed { background: rgba(16,185,129,0.3); color: #10b981; }
+        .status-stopped { background: rgba(239,68,68,0.2); color: #ef4444; }
         
-        /* Карточки */
         .card {
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(20px);
@@ -111,7 +109,6 @@
         .card:hover { border-color: rgba(102,126,234,0.6); box-shadow: 0 10px 30px rgba(102,126,234,0.1); }
         .card-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #a78bfa; }
         
-        /* Прогресс бар */
         .progress-bar {
             height: 8px;
             background: rgba(255,255,255,0.1);
@@ -126,13 +123,11 @@
             transition: width 0.6s ease;
         }
         
-        /* Таблица сущностей */
         .entity-table { width: 100%; border-collapse: collapse; }
         .entity-table th { text-align: left; padding: 14px 12px; color: rgba(255,255,255,0.6); font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .entity-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .entity-checkbox { width: 20px; height: 20px; cursor: pointer; }
         
-        /* Кнопки */
         .btn {
             padding: 12px 28px;
             border-radius: 40px;
@@ -147,8 +142,13 @@
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
         .btn-outline { background: transparent; border: 1px solid rgba(102,126,234,0.5); color: #a78bfa; }
         .btn-outline:hover { background: rgba(102,126,234,0.1); border-color: #667eea; }
+        .btn-danger { background: rgba(239,68,68,0.2); border: 1px solid #ef4444; color: #ef4444; }
+        .btn-danger:hover { background: rgba(239,68,68,0.4); transform: translateY(-2px); }
+        .btn-warning { background: rgba(245,158,11,0.2); border: 1px solid #f59e0b; color: #f59e0b; }
+        .btn-warning:hover { background: rgba(245,158,11,0.4); }
         
-        /* Статистика */
+        .button-group { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
+        
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card {
             background: rgba(0,0,0,0.3);
@@ -159,7 +159,6 @@
         .stat-value { font-size: 28px; font-weight: 700; color: #a78bfa; }
         .stat-label { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 5px; }
         
-        /* Источник данных */
         .source-selector {
             display: flex;
             gap: 15px;
@@ -178,7 +177,6 @@
         .source-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); border-color: transparent; }
         .source-btn:hover { border-color: #667eea; }
         
-        /* Модальное окно */
         .modal {
             display: none;
             position: fixed;
@@ -213,9 +211,50 @@
             to { transform: translateX(0); opacity: 1; }
         }
         
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 9999;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+        }
+        .back-button:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+        
+        .form-control {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            width: 100%;
+        }
+        .form-control:focus { border-color: #667eea; outline: none; }
+        .row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .col { flex: 1; min-width: 200px; }
+        
         @media (max-width: 768px) {
             .phases-container { flex-direction: column; }
             .page-title { font-size: 32px; }
+            .back-button { padding: 10px 20px; font-size: 14px; bottom: 20px; left: 20px; }
+            .button-group { flex-direction: column; }
         }
     </style>
 </head>
@@ -254,40 +293,51 @@
     <div class="card">
         <div class="card-title"><i class="bi bi-database"></i> Источник данных</div>
         <div class="source-selector">
-            <button class="source-btn active" onclick="selectSource('bitrix24')">
+            <button class="source-btn active" onclick="selectSource('bitrix24', this)">
                 <i class="bi bi-microsoft"></i> Bitrix24
             </button>
-            <button class="source-btn" onclick="selectSource('1c')">
+            <button class="source-btn" onclick="selectSource('1c', this)">
                 <i class="bi bi-building"></i> 1С:Предприятие
             </button>
-            <button class="source-btn" onclick="selectSource('amo')">
+            <button class="source-btn" onclick="selectSource('amo', this)">
                 <i class="bi bi-chat-dots"></i> AmoCRM
             </button>
-            <button class="source-btn" onclick="selectSource('custom')">
+            <button class="source-btn" onclick="selectSource('custom', this)">
                 <i class="bi bi-gear"></i> Другая CRM
             </button>
         </div>
         
-        <div id="sourceConfig" style="margin-top: 20px;">
-            <div class="row" style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 8px;">🌐 API URL / Webhook</label>
-                    <input type="text" id="apiUrl" class="form-control" placeholder="https://ваш-битрикс24.bitrix24.ru/rest/1/">
-                </div>
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 8px;">🔑 API Key / Токен</label>
-                    <input type="password" id="apiKey" class="form-control" placeholder="Ваш API ключ">
-                </div>
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 8px;">🏢 ID компании</label>
-                    <input type="text" id="companyId" class="form-control" placeholder="ID компании в старой системе">
+        <form id="sourceForm" onsubmit="return false;">
+            <div id="sourceConfig" style="margin-top: 20px;">
+                <div class="row" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 8px;">🌐 API URL / Webhook</label>
+                        <input type="text" id="apiUrl" class="form-control" placeholder="https://ваш-битрикс24.bitrix24.ru/rest/1/">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 8px;">🔑 API Key / Токен</label>
+                        <input type="password" id="apiKey" class="form-control" placeholder="Ваш API ключ" autocomplete="current-password">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 8px;">🏢 ID компании</label>
+                        <input type="text" id="companyId" class="form-control" placeholder="ID компании в старой системе">
+                    </div>
                 </div>
             </div>
-        </div>
+        </form>
         
-        <div style="margin-top: 20px;">
+        <div class="button-group">
             <button class="btn btn-primary" onclick="createMigrationProject()">
                 <i class="bi bi-play-fill"></i> Запустить миграцию
+            </button>
+            <button class="btn btn-danger" onclick="stopMigration()">
+                <i class="bi bi-stop-fill"></i> Остановить миграцию
+            </button>
+            <button class="btn btn-warning" onclick="forceNextPhase()">
+                <i class="bi bi-fast-forward-fill"></i> Принудительно завершить фазу
+            </button>
+            <button class="btn btn-outline" onclick="resetMigration()">
+                <i class="bi bi-arrow-repeat"></i> Сбросить проект
             </button>
         </div>
     </div>
@@ -338,48 +388,37 @@
     </div>
 </div>
 
-<style>
-    .form-control {
-        background: rgba(0,0,0,0.5);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 12px;
-        padding: 12px 16px;
-        color: white;
-        width: 100%;
-    }
-    .form-control:focus { border-color: #667eea; outline: none; }
-    .row { display: flex; gap: 15px; flex-wrap: wrap; }
-    .col { flex: 1; min-width: 200px; }
-</style>
+<!-- Кнопка назад -->
+<a href="javascript:history.back()" class="back-button" title="Назад">
+    <i class="bi bi-arrow-left"></i> Назад
+</a>
 
 <script>
     let currentSource = 'bitrix24';
     let currentProjectId = null;
     let currentPhase = 1;
     let refreshInterval = null;
+    let isMigrationActive = true;
     
     // Выбор источника
-    function selectSource(source) {
+    function selectSource(source, btn) {
         currentSource = source;
-        document.querySelectorAll('.source-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         
-        // Меняем плейсхолдеры
         const apiUrl = document.getElementById('apiUrl');
         const apiKey = document.getElementById('apiKey');
         
-        if (source === 'bitrix24') {
-            apiUrl.placeholder = 'https://ваш-битрикс24.bitrix24.ru/rest/1/';
-            apiKey.placeholder = 'Webhook токен Bitrix24';
-        } else if (source === '1c') {
-            apiUrl.placeholder = 'http://localhost:8080/1c/hs/api/';
-            apiKey.placeholder = 'API ключ 1С';
-        } else if (source === 'amo') {
-            apiUrl.placeholder = 'https://ваш-аккаунт.amocrm.ru/';
-            apiKey.placeholder = 'Client Secret / Access Token';
-        } else {
-            apiUrl.placeholder = 'https://ваша-crm.com/api/';
-            apiKey.placeholder = 'API ключ';
+        const placeholders = {
+            bitrix24: ['https://ваш-битрикс24.bitrix24.ru/rest/1/', 'Webhook токен Bitrix24'],
+            '1c': ['http://localhost:8080/1c/hs/api/', 'API ключ 1С'],
+            amo: ['https://ваш-аккаунт.amocrm.ru/', 'Client Secret / Access Token'],
+            custom: ['https://ваша-crm.com/api/', 'API ключ']
+        };
+        
+        if (placeholders[source]) {
+            apiUrl.placeholder = placeholders[source][0];
+            apiKey.placeholder = placeholders[source][1];
         }
     }
     
@@ -419,14 +458,130 @@
             const data = await res.json();
             if (data.success) {
                 currentProjectId = data.project_id;
+                isMigrationActive = true;
                 showToast('✅ Проект создан! Фаза 1 запущена', 'success');
                 document.getElementById('projectInfo').style.display = 'block';
                 startPolling();
+                addLog('🚀 Проект миграции создан. Фаза 1 активна.');
             } else {
-                showToast('❌ Ошибка: ' + data.error, 'error');
+                showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
             }
         } catch(e) {
-            showToast('❌ Ошибка подключения', 'error');
+            showToast('❌ Ошибка подключения к серверу', 'error');
+            console.error(e);
+        }
+    }
+    
+    // Остановка миграции
+    async function stopMigration() {
+        if (!currentProjectId) {
+            showToast('⚠️ Нет активного проекта миграции!', 'warning');
+            return;
+        }
+        
+        if (confirm('Остановить миграцию? Вы сможете продолжить позже.')) {
+            showToast('🛑 Остановка миграции...', 'info');
+            addLog('⏸️ Остановка миграции...');
+            try {
+                const res = await fetch(`/api/migration/project/${currentProjectId}/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    isMigrationActive = false;
+                    showToast('✅ Миграция остановлена', 'success');
+                    addLog('⏸️ Миграция остановлена пользователем.');
+                    if (refreshInterval) clearInterval(refreshInterval);
+                } else {
+                    showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                }
+            } catch(e) {
+                showToast('❌ Ошибка подключения', 'error');
+            }
+        }
+    }
+    
+    // Принудительное завершение текущей фазы
+    async function forceNextPhase() {
+        if (!currentProjectId) {
+            showToast('⚠️ Нет активного проекта', 'warning');
+            return;
+        }
+        
+        let nextPhase = currentPhase + 1;
+        if (nextPhase > 3) {
+            showToast('✅ Миграция уже завершена!', 'success');
+            return;
+        }
+        
+        if (confirm(`Принудительно завершить ФАЗУ ${currentPhase} и перейти к ФАЗЕ ${nextPhase}?`)) {
+            showToast(`🚀 Завершение ФАЗЫ ${currentPhase}...`, 'info');
+            addLog(`⚡ Принудительное завершение ФАЗЫ ${currentPhase}`);
+            try {
+                const res = await fetch(`/api/migration/project/${currentProjectId}/force-phase`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phase: nextPhase })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentPhase = nextPhase;
+                    updatePhaseStatus();
+                    showToast(`✅ Фаза ${currentPhase - 1} завершена, переход к фазе ${currentPhase}`, 'success');
+                    addLog(`✅ ФАЗА ${currentPhase - 1} завершена. Переход к ФАЗЕ ${currentPhase}`);
+                    
+                    if (currentPhase === 3) {
+                        document.getElementById('phase3Entities').style.display = 'block';
+                        addLog('🎯 ФАЗА 3: Выберите сущности для переноса');
+                    }
+                    loadStatus();
+                } else {
+                    showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                }
+            } catch(e) {
+                showToast('❌ Ошибка подключения', 'error');
+            }
+        }
+    }
+    
+    // Сброс проекта
+    async function resetMigration() {
+        if (!currentProjectId) {
+            showToast('⚠️ Нет активного проекта', 'warning');
+            return;
+        }
+        
+        if (confirm('СБРОС: Все данные миграции будут удалены. Продолжить?')) {
+            showToast('🔄 Сброс проекта...', 'info');
+            addLog('🗑️ Сброс проекта миграции');
+            try {
+                const res = await fetch(`/api/migration/project/${currentProjectId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('✅ Проект удален. Создайте новый.', 'success');
+                    addLog('✅ Проект миграции удален');
+                    currentProjectId = null;
+                    currentPhase = 1;
+                    isMigrationActive = true;
+                    document.getElementById('projectInfo').style.display = 'none';
+                    document.getElementById('phase3Entities').style.display = 'none';
+                    if (refreshInterval) clearInterval(refreshInterval);
+                    
+                    document.getElementById('phase1Status').innerHTML = '⏳ Ожидание';
+                    document.getElementById('phase2Status').innerHTML = '⏳ Ожидание';
+                    document.getElementById('phase3Status').innerHTML = '⏳ Ожидание';
+                    document.querySelectorAll('.phase-card').forEach(card => {
+                        card.classList.remove('active', 'completed');
+                    });
+                } else {
+                    showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                }
+            } catch(e) {
+                showToast('❌ Ошибка подключения', 'error');
+            }
         }
     }
     
@@ -444,20 +599,25 @@
         } else if (phase === 3 && currentPhase < 3) {
             document.getElementById('phase3Entities').style.display = 'block';
             document.getElementById('phase3Entities').scrollIntoView({ behavior: 'smooth' });
+            addLog('🎯 Открыт выбор сущностей для ФАЗЫ 3');
         }
     }
     
     async function startPhase2() {
         showToast('🚀 Запуск ФАЗЫ 2: Полный перенос данных...', 'info');
+        addLog('🚀 Запуск ФАЗЫ 2 - полный перенос данных');
         try {
             const res = await fetch(`/api/migration/project/${currentProjectId}/phase2`, { method: 'POST' });
             const data = await res.json();
             if (data.success) {
-                showToast(data.message, 'success');
+                showToast(data.message || 'Фаза 2 запущена', 'success');
                 currentPhase = 2;
                 updatePhaseStatus();
+                addLog('✅ ФАЗА 2 успешно запущена');
+            } else {
+                showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
             }
-        } catch(e) { showToast('❌ Ошибка', 'error'); }
+        } catch(e) { showToast('❌ Ошибка подключения', 'error'); }
     }
     
     async function migrateSelected() {
@@ -472,6 +632,7 @@
         }
         
         showToast(`🔄 Перенос выбранных сущностей: ${selected.join(', ')}`, 'info');
+        addLog(`🔄 Запуск переноса сущностей: ${selected.join(', ')}`);
         
         try {
             const res = await fetch(`/api/migration/project/${currentProjectId}/phase3`, {
@@ -481,12 +642,15 @@
             });
             const data = await res.json();
             if (data.success) {
-                showToast(data.message, 'success');
+                showToast(data.message || 'Перенос запущен', 'success');
                 currentPhase = 3;
                 updatePhaseStatus();
                 startPolling();
+                addLog('✅ Перенос выбранных сущностей запущен');
+            } else {
+                showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
             }
-        } catch(e) { showToast('❌ Ошибка', 'error'); }
+        } catch(e) { showToast('❌ Ошибка подключения', 'error'); }
     }
     
     // Получение статуса
@@ -506,14 +670,23 @@
     
     function updateUI(data) {
         const project = data.project;
-        const stats = data.stats;
+        const stats = data.stats || { synced: 0, pending: 0, failed: 0, total: 0 };
+        
+        if (project.phase && project.phase !== currentPhase) {
+            currentPhase = project.phase;
+            addLog(`📊 Переход к ФАЗЕ ${currentPhase}`);
+            if (currentPhase === 3) {
+                document.getElementById('phase3Entities').style.display = 'block';
+            }
+        }
         
         document.getElementById('projectDetails').innerHTML = `
             <div class="row">
-                <div class="col"><strong>📋 Название:</strong> ${project.name}</div>
-                <div class="col"><strong>🔄 Источник:</strong> ${project.source_type}</div>
-                <div class="col"><strong>📊 Фаза:</strong> ${project.phase}</div>
+                <div class="col"><strong>📋 Название:</strong> ${project.name || '—'}</div>
+                <div class="col"><strong>🔄 Источник:</strong> ${project.source_type || '—'}</div>
+                <div class="col"><strong>📊 Фаза:</strong> ${project.phase || 1}</div>
                 <div class="col"><strong>🔁 Синхронизация:</strong> ${project.sync_direction === 'two_way' ? 'Двусторонняя' : 'Односторонняя'}</div>
+                <div class="col"><strong>⚡ Статус:</strong> ${isMigrationActive ? '🟢 Активна' : '🔴 Остановлена'}</div>
             </div>
         `;
         
@@ -521,21 +694,30 @@
         document.getElementById('progressFill').style.width = percent + '%';
         
         document.getElementById('statsContainer').innerHTML = `
-            <div class="stat-card"><div class="stat-value">${stats.synced}</div><div class="stat-label">✅ Синхронизировано</div></div>
-            <div class="stat-card"><div class="stat-value">${stats.pending}</div><div class="stat-label">⏳ В очереди</div></div>
-            <div class="stat-card"><div class="stat-value">${stats.failed}</div><div class="stat-label">❌ Ошибок</div></div>
-            <div class="stat-card"><div class="stat-value">${stats.total}</div><div class="stat-label">📊 Всего</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.synced || 0}</div><div class="stat-label">✅ Синхронизировано</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.pending || 0}</div><div class="stat-label">⏳ В очереди</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.failed || 0}</div><div class="stat-label">❌ Ошибок</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.total || 0}</div><div class="stat-label">📊 Всего</div></div>
         `;
         
-        document.getElementById('phase1Status').innerHTML = project.phase >= 1 ? '✅ Активна' : '⏳ Ожидание';
-        document.getElementById('phase1Status').className = 'phase-status status-active';
-        if (project.phase >= 2) document.getElementById('phase2Status').innerHTML = '✅ Выполнена';
-        if (project.phase >= 3) document.getElementById('phase3Status').innerHTML = '✅ Выполнена';
+        if (project.phase >= 1) {
+            document.getElementById('phase1Status').innerHTML = '✅ Активна';
+            document.getElementById('phase1Status').className = 'phase-status status-active';
+        }
+        if (project.phase >= 2) {
+            document.getElementById('phase2Status').innerHTML = '✅ Выполнена';
+            document.getElementById('phase2Status').className = 'phase-status status-completed';
+        }
+        if (project.phase >= 3) {
+            document.getElementById('phase3Status').innerHTML = '✅ Выполнена';
+            document.getElementById('phase3Status').className = 'phase-status status-completed';
+        }
     }
     
     function updatePhaseStatus() {
         document.querySelectorAll('.phase-card').forEach((card, idx) => {
             const phaseNum = idx + 1;
+            card.classList.remove('active', 'completed');
             if (currentPhase >= phaseNum) {
                 card.classList.add('completed');
             } else if (currentPhase === phaseNum - 1) {
@@ -554,9 +736,18 @@
         refreshInterval = setInterval(loadStatus, 3000);
     }
     
+    function addLog(message) {
+        const logContainer = document.getElementById('logContainer');
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `📌 ${new Date().toLocaleTimeString()} - ${message}`;
+        logContainer.appendChild(logEntry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = 'toast';
+        toast.style.borderLeftColor = type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981';
         toast.innerHTML = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
@@ -569,27 +760,19 @@
             const data = await res.json();
             if (data.projects && data.projects.length > 0) {
                 currentProjectId = data.projects[0].id;
-                currentPhase = data.projects[0].phase;
+                currentPhase = data.projects[0].phase || 1;
                 document.getElementById('projectInfo').style.display = 'block';
                 startPolling();
                 loadStatus();
+                addLog('📂 Загружен существующий проект миграции');
+                if (currentPhase === 3) {
+                    document.getElementById('phase3Entities').style.display = 'block';
+                }
             }
         } catch(e) { console.error(e); }
     }
     
     loadProjects();
-</script>
-<div class="ai-floating-widget">
-    <div class="ai-widget-button" onclick="openAIAssistant()">
-        🤖
-        <div class="ai-widget-badge">●</div>
-    </div>
-    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
-</div>
-<script>
-function openAIAssistant() {
-    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
-}
 </script>
 </body>
 </html>
