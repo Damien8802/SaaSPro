@@ -1,506 +1,355 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Реферальная программа - SaaSPro</title>
+    <title>Реферальная программа | SaaSPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .header {
-            background: white;
-            border-radius: 30px;
             padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            text-align: center;
+            color: #ffffff;
         }
-        .header h1 {
-            font-size: 32px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .header p {
-            color: #666;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 36px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        .stat-label {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .referral-box {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .referral-box h2 {
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: #333;
-        }
-        .link-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .referral-link {
-            flex: 1;
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 16px;
-        }
-        .btn-copy {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .btn-copy:hover { opacity: 0.9; transform: scale(1.02); }
-        
-        .bonus-info {
-            background: #f0f3ff;
-            border-radius: 15px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .bonus-amount {
-            font-size: 28px;
-            font-weight: bold;
-            color: #4caf50;
-        }
-        .btn-withdraw {
-            background: #4caf50;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .btn-withdraw:hover { opacity: 0.9; transform: scale(1.02); }
-        
-        .table-section {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            text-align: left;
-            padding: 12px;
-            background: #f8f9fa;
-            color: #666;
-            font-weight: 600;
-        }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            color: #333;
-        }
-        .badge-active {
-            background: #4caf50;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-        .badge-pending {
-            background: #ff9800;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-        .badge-completed {
-            background: #2196f3;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-        
-        .how-it-works {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .step {
-            text-align: center;
-        }
-        .step-number {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-        }
-        
-        .back-link {
-            display: inline-block;
-            margin-top: 20px;
-            color: white;
-            text-decoration: none;
-            background: rgba(255,255,255,0.2);
-            padding: 10px 20px;
-            border-radius: 10px;
-        }
-        .back-link:hover { background: rgba(255,255,255,0.3); }
-        
-        /* Кнопка назад */
-        .back-button {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 12px 28px;
-            border-radius: 40px !important;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-            z-index: 9999;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            border: none;
-        }
-        .back-button:hover {
-            transform: translateY(-3px);
-            background: linear-gradient(135deg, #764ba2, #667eea);
-            color: white;
-            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
-            text-decoration: none;
-        }
-        
-        @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .steps { grid-template-columns: 1fr; }
-            .back-button { padding: 10px 20px; font-size: 14px; bottom: 20px; right: 20px; }
-        }
-        
-        input, select { outline: none; }
-        input:focus, select:focus { border-color: #667eea; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .page-header { text-align: center; margin-bottom: 40px; }
+        .page-title { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, #fbbf24, #f59e0b, #667eea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .page-subtitle { color: #94a3b8; font-size: 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: rgba(251, 191, 36, 0.1); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid rgba(251, 191, 36, 0.3); transition: all 0.3s; }
+        .stat-card:hover { background: rgba(251, 191, 36, 0.15); transform: translateY(-3px); }
+        .stat-icon { font-size: 32px; color: #fbbf24; margin-bottom: 12px; }
+        .stat-value { font-size: 32px; font-weight: 700; color: #fbbf24; }
+        .stat-label { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+        .card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-radius: 24px; padding: 24px; border: 1px solid rgba(251, 191, 36, 0.3); transition: all 0.3s; margin-bottom: 24px; }
+        .card:hover { border-color: rgba(251, 191, 36, 0.6); transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .ref-link-container { display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 8px 8px 8px 20px; margin-top: 15px; }
+        .ref-link { flex: 1; font-family: monospace; font-size: 14px; color: #fbbf24; word-break: break-all; background: transparent; border: none; }
+        .copy-btn { background: linear-gradient(135deg, #fbbf24, #f59e0b); border: none; padding: 10px 24px; border-radius: 40px; color: #1a1a2e; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .copy-btn:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(251,191,36,0.4); }
+        .table-container { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; color: #fbbf24; border-bottom: 1px solid rgba(251,191,36,0.3); }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #cbd5e1; }
+        .badge-active { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        .badge-pending { background: #f59e0b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        .badge-completed { background: #3b82f6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        .rank-badge { display: inline-block; width: 28px; height: 28px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #1a1a2e; }
+        .btn-withdraw { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 30px; border-radius: 40px; cursor: pointer; transition: all 0.3s; font-weight: 500; width: 100%; }
+        .btn-withdraw:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(16,185,129,0.4); }
+        .form-control { background: rgba(0,0,0,0.3); border: 1px solid rgba(251,191,36,0.3); border-radius: 12px; padding: 12px; color: white; width: 100%; }
+        .form-control:focus { outline: none; border-color: #fbbf24; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .back-button { position: fixed; bottom: 30px; right: 30px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1a1a2e; padding: 12px 28px; border-radius: 40px; display: flex; align-items: center; gap: 10px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: all 0.3s; z-index: 9999; cursor: pointer; font-size: 16px; font-weight: 500; border: none; }
+        .back-button:hover { transform: translateY(-3px); background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1a1a2e; box-shadow: 0 8px 25px rgba(251,191,36,0.4); }
+        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; } .back-button { padding: 10px 20px; font-size: 14px; bottom: 20px; right: 20px; } body { padding: 20px; } .page-title { font-size: 28px; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎁 Реферальная программа</h1>
-            <p>Приглашайте друзей и получайте бонусы на счёт</p>
-        </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="invitedCount">0</div>
-                <div class="stat-label">Приглашено</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="activeCount">0</div>
-                <div class="stat-label">Активных</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="earnedAmount">0 ₽</div>
-                <div class="stat-label">Заработано</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="availableAmount">0 ₽</div>
-                <div class="stat-label">Доступно</div>
-            </div>
-        </div>
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title"><i class="fas fa-gift"></i> Реферальная программа</h1>
+        <p class="page-subtitle">Приглашайте друзей и получайте бонусы до 20% от их платежей</p>
+    </div>
 
-        <div class="referral-box">
-            <h2>🔗 Ваша реферальная ссылка</h2>
-            <div class="link-container">
-                <input type="text" class="referral-link" id="referralLink" value="Загрузка..." readonly>
-                <button class="btn-copy" onclick="copyLink()">Копировать</button>
-            </div>
-            
-            <div class="bonus-info">
-                <span>Доступно для вывода:</span>
-                <span class="bonus-amount" id="availableBonus">0 ₽</span>
-                <button class="btn-withdraw" onclick="scrollToPayout()">Вывести</button>
-            </div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-value" id="invitedCount">0</div>
+            <div class="stat-label">Приглашено</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-coins"></i></div>
+            <div class="stat-value" id="earnedAmount">0 ₽</div>
+            <div class="stat-label">Заработано</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+            <div class="stat-value" id="availableAmount">0 ₽</div>
+            <div class="stat-label">Доступно</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-percent"></i></div>
+            <div class="stat-value" id="commissionRate">20%</div>
+            <div class="stat-label">Ваша комиссия</div>
+        </div>
+    </div>
 
-        <div class="table-section">
-            <h2 style="margin-bottom: 20px;">📋 Приглашённые друзья</h2>
+    <div class="card">
+        <h3><i class="fas fa-link"></i> Ваша реферальная ссылка</h3>
+        <p style="color:#94a3b8; font-size:13px;">Поделитесь ссылкой с друзьями. За каждого приглашенного вы получите бонус!</p>
+        <div class="ref-link-container">
+            <input type="text" class="ref-link" id="referralLink" value="Загрузка..." readonly>
+            <button class="copy-btn" onclick="copyReferralLink()"> <i class="fas fa-copy"></i> Копировать</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-user-friends"></i> Приглашенные друзья</h3>
+        <div class="table-container">
             <table>
-                <thead>
-                    <tr>
-                        <th>Дата</th>
-                        <th>Email</th>
-                        <th>Статус</th>
-                        <th>Бонус</th>
-                    </tr>
-                </thead>
-                <tbody id="friendsTableBody">
-                    <tr><td colspan="4" style="text-align: center;">Загрузка...</td></tr>
-                </tbody>
+                <thead><tr><th>Email</th><th>Дата</th><th>Статус</th><th>Бонус</th></tr></thead>
+                <tbody id="friendsList"><tr><td colspan="4" class="text-center" style="color:#94a3b8;">Загрузка...</td></tr></tbody>
             </table>
         </div>
-
-        <!-- Секция вывода средств -->
-        <div class="referral-box" id="payoutSection">
-            <h2>💰 Вывод средств</h2>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 10px;">Сумма вывода (₽)</label>
-                    <input type="number" id="payoutAmount" class="referral-link" placeholder="Минимум 500 ₽" style="width: 100%;">
-                </div>
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 10px;">Способ вывода</label>
-                    <select id="payoutMethod" class="referral-link" style="width: 100%;">
-                        <option value="bank">Банковская карта</option>
-                        <option value="card">Банковский счёт</option>
-                        <option value="crypto">Криптовалюта USDT</option>
-                    </select>
-                </div>
-                <div style="flex: 1; display: flex; align-items: flex-end;">
-                    <button class="btn-copy" onclick="requestPayout()" style="width: 100%;">Запросить вывод</button>
-                </div>
-            </div>
-            <div id="payoutMessage" style="margin-top: 15px; display: none;"></div>
-        </div>
-
-        <!-- История выплат -->
-        <div class="referral-box">
-            <h2>📋 История выплат</h2>
-            <div id="payoutsList" style="margin-top: 15px;">
-                <p style="color: #666;">Загрузка...</p>
-            </div>
-        </div>
-
-        <div class="how-it-works">
-            <h2>📌 Как это работает</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Поделитесь ссылкой</h3>
-                    <p>Отправьте друзьям</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Друг регистрируется</h3>
-                    <p>Создаёт аккаунт</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Получаете 300 ₽</h3>
-                    <p>После первой оплаты</p>
-                </div>
-            </div>
-        </div>
-
-        <a href="/dashboard-improved" class="back-link">← В дашборд</a>
     </div>
 
-    <!-- Кнопка назад -->
-    <a href="javascript:history.back()" class="back-button">
-        <i class="fas fa-arrow-left"></i> Назад
-    </a>
+    <!-- История выплат -->
+    <div class="card">
+        <h3><i class="fas fa-history"></i> История выплат</h3>
+        <div id="payoutsList" style="margin-top: 15px;">
+            <div class="text-center" style="color: #94a3b8;">Загрузка...</div>
+        </div>
+    </div>
 
-    <script>
-        const userId = 'aa5f14e6-30e1-476c-ac42-8c11ced838a4';
+    <div class="card">
+        <h3><i class="fas fa-history"></i> История выплат</h3>
+        <div class="table-container">
+            </table>
+                <thead><tr><th>Дата</th><th>Сумма</th><th>Способ</th><th>Статус</th></tr></thead>
+                <tbody id="payoutsList"><tr><td colspan="4" class="text-center" style="color:#94a3b8;">Загрузка...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
 
-        async function loadStats() {
-            try {
-                const response = await fetch(`/api/referral/stats?user_id=${userId}`);
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('invitedCount').textContent = data.stats.invited || 0;
-                    document.getElementById('activeCount').textContent = data.stats.active || 0;
-                    document.getElementById('earnedAmount').textContent = (data.stats.earned || 0).toLocaleString() + ' ₽';
-                    document.getElementById('availableAmount').textContent = (data.stats.available || 0).toLocaleString() + ' ₽';
-                    document.getElementById('availableBonus').textContent = (data.stats.available || 0).toLocaleString() + ' ₽';
-                }
-            } catch(e) { console.error(e); }
+    <div class="card">
+        <h3><i class="fas fa-trophy"></i> Топ рефералов</h3>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>#</th><th>Реферал</th><th>Приглашено</th><th>Начислено</th></tr></thead>
+                <tbody id="topReferralsList"><tr><td colspan="4" class="text-center" style="color:#94a3b8;">Нет данных</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-money-bill-wave"></i> Вывод средств</h3>
+        <div class="flex-between">
+            <div style="flex:1; margin-right:15px;"><input type="number" id="payoutAmount" class="form-control" placeholder="Сумма вывода (мин. 500 ₽)"></div>
+            <div style="flex:1; margin-right:15px;"><select id="payoutMethod" class="form-control"><option value="bank">Банковская карта</option><option value="card">Банковский счёт</option><option value="crypto">Криптовалюта USDT</option></select></div>
+            <div><button class="btn-withdraw" onclick="showPayoutDetails()">Запросить вывод</button></div>
+        </div>
+        <div id="payoutMessage" style="margin-top: 15px; display: none;"></div>
+    </div>
+</div>
+
+<!-- Реквизиты для вывода -->
+<div class="card" id="payoutDetailsForm" style="display: none;">
+    <h3><i class="fas fa-credit-card"></i> Реквизиты для вывода</h3>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <select id="payoutMethodDetails" class="form-control" onchange="togglePayoutFields()">
+            <option value="bank">Банковская карта</option>
+            <option value="card">Банковский счёт</option>
+            <option value="crypto">Криптовалюта USDT (TRC20)</option>
+        </select>
+        
+        <div id="bankFields">
+            <input type="text" id="cardNumber" class="form-control" placeholder="Номер карты (16 цифр)">
+            <input type="text" id="cardHolder" class="form-control" placeholder="Держатель карты (ИМЯ ФАМИЛИЯ)">
+            <input type="text" id="bankName" class="form-control" placeholder="Название банка">
+        </div>
+        
+        <div id="cryptoFields" style="display: none;">
+            <input type="text" id="cryptoAddress" class="form-control" placeholder="USDT (TRC20) адрес">
+        </div>
+        
+        <button class="btn-withdraw" onclick="savePayoutDetails()">Сохранить реквизиты</button>
+        <button class="btn-withdraw" style="background:#6c757d;" onclick="closePayoutDetails()">Отмена</button>
+    </div>
+</div>
+
+<a href="javascript:history.back()" class="back-button" title="Назад"><i class="fas fa-arrow-left"></i> Назад</a>
+
+<script>
+    const userId = '75a2c023-1fad-4517-a690-edd024ae2b6c';
+    let currentPayoutAmount = 0;
+    let currentPayoutMethod = '';
+
+    function getToken() {
+        return localStorage.getItem('token');
+    }
+
+    async function authFetch(url, options = {}) {
+        const token = getToken();
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        
+        const response = await fetch(url, { ...options, headers });
+        if (response.status === 401) {
+            window.location.href = '/login';
+            throw new Error('Unauthorized');
         }
+        return response;
+    }
 
-        async function loadFriends() {
-            try {
-                const response = await fetch(`/api/referral/friends?user_id=${userId}`);
-                const data = await response.json();
-                const tbody = document.getElementById('friendsTableBody');
-                if (data.success && data.friends && data.friends.length > 0) {
-                    tbody.innerHTML = data.friends.map(f => `
-                        <tr>
-                            <td>${f.date}</td>
-                            <td>${f.email}</td>
-                            <td><span class="badge-${f.status === 'active' ? 'active' : 'pending'}">${f.status === 'active' ? 'Активен' : 'Ожидает'}</span></td>
-                            <td>${f.bonus > 0 ? f.bonus + ' ₽' : '—'}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Пока нет приглашённых друзей</td></tr>';
-                }
-            } catch(e) { console.error(e); }
-        }
-
-        async function loadReferralLink() {
-            try {
-                const response = await fetch(`/api/partner/link`);
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('referralLink').value = data.link;
-                }
-            } catch(e) {
-                document.getElementById('referralLink').value = 'https://saaspro.ru/ref/USER123';
+    async function loadStats() {
+        try {
+            const res = await authFetch(`/api/referral/stats?user_id=${userId}`);
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('invitedCount').textContent = data.stats.invited || 0;
+                document.getElementById('earnedAmount').textContent = (data.stats.earned || 0).toLocaleString() + ' ₽';
+                document.getElementById('availableAmount').textContent = (data.stats.available || 0).toLocaleString() + ' ₽';
             }
-        }
+        } catch(e) { console.error(e); }
+    }
 
-        async function loadPayouts() {
-            try {
-                const response = await fetch(`/api/partner/payouts`);
-                const data = await response.json();
-                const container = document.getElementById('payoutsList');
-                if (data.success && data.payouts && data.payouts.length > 0) {
-                    container.innerHTML = `
-                        <table style="width:100%; border-collapse: collapse;">
-                            <tr style="background:#f0f3ff;">
-                                <th style="padding:10px; text-align:left;">Дата</th>
-                                <th style="padding:10px; text-align:left;">Сумма</th>
-                                <th style="padding:10px; text-align:left;">Способ</th>
-                                <th style="padding:10px; text-align:left;">Статус</th>
-                            </tr>
-                            ${data.payouts.map(p => `
-                                <tr style="border-bottom:1px solid #eee;">
-                                    <td style="padding:10px;">${p.created_at}</td>
-                                    <td style="padding:10px;">${p.amount} ₽</td>
-                                    <td style="padding:10px;">${p.method === 'bank' ? 'Банковская карта' : p.method === 'card' ? 'Банковский счёт' : 'Криптовалюта'}</td>
-                                    <td style="padding:10px;">
-                                        <span class="badge-${p.status === 'completed' ? 'completed' : p.status === 'pending' ? 'pending' : 'pending'}">
-                                            ${p.status === 'completed' ? '✅ Выполнен' : p.status === 'pending' ? '⏳ В обработке' : '❌ Отклонён'}
-                                        </span>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </table>
-                    `;
-                } else {
-                    container.innerHTML = '<p style="color: #666;">Пока нет выплат</p>';
-                }
-            } catch(e) { console.error(e); }
-        }
+    async function loadFriends() {
+        try {
+            const res = await authFetch(`/api/referral/friends?user_id=${userId}`);
+            const data = await res.json();
+            const tbody = document.getElementById('friendsList');
+            if (data.success && data.friends && data.friends.length > 0) {
+                tbody.innerHTML = data.friends.map(f => `<tr><td>${f.email || '—'}</td><td>${f.date || '—'}</td><td><span class="badge-active">Активен</span></td><td>${f.bonus || 0} ₽</td></tr>`).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:#94a3b8;">Пока нет приглашённых друзей</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
 
-        async function requestPayout() {
-            const amount = document.getElementById('payoutAmount').value;
-            const method = document.getElementById('payoutMethod').value;
-            
-            if (!amount || amount < 500) {
-                alert('Минимальная сумма вывода: 500 ₽');
+    async function loadReferralLink() {
+        try {
+            const res = await authFetch('/api/partner/link');
+            const data = await res.json();
+            if (data.success && data.link) {
+                document.getElementById('referralLink').value = data.link;
+            } else {
+                document.getElementById('referralLink').value = window.location.origin + '/ref/' + userId;
+            }
+        } catch(e) {
+            document.getElementById('referralLink').value = window.location.origin + '/ref/' + userId;
+        }
+    }
+
+    async function loadPayouts() {
+        try {
+            const res = await authFetch('/api/partner/payouts');
+            const data = await res.json();
+            const tbody = document.getElementById('payoutsList');
+            if (data.success && data.payouts && data.payouts.length > 0) {
+                tbody.innerHTML = data.payouts.map(p => `<tr><td>${new Date(p.created_at).toLocaleDateString()}</td><td>${p.amount} ₽</td><td>${p.method === 'bank' ? 'Банковская карта' : p.method === 'card' ? 'Банковский счёт' : 'Криптовалюта'}</td><td><span class="badge-${p.status === 'completed' ? 'completed' : 'pending'}">${p.status === 'completed' ? 'Выполнен' : 'В обработке'}</span></td></tr>`).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:#94a3b8;">Пока нет выплат</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadTopReferrals() {
+        try {
+            const res = await authFetch('/api/referral/top');
+            const data = await res.json();
+            const tbody = document.getElementById('topReferralsList');
+            if (data.success && data.referrals && data.referrals.length > 0) {
+                tbody.innerHTML = data.referrals.map((r, i) => `<tr><td><span class="rank-badge">${i+1}</span></td><td>${r.name || r.email || 'Пользователь'}</td><td>${r.invited_count || 0}</td><td>${r.earned || 0} ₽</td></tr>`).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:#94a3b8;">Нет данных</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function togglePayoutFields() {
+        const method = document.getElementById('payoutMethodDetails').value;
+        document.getElementById('bankFields').style.display = (method === 'bank' || method === 'card') ? 'block' : 'none';
+        document.getElementById('cryptoFields').style.display = method === 'crypto' ? 'block' : 'none';
+    }
+
+    async function savePayoutDetails() {
+        const method = document.getElementById('payoutMethodDetails').value;
+        let details = {};
+        
+        if (method === 'bank' || method === 'card') {
+            const cardNumber = document.getElementById('cardNumber')?.value;
+            const cardHolder = document.getElementById('cardHolder')?.value;
+            const bankName = document.getElementById('bankName')?.value;
+            if (!cardNumber || !cardHolder) {
+                alert('❌ Заполните номер карты и держателя');
                 return;
             }
-            
-            try {
-                const response = await fetch('/api/partner/payout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: parseFloat(amount), method: method, details: {} })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    alert(data.message);
-                    document.getElementById('payoutAmount').value = '';
-                    loadPayouts();
-                    loadStats();
-                } else {
-                    alert(data.error);
-                }
-            } catch(e) { alert('Ошибка при запросе вывода'); }
+            details = { card_number: cardNumber, card_holder: cardHolder, bank_name: bankName };
+        } else if (method === 'crypto') {
+            const address = document.getElementById('cryptoAddress')?.value;
+            if (!address) {
+                alert('❌ Введите крипто-адрес');
+                return;
+            }
+            details = { address: address };
         }
-
-        function copyLink() {
-            const link = document.getElementById('referralLink');
-            link.select();
-            navigator.clipboard.writeText(link.value);
-            alert('✅ Ссылка скопирована!');
+        
+        try {
+            const res = await authFetch('/api/partner/save-payout-details', {
+                method: 'POST',
+                body: JSON.stringify({ method: method, details: details })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Реквизиты сохранены!');
+                document.getElementById('payoutDetailsForm').style.display = 'none';
+                await executePayout();
+            } else {
+                alert('❌ ' + (data.error || 'Ошибка сохранения'));
+            }
+        } catch(e) { 
+            alert('❌ Ошибка подключения'); 
         }
+    }
 
-        function scrollToPayout() {
-            document.getElementById('payoutSection').scrollIntoView({ behavior: 'smooth' });
+    async function executePayout() {
+        try {
+            const res = await authFetch('/api/partner/payout', {
+                method: 'POST',
+                body: JSON.stringify({ amount: currentPayoutAmount, method: currentPayoutMethod })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Заявка на вывод отправлена!');
+                document.getElementById('payoutAmount').value = '';
+                loadStats();
+                loadPayouts();
+            } else {
+                alert('❌ ' + (data.error || 'Ошибка'));
+            }
+        } catch(e) { 
+            alert('❌ Ошибка при запросе вывода'); 
         }
+    }
 
-        // Загрузка всех данных
-        loadStats();
-        loadFriends();
-        loadReferralLink();
-        loadPayouts();
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<div class="ai-floating-widget">
-    <div class="ai-widget-button" onclick="openAIAssistant()">
-        🤖
-        <div class="ai-widget-badge">●</div>
-    </div>
-    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
-</div>
-<script>
-function openAIAssistant() {
-    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
-}
+    function showPayoutDetails() {
+        const amount = document.getElementById('payoutAmount').value;
+        const method = document.getElementById('payoutMethod').value;
+        
+        if (!amount || amount < 500) {
+            alert('Минимальная сумма вывода: 500 ₽');
+            return;
+        }
+        
+        currentPayoutAmount = parseFloat(amount);
+        currentPayoutMethod = method;
+        
+        document.getElementById('payoutDetailsForm').style.display = 'block';
+        document.getElementById('payoutDetailsForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closePayoutDetails() {
+        document.getElementById('payoutDetailsForm').style.display = 'none';
+    }
+
+    function copyReferralLink() {
+        const link = document.getElementById('referralLink');
+        link.select();
+        navigator.clipboard.writeText(link.value);
+        alert('✅ Ссылка скопирована!');
+    }
+
+    loadStats(); 
+    loadFriends(); 
+    loadReferralLink(); 
+    loadPayouts(); 
+    
 </script>
 </body>
 </html>

@@ -838,9 +838,10 @@ r.GET("/suppliers", func(c *gin.Context) {
     {
         partnerAPI.GET("/stats", handlers.GetReferralStatsHandler)
         partnerAPI.GET("/friends", handlers.GetReferralFriendsHandler)
-        partnerAPI.GET("/link", handlers.GetReferralLink)
-        partnerAPI.POST("/payout", handlers.RequestPayout)
-        partnerAPI.GET("/payouts", handlers.GetPayoutHistory)
+        partnerAPI.GET("/link", handlers.GetReferralLinkHandler)
+        partnerAPI.POST("/payout", handlers.RequestReferralPayoutHandler)
+        partnerAPI.GET("/payouts", handlers.GetReferralPayoutsHandler)
+        partnerAPI.POST("/save-payout-details", handlers.SavePayoutDetailsHandler)
     }
     
     // Страница бэкапов
@@ -1511,6 +1512,10 @@ api.POST("/sessions/limit", handlers.SetMaxSessions)
         adminAPI.PUT("/tenants/:id", handlers.UpdateTenant)
         adminAPI.DELETE("/tenants/:id", handlers.DeleteTenant)
         adminAPI.POST("/tenants/:id/switch", handlers.SwitchTenant)
+
+ // Админские API для выплат
+    adminAPI.GET("/payouts", handlers.AdminGetPayouts)
+    adminAPI.POST("/payouts/update", handlers.AdminUpdatePayoutStatus)
     }
 
     // Админская страница для управления компаниями (отдельно)

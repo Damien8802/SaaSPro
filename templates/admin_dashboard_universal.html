@@ -123,6 +123,21 @@
         .badge-info { background: rgba(59,130,246,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
         .badge-danger { background: rgba(239,68,68,0.2); color: #f87171; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
         
+        /* Стили для статусов выплат */
+        .status-pending { background: #f59e0b; color: #1a1a2e; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        .status-completed { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        .status-rejected { background: #ef4444; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        .btn-sm { padding: 5px 12px; border-radius: 20px; font-size: 12px; margin: 2px; cursor: pointer; border: none; }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
         .btn-action {
             padding: 6px 16px;
             border-radius: 30px;
@@ -144,6 +159,8 @@
         .btn-view:hover { background: #10b981; color: white; }
         .btn-edit { background: rgba(59,130,246,0.2); color: #60a5fa; }
         .btn-edit:hover { background: #3b82f6; color: white; }
+        .btn-save { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
+        .btn-cancel { background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
         
         .card, .project-card {
             background: rgba(255,255,255,0.05);
@@ -209,8 +226,6 @@
             color: white;
         }
         .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
-        .btn-save { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
-        .btn-cancel { background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
         
         .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
         .form-group { flex: 1; min-width: 200px; }
@@ -242,6 +257,7 @@
             <button class="tab-btn" onclick="showTab('features')"><i class="fas fa-lightbulb"></i> Доработки</button>
             <button class="tab-btn" onclick="showTab('users')"><i class="fas fa-users"></i> Пользователи</button>
             <button class="tab-btn" onclick="showTab('hr')"><i class="fas fa-user-tie"></i> HR</button>
+            <button class="tab-btn" onclick="showTab('payouts')"><i class="fas fa-money-bill-wave"></i> Заявки на вывод</button>
         </div>
         
         <!-- ДАШБОРД -->
@@ -338,9 +354,9 @@
                     </tr>
                 </thead>
                 <tbody id="journalList">
-                    <tr><td colspan="9" style="text-align:center;">Загрузка...</td></tr>
+                    <tr><td colspan="9" style="text-align:center;">Загрузка...</td>\u003c/tr\u003e
                 </tbody>
-            </table>
+             </table>
         </div>
     </div>
 </div>
@@ -382,8 +398,32 @@
             <h3 class="section-title"><i class="fas fa-briefcase"></i> Вакансии</h3>
             <div id="vacanciesList">Загрузка...</div>
         </div>
-    </div>
-</div>
+
+            <!-- ЗАЯВКИ НА ВЫВОД -->
+        <div id="payoutsTab" class="tab-content">
+            <div class="card">
+                <h3 class="section-title"><i class="fas fa-money-bill-wave"></i> Заявки на вывод средств</h3>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Пользователь</th>
+                                <th>Сумма</th>
+                                <th>Способ</th>
+                                <th>Реквизиты</th>
+                                <th>Дата</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payoutsTable">
+                            <tr><td colspan="8" class="text-center">Загрузка...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
 <button class="refresh-btn" onclick="loadAllData()"><i class="fas fa-sync-alt"></i> Обновить</button>
 
@@ -402,11 +442,14 @@
     function showTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabName + 'Tab').classList.add('active');
+        const tab = document.getElementById(tabName + 'Tab');
+        if (tab) tab.classList.add('active');
         if (event && event.target) event.target.classList.add('active');
         if (tabName === 'hr') { loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
         if (tabName === 'dashboard') loadDashboardData();
         if (tabName === 'finance') loadFinanceData();
+        if (tabName === 'journal') loadJournalEntries();
+       
     }
 
     async function loadDashboardData() {
@@ -450,7 +493,7 @@
 
     async function loadFeatures() { try { const res = await fetch('/api/feature-requests'); const features = await res.json(); const container = document.getElementById('featuresList'); if (!features || features.length === 0) { container.innerHTML = '<div class="card">💡 Нет идей</div>'; return; } container.innerHTML = features.map(f => `<div class="card"><div><span class="badge-new">${f.priority === 'high' ? '🔴 Высокий' : '🟡 Средний'}</span> <small>${f.date}</small></div><strong>${f.title}</strong><p>${f.description}</p><small>От: ${f.user_name}</small></div>`).join(''); } catch(e) { console.error(e); } }
 
-    async function loadUsers() { try { const res = await fetch('/api/admin/users'); const users = await res.json(); const container = document.getElementById('usersList'); if (!users || users.length === 0) { container.innerHTML = '<div class="card">👤 Нет пользователей</div>'; return; } container.innerHTML = '<table><thead><tr><th>Email</th><th>Имя</th><th>Роль</th></tr></thead><tbody>' + users.map(u => `<tr><td>${u.email}</td><td>${u.name || '—'}</td><td>${u.role || 'user'}</td></tr>`).join('') + '</tbody></table>'; } catch(e) { console.error(e); } }
+    async function loadUsers() { try { const res = await fetch('/api/admin/users'); const users = await res.json(); const container = document.getElementById('usersList'); if (!users || users.length === 0) { container.innerHTML = '<div class="card">👤 Нет пользователей</div>'; return; } container.innerHTML = '<table><thead><tr><th>Email</th><th>Имя</th><th>Роль</th></tr></thead><tbody>' + users.map(u => `<td>${u.email}</td><td>${u.name || '—'}</td><td>${u.role || 'user'}</td></tr>`).join('') + '</tbody></td>'; } catch(e) { console.error(e); } }
 
     async function loadFinanceData() { try { const res = await fetch('/api/orders/list'); const orders = await res.json(); let totalIncome = 0; if (orders && orders.length) { orders.forEach(o => { totalIncome += o.budget || 0; }); } const totalExpenses = expensesList.reduce((s, e) => s + (e.amount || 0), 0); const totalTax = totalIncome * 0.13; const totalProfit = totalIncome - totalExpenses - totalTax; document.getElementById('totalIncome').innerHTML = totalIncome.toLocaleString() + ' ₽'; document.getElementById('totalExpenses').innerHTML = totalExpenses.toLocaleString() + ' ₽'; document.getElementById('totalTax').innerHTML = totalTax.toLocaleString() + ' ₽'; document.getElementById('totalProfit').innerHTML = totalProfit.toLocaleString() + ' ₽'; if (profitChart) profitChart.destroy(); profitChart = new Chart(document.getElementById('profitChart'), { type: 'line', data: { labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'], datasets: [{ label: 'Прибыль (₽)', data: [totalProfit * 0.1, totalProfit * 0.15, totalProfit * 0.2, totalProfit * 0.25, totalProfit * 0.15, totalProfit * 0.15], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#fff' } } }, scales: { y: { ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } } } }); if (expensesChart) expensesChart.destroy(); expensesChart = new Chart(document.getElementById('expensesChart'), { type: 'doughnut', data: { labels: ['Налоги', 'Расходы', 'Чистая прибыль'], datasets: [{ data: [totalTax, totalExpenses, totalProfit], backgroundColor: ['#ef4444', '#f59e0b', '#10b981'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } } }); document.getElementById('financeDetails').innerHTML = `<div><div>📈 Доход: ${totalIncome.toLocaleString()} ₽</div><div>📊 Налоги: ${totalTax.toLocaleString()} ₽</div><div>📉 Расходы: ${totalExpenses.toLocaleString()} ₽</div><div>💰 Прибыль: ${totalProfit.toLocaleString()} ₽</div></div>`; } catch(e) { console.error(e); } }
 
@@ -459,6 +502,58 @@
     async function loadEmployees() { try { const res = await fetch('/api/hr/employees'); const employees = await res.json(); const container = document.getElementById('employeesList'); if (!employees || employees.length === 0) { container.innerHTML = '<div class="card">👔 Нет сотрудников</div>'; return; } container.innerHTML = employees.map(e => `<div class="card"><div><strong>${e.full_name}</strong><br><small>${e.position}</small></div><div>${(e.salary || 0).toLocaleString()} ₽</div></div>`).join(''); } catch(e) { console.error(e); } }
     async function loadCandidates() { try { const res = await fetch('/api/hr/candidates'); const candidates = await res.json(); const container = document.getElementById('candidatesList'); if (!candidates || candidates.length === 0) { container.innerHTML = '<div class="card">📋 Нет кандидатов</div>'; return; } container.innerHTML = candidates.map(c => `<div class="card"><div><strong>${c.full_name}</strong><br><small>${c.vacancy || '—'}</small></div><div>${(c.expected_salary || 0).toLocaleString()} ₽</div></div>`).join(''); } catch(e) { console.error(e); } }
     async function loadVacancies() { try { const res = await fetch('/api/hr/vacancies'); const vacancies = await res.json(); const container = document.getElementById('vacanciesList'); if (!vacancies || vacancies.length === 0) { container.innerHTML = '<div class="card">💼 Нет вакансий</div>'; return; } container.innerHTML = vacancies.map(v => `<div class="card"><div><strong>${v.title}</strong><br><small>от ${(v.salary_from || 0).toLocaleString()} ₽</small></div></div>`).join(''); } catch(e) { console.error(e); } }
+
+    // Заявки на вывод
+    async function loadPayouts() {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/admin/payouts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const tbody = document.getElementById('payoutsTable');
+            if (data.payouts && data.payouts.length > 0) {
+                tbody.innerHTML = data.payouts.map(p => `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td>${p.user_email || p.user_id}</td>
+                        <td><strong>${p.amount} ₽</strong></td>
+                        <td>${p.method === 'bank' ? '💳 Карта' : p.method === 'crypto' ? '🪙 USDT' : '🏦 Счёт'}</td>
+                        <td><small>${p.details ? JSON.stringify(p.details) : '-'}</small></td>
+                        <td>${new Date(p.created_at).toLocaleString()}</td>
+                        <td><span class="status-${p.status}">${p.status === 'pending' ? '⏳ В обработке' : p.status === 'completed' ? '✅ Выплачен' : '❌ Отклонён'}</span></td>
+                        <td>
+                            ${p.status === 'pending' ? `
+                                <button class="btn-sm" style="background:#10b981;" onclick="updatePayoutStatus(${p.id}, 'completed')">Выплатить</button>
+                                <button class="btn-sm" style="background:#ef4444;" onclick="updatePayoutStatus(${p.id}, 'rejected')">Отклонить</button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Нет активных заявок</td><tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function updatePayoutStatus(payoutId, status) {
+        if (!confirm(`Подтвердить действие?`)) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/admin/payouts/update', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: payoutId, status: status })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Статус обновлён');
+                loadPayouts();
+            } else {
+                alert('❌ Ошибка');
+            }
+        } catch(e) { alert('Ошибка'); }
+    }
 
     function openExpenseModal() { document.getElementById('expenseModal').style.display = 'flex'; }
     function closeExpenseModal() { document.getElementById('expenseModal').style.display = 'none'; }
@@ -482,7 +577,7 @@
     async function savePayroll() { await fetch('/api/hr/payroll/calculate', { method: 'POST' }); alert('✅ Расчёт сохранён'); closePayrollModal(); loadHRStats(); }
     function closePayrollModal() { document.getElementById('payrollModal').style.display = 'none'; }
     
-    function loadAllData() { loadDashboardData(); loadOrders(); loadFeatures(); loadUsers(); loadFinanceData(); loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
+    function loadAllData() { loadDashboardData(); loadOrders(); loadFeatures(); loadUsers(); loadFinanceData(); loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); loadPayouts(); }
     loadAllData();
     setInterval(loadAllData, 30000);
 
@@ -497,7 +592,7 @@
             const tbody = document.getElementById('journalList');
             
             if (!data.entries || data.entries.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Нет операций</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Нет операций</td><tr>';
                 return;
             }
             
@@ -575,16 +670,5 @@
         }
     }
 </script>
-
-function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    if (event && event.target) event.target.classList.add('active');
-    if (tabName === 'hr') { loadHRStats(); loadEmployees(); loadCandidates(); loadVacancies(); }
-    if (tabName === 'dashboard') loadDashboardData();
-    if (tabName === 'finance') loadFinanceData();
-    if (tabName === 'journal') loadJournalEntries();  // <--- ДОБАВЬТЕ ЭТУ СТРОКУ
-}
 </body>
 </html>
