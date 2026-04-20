@@ -1343,6 +1343,18 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         api.GET("/analytics/insights", handlers.GetInsights)
         api.GET("/analytics/segments", handlers.GetSegmentSummary)
         api.GET("/analytics/cohorts/run", handlers.RunCohortAnalysis)
+
+// ========== БЕЗОПАСНОСТЬ - СЕССИИ ==========
+api.GET("/sessions", handlers.GetUserSessions)
+api.DELETE("/sessions/:id", handlers.TerminateSession)
+api.DELETE("/sessions/all", handlers.TerminateAllSessions)
+
+// ========== БЕЗОПАСНОСТЬ - ИСТОРИЯ ВХОДОВ ==========
+api.GET("/login-history", handlers.GetLoginHistory)
+
+// ========== БЕЗОПАСНОСТЬ - НАСТРОЙКИ ПОЛЬЗОВАТЕЛЯ ==========
+api.GET("/user/settings", handlers.GetUserSettings)
+api.POST("/sessions/limit", handlers.SetMaxSessions)
     // Экспорт аналитики
     api.GET("/analytics/export/csv", handlers.ExportAnalyticsCSV)
     api.GET("/analytics/export/excel", handlers.ExportAnalyticsExcel)
