@@ -337,13 +337,20 @@ r.POST("/api/ai/assistant", handlers.AIAssistantHandler)
         log.Fatalf("❌ Не удалось загрузить шаблоны: %v", err)
     }
 
-    // Добавляем HR шаблоны
-    hrTmpl, err := template.ParseGlob("templates/hr/*.html")
-    if err == nil && hrTmpl != nil {
-        for _, t := range hrTmpl.Templates() {
-            tmpl.AddParseTree(t.Name(), t.Tree)
-        }
+ // Добавляем HR шаблоны
+log.Println("🔍 Загружаем HR шаблоны из templates/hr/")
+hrTmpl, err := template.ParseGlob("templates/hr/*.html")
+if err != nil {
+    log.Printf("❌ Ошибка ParseGlob: %v", err)
+} else if hrTmpl == nil {
+    log.Println("❌ hrTmpl == nil")
+} else {
+    log.Printf("✅ Найдено HR шаблонов: %d", len(hrTmpl.Templates()))
+    for _, t := range hrTmpl.Templates() {
+        tmpl.AddParseTree(t.Name(), t.Tree)
+        log.Printf("   ✅ Загружен: %s", t.Name())
     }
+}
 
     // Добавляем MARKETPLACE шаблоны
     marketplaceTmpl, err := template.ParseGlob("templates/marketplace/*.html")
@@ -695,31 +702,44 @@ r.GET("/suppliers", func(c *gin.Context) {
     // Projects page
     r.GET("/projects", handlers.ProjectsPageHandler)
 
-    // HR маршруты
-    hr := r.Group("/hr")
-    {
-        hr.GET("/", handlers.HRDashboardHandler)
-        hr.GET("/api/employees", handlers.GetEmployeesHandler)
-        hr.POST("/api/employees", handlers.AddEmployeeHandler)
-        hr.PUT("/api/employees/:id", handlers.UpdateEmployeeHandler)
-        hr.DELETE("/api/employees/:id", handlers.DeleteEmployeeHandler)
-        hr.GET("/api/vacations", handlers.GetVacationRequestsHandler)
-        hr.POST("/api/vacations", handlers.AddVacationRequestHandler)
-        hr.POST("/api/vacations/:id/approve", handlers.ApproveRequestHandler)
-        hr.POST("/api/vacations/:id/reject", handlers.RejectRequestHandler)
-        hr.GET("/api/candidates", handlers.GetCandidatesHandler)
-        hr.POST("/api/candidates", handlers.AddCandidateHandler)
-        hr.PUT("/api/candidates/:id/status", handlers.UpdateCandidateStatusHandler)
-        hr.DELETE("/api/candidates/:id", handlers.DeleteCandidateHandler)
-        hr.GET("/api/statistics", handlers.GetStatisticsHandler)
-        hr.POST("/api/candidates/:id/analyze", handlers.AnalyzeCandidateHandler)
-        hr.POST("/api/ai/chat", handlers.AIChatHandler)
-        hr.GET("/api/training/suggestions", handlers.SuggestTrainingHandler)
-        hr.GET("/api/turnover/predict", handlers.PredictTurnoverHandler)
-        hr.POST("/api/orders/generate", handlers.GenerateOrderHandler)
-        hr.GET("/api/departments", handlers.GetDepartmentsHandler)
-    }
-
+ // HR маршруты
+hr := r.Group("/hr")
+{
+    hr.GET("/", handlers.HRDashboardHandler)
+    
+    // Employees
+    hr.GET("/api/employees", handlers.GetEmployeesHandler)
+    hr.POST("/api/employees", handlers.AddEmployeeHandler)
+    hr.PUT("/api/employees/:id", handlers.UpdateEmployeeHandler)
+    hr.DELETE("/api/employees/:id", handlers.DeleteEmployeeHandler)
+    
+    // Vacations
+    hr.GET("/api/vacations", handlers.GetVacationRequestsHandler)
+    hr.POST("/api/vacations", handlers.AddVacationRequestHandler)
+    hr.POST("/api/vacations/:id/approve", handlers.ApproveRequestHandler)
+    hr.POST("/api/vacations/:id/reject", handlers.RejectRequestHandler)
+    
+    // Candidates
+    hr.GET("/api/candidates", handlers.GetCandidatesHandler)
+    hr.POST("/api/candidates", handlers.AddCandidateHandler)
+    hr.PUT("/api/candidates/:id/status", handlers.UpdateCandidateStatusHandler)
+    hr.DELETE("/api/candidates/:id", handlers.DeleteCandidateHandler)
+    
+    // Vacancies (НОВЫЕ МАРШРУТЫ)
+    hr.GET("/api/vacancies", handlers.GetVacanciesHandler)
+    hr.POST("/api/vacancies", handlers.AddVacancyHandler)
+    hr.PUT("/api/vacancies/:id", handlers.UpdateVacancyHandler)
+    hr.DELETE("/api/vacancies/:id", handlers.DeleteVacancyHandler)
+    
+    // Statistics
+    hr.GET("/api/statistics", handlers.GetStatisticsHandler)
+    hr.POST("/api/candidates/:id/analyze", handlers.AnalyzeCandidateHandler)
+    hr.POST("/api/ai/chat", handlers.AIChatHandler)
+    hr.GET("/api/training/suggestions", handlers.SuggestTrainingHandler)
+    hr.GET("/api/turnover/predict", handlers.PredictTurnoverHandler)
+    hr.POST("/api/orders/generate", handlers.GenerateOrderHandler)
+    hr.GET("/api/departments", handlers.GetDepartmentsHandler)
+}
     // ========== АРХИВ ==========
     archiveGroup := r.Group("/archive")
     archiveGroup.Use(middleware.AuthMiddleware(cfg))
