@@ -103,6 +103,9 @@
         .btn-danger { background: rgba(239,68,68,0.2); border: 1px solid #ef4444; color: #ef4444; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
         .btn-danger:hover { background: rgba(239,68,68,0.4); }
         .btn-success { background: rgba(16,185,129,0.2); border: 1px solid #10b981; color: #10b981; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
+        .btn-avito { background: rgba(0,165,80,0.2); border: 1px solid #00a550; color: #00a550; padding: 4px 8px; border-radius: 20px; cursor: pointer; font-size: 11px; }
+        .btn-rabota { background: rgba(255,107,107,0.2); border: 1px solid #ff6b6b; color: #ff6b6b; padding: 4px 8px; border-radius: 20px; cursor: pointer; font-size: 11px; }
+        .btn-hh { background: rgba(229,57,53,0.2); border: 1px solid #e53935; color: #e53935; padding: 4px 8px; border-radius: 20px; cursor: pointer; font-size: 11px; }
         
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
@@ -150,8 +153,10 @@
             border: 1px solid rgba(251,191,36,0.4);
             border-radius: 24px;
             padding: 32px;
-            max-width: 500px;
+            max-width: 550px;
             width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .modal-content h3 { color: #fbbf24; margin-bottom: 20px; }
         .modal-content input, .modal-content select, .modal-content textarea {
@@ -297,6 +302,23 @@
             max-width: 85%;
             align-self: flex-start;
         }
+        
+        .platform-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+        .platform-hh { background: #e53935; color: white; }
+        .platform-avito { background: #00a550; color: white; }
+        .platform-rabota { background: #ff6b6b; color: white; }
+        
+        .btn-group-custom {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -315,6 +337,7 @@
         <button class="tab-btn" onclick="showTab('vacations')">🏖️ Отпуска</button>
         <button class="tab-btn" onclick="showTab('recruitment')">🎯 Рекрутинг</button>
         <button class="tab-btn" onclick="showTab('vacancies')">💼 Вакансии</button>
+        <button class="tab-btn" onclick="showTab('responses')">📩 Отклики <span id="newResponsesBadge" style="display:none; background:#ef4444; color:white; border-radius:10px; padding:0 6px; margin-left:5px; font-size:10px;">0</span></button>
         <button class="tab-btn" onclick="showTab('analytics')">📈 Аналитика</button>
     </div>
 
@@ -345,9 +368,14 @@
         <div class="card">
             <div class="card-header">
                 <h3><i class="fas fa-briefcase"></i> Активные вакансии</h3>
-                <button class="btn-primary" onclick="openVacancyModal()">
-                    <i class="fas fa-plus"></i> Создать вакансию
-                </button>
+                <div>
+                    <button class="btn-primary" onclick="syncResponses()" style="margin-right: 10px;">
+                        <i class="fas fa-sync-alt"></i> Синхронизировать отклики
+                    </button>
+                    <button class="btn-primary" onclick="openVacancyModal()">
+                        <i class="fas fa-plus"></i> Создать вакансию
+                    </button>
+                </div>
             </div>
             <div class="table-container">
                 <table class="table">
@@ -357,14 +385,73 @@
                             <th>Отдел</th>
                             <th>Зарплата</th>
                             <th>Статус</th>
+                            <th>Платформы</th>
                             <th>Дата</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody id="vacanciesList">
-                        <tr><td colspan="6" class="text-center">Загрузка...</td></tr>
+                        <tr><td colspan="7" class="text-center">Загрузка...</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка Отклики -->
+    <div id="responsesTab" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-inbox"></i> Отклики с сайтов</h3>
+                <div>
+                    <button class="btn-primary" onclick="syncResponses()" style="margin-right: 10px;">
+                        <i class="fas fa-sync-alt"></i> Синхронизировать
+                    </button>
+                    <select id="responsePlatformFilter" onchange="loadResponses()" style="background:rgba(0,0,0,0.3); border:1px solid #fbbf24; border-radius:20px; padding:6px 12px; color:white;">
+                        <option value="all">Все платформы</option>
+                        <option value="hh">HeadHunter</option>
+                        <option value="avito">Avito</option>
+                        <option value="rabota">Работа.ру</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Кандидат</th>
+                            <th>Вакансия</th>
+                            <th>Платформа</th>
+                            <th>Сообщение</th>
+                            <th>Дата</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="responsesList">
+                        <tr><td colspan="7" class="text-center">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для просмотра отклика -->
+    <div id="responseModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3><i class="fas fa-user-circle"></i> <span id="responseCandidateName"></span></h3>
+            <div id="responseDetails"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <select id="responseStatusSelect" class="form-control" style="flex:1;">
+                    <option value="new">🆕 Новый</option>
+                    <option value="in_review">🔍 На рассмотрении</option>
+                    <option value="interview">🎤 Приглашён на собеседование</option>
+                    <option value="offer">📄 Отправлен оффер</option>
+                    <option value="hired">✅ Принят</option>
+                    <option value="rejected">❌ Отклонён</option>
+                </select>
+                <button class="btn-primary" onclick="updateResponseStatus()">Сохранить</button>
+                <button class="btn-danger" onclick="closeResponseModal()">Закрыть</button>
             </div>
         </div>
     </div>
@@ -420,6 +507,79 @@
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button class="btn-primary" onclick="createVacancy()">Сохранить</button>
             <button class="btn-danger" onclick="closeVacancyModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<!-- Универсальное модальное окно для публикации -->
+<div id="platformPublishModal" class="modal">
+    <div class="modal-content">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+            <i id="platformIcon" class="fab fa-hh" style="font-size: 48px;"></i>
+            <div>
+                <h3 style="margin: 0; color: #fbbf24;" id="platformTitle">Публикация</h3>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #94a3b8;" id="platformVacancyTitle">Вакансия</p>
+            </div>
+        </div>
+        
+        <div id="platformLoginStep">
+            <p id="platformLoginMessage" style="margin-bottom: 15px;">🔐 Введите данные от аккаунта</p>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 13px;" id="emailLabel">📧 Email / Логин</label>
+                <input type="email" id="platformEmail" placeholder="your@email.com" style="width: 100%; margin-bottom: 15px;">
+                
+                <label style="display: block; margin-bottom: 8px; font-size: 13px;" id="passwordLabel">🔑 Пароль</label>
+                <input type="password" id="platformPassword" placeholder="••••••••" style="width: 100%; margin-bottom: 15px;">
+                
+                <div id="extraFields"></div>
+                
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
+                    <input type="checkbox" id="platformRemember" style="width: auto; margin: 0;">
+                    <label style="margin: 0; font-size: 13px;">Запомнить для следующих публикаций</label>
+                </div>
+            </div>
+            
+            <div style="background: rgba(229,57,53,0.1); border-radius: 12px; padding: 12px; margin-bottom: 20px;">
+                <small style="color: #e53935;">
+                    <i class="fas fa-shield-alt"></i> Ваши данные защищены и не передаются третьим лицам
+                </small>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-primary" onclick="publishToPlatform()" style="flex: 1;" id="publishBtn">
+                    <i id="publishIcon" class="fab fa-hh"></i> Опубликовать
+                </button>
+                <button class="btn-danger" onclick="closePlatformModal()">Отмена</button>
+            </div>
+        </div>
+        
+        <div id="platformPublishStep" style="display: none; text-align: center;">
+            <div style="background: rgba(16,185,129,0.1); border-radius: 16px; padding: 30px;">
+                <i class="fas fa-spinner fa-pulse" style="font-size: 48px; color: #fbbf24;"></i>
+                <p style="margin-top: 15px;">Публикация...</p>
+                <p style="font-size: 14px; color: #94a3b8;">Пожалуйста, подождите</p>
+            </div>
+        </div>
+        
+        <div id="platformSuccessStep" style="display: none; text-align: center;">
+            <div style="background: rgba(16,185,129,0.1); border-radius: 16px; padding: 30px;">
+                <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981;"></i>
+                <h4 style="color: #10b981;">✅ Готово!</h4>
+                <p id="successMessage">Вакансия опубликована</p>
+                <a href="#" id="platformLink" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Посмотреть</a>
+            </div>
+            <button class="btn-primary mt-3" onclick="closePlatformModal()">Закрыть</button>
+        </div>
+        
+        <div id="platformErrorStep" style="display: none; text-align: center;">
+            <div style="background: rgba(239,68,68,0.1); border-radius: 16px; padding: 30px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444;"></i>
+                <h4 style="color: #ef4444;">❌ Ошибка</h4>
+                <p id="platformErrorText"></p>
+            </div>
+            <button class="btn-primary mt-3" onclick="retryPlatformPublish()">Повторить</button>
+            <button class="btn-danger mt-2" onclick="closePlatformModal()">Закрыть</button>
         </div>
     </div>
 </div>
@@ -480,7 +640,8 @@
     window.showTab = function(tabName) {
         document.querySelectorAll('.tab-content').forEach(function(t) { t.style.display = 'none'; });
         document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.getElementById(tabName + 'Tab').style.display = 'block';
+        const tab = document.getElementById(tabName + 'Tab');
+        if (tab) tab.style.display = 'block';
         if (event && event.target) event.target.classList.add('active');
         
         if (tabName === 'dashboard') loadDashboard();
@@ -488,6 +649,7 @@
         if (tabName === 'vacations') loadVacations();
         if (tabName === 'recruitment') loadRecruitment();
         if (tabName === 'vacancies') loadVacancies();
+        if (tabName === 'responses') loadResponses();
         if (tabName === 'analytics') loadAnalytics();
     };
 
@@ -662,24 +824,46 @@
             const tbody = document.getElementById('vacanciesList');
             if (tbody) {
                 if (vacancies.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Нет вакансий</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Нет вакансий</td></tr>';
                     return;
                 }
                 let html = '';
                 for (let v of vacancies) {
-                    const salary = v.salary_from > 0 ? `${v.salary_from.toLocaleString()} - ${v.salary_to.toLocaleString()} ₽` : 'По договорённости';
+                    const salary = v.salary_min > 0 ? `${v.salary_min.toLocaleString()} - ${v.salary_max.toLocaleString()} ₽` : 'По договорённости';
                     const statusBadge = v.status === 'open' ? '<span class="badge-active">Открыта</span>' : '<span class="badge-closed">Закрыта</span>';
+                    
+                    let hhStatus = '';
+                    try {
+                        const hhRes = await fetch(`/api/hh/vacancies/${v.id}/status`);
+                        const hhData = await hhRes.json();
+                        if (hhData.published) {
+                            hhStatus = `<span class="platform-badge platform-hh"><i class="fab fa-hh"></i> HH</span>`;
+                        }
+                    } catch(e) {}
+                    
                     html += `
                         <tr>
                             <td><strong>${escapeHtml(v.title)}</strong></td>
                             <td>${escapeHtml(v.department)}</td>
                             <td>${salary}</td>
                             <td>${statusBadge}</td>
+                            <td>${hhStatus}</td>
                             <td>${v.created_at || ''}</td>
                             <td>
-                                <button class="btn-danger" onclick="deleteVacancy('${v.id}')">
-                                    <i class="fas fa-trash"></i> Удалить
-                                </button>
+                                <div class="btn-group-custom">
+                                    <button class="btn-danger" onclick="deleteVacancy('${v.id}')" title="Удалить">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button class="btn-hh" onclick="openPublishModal('${v.id}', '${escapeHtml(v.title)}', 'hh')" title="Опубликовать в HeadHunter">
+                                        <i class="fab fa-hh"></i> HH
+                                    </button>
+                                    <button class="btn-avito" onclick="openPublishModal('${v.id}', '${escapeHtml(v.title)}', 'avito')" title="Опубликовать в Avito">
+                                        <i class="fas fa-store"></i> Avito
+                                    </button>
+                                    <button class="btn-rabota" onclick="openPublishModal('${v.id}', '${escapeHtml(v.title)}', 'rabota')" title="Опубликовать на Работа.ру">
+                                        <i class="fas fa-briefcase"></i> Работа.ру
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -689,10 +873,10 @@
         } catch(e) {
             console.error('Ошибка загрузки вакансий:', e);
             const tbody = document.getElementById('vacanciesList');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center">Ошибка загрузки</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center">Ошибка загрузки</td></tr>';
         }
     }
-
+    
     async function loadAnalytics() {
         const deptCtx = document.getElementById('deptChart')?.getContext('2d');
         if (deptCtx) {
@@ -722,10 +906,10 @@
         
         const payrollTbody = document.getElementById('payrollByDept');
         if (payrollTbody) {
-            payrollTbody.innerHTML = '<tr><td>Разработка</td><td>25</td><td>2,500,000 ₽</td>' +
-                '<tr><td>Маркетинг</td><td>12</td><td>900,000 ₽</td>' +
-                '<tr><td>Продажи</td><td>8</td><td>600,000 ₽</td>' +
-                '<tr><td>HR</td><td>5</td><td>400,000 ₽</td>';
+            payrollTbody.innerHTML = '<tr><td>Разработка</td><td>25</td><td>2,500,000 ₽</td></tr>' +
+                '<tr><td>Маркетинг</td><td>12</td><td>900,000 ₽</td></tr>' +
+                '<tr><td>Продажи</td><td>8</td><td>600,000 ₽</td></tr>' +
+                '<tr><td>HR</td><td>5</td><td>400,000 ₽</td></tr>';
         }
     }
 
@@ -978,7 +1162,403 @@ window.deleteEmployeeGlobal = async function(id) {
         alert('Ошибка: ' + e.message);
     }
 };
+
+// ==================== УНИВЕРСАЛЬНАЯ ПУБЛИКАЦИЯ ====================
+
+let currentPlatform = null;
+let currentPlatformVacancyId = null;
+
+const platformConfig = {
+    hh: {
+        name: 'HeadHunter',
+        icon: 'fab fa-hh',
+        color: '#e53935',
+        apiEndpoint: '/api/hh/vacancies/publish',
+        loginMessage: '🔐 Введите данные от аккаунта HeadHunter',
+        emailLabel: '📧 Email / Логин HH',
+        extraFields: ''
+    },
+    avito: {
+        name: 'Avito',
+        icon: 'fas fa-store',
+        color: '#00a550',
+        apiEndpoint: '/api/platforms/avito/publish',
+        loginMessage: '🔐 Введите данные от аккаунта Avito',
+        emailLabel: '📧 Email / Логин Avito',
+        extraFields: `
+            <label style="display: block; margin-bottom: 8px; font-size: 13px;">📞 Телефон</label>
+            <input type="tel" id="platformPhone" placeholder="+7 (999) 123-45-67" style="width: 100%; margin-bottom: 15px;">
+            
+            <label style="display: block; margin-bottom: 8px; font-size: 13px;">🏙️ Город</label>
+            <input type="text" id="platformCity" placeholder="Москва" style="width: 100%; margin-bottom: 15px;">
+            
+            <label style="display: block; margin-bottom: 8px; font-size: 13px;">📂 Категория</label>
+            <select id="platformCategory" style="width: 100%; margin-bottom: 15px;">
+                <option value="74">IT - Программирование</option>
+                <option value="75">Маркетинг, реклама, PR</option>
+                <option value="76">Продажи</option>
+                <option value="77">Административный персонал</option>
+            </select>
+        `
+    },
+    rabota: {
+        name: 'Работа.ру',
+        icon: 'fas fa-briefcase',
+        color: '#ff6b6b',
+        apiEndpoint: '/api/platforms/rabota/publish',
+        loginMessage: '🔐 Введите данные от аккаунта Работа.ру',
+        emailLabel: '📧 Email / Логин Работа.ру',
+        extraFields: `
+            <label style="display: block; margin-bottom: 8px; font-size: 13px;">📞 Телефон</label>
+            <input type="tel" id="platformPhone" placeholder="+7 (999) 123-45-67" style="width: 100%; margin-bottom: 15px;">
+            
+            <label style="display: block; margin-bottom: 8px; font-size: 13px;">🏙️ Город</label>
+            <input type="text" id="platformCity" placeholder="Москва" style="width: 100%; margin-bottom: 15px;">
+        `
+    }
+};
+
+window.openPublishModal = function(vacancyId, title, platform) {
+    currentPlatform = platform;
+    currentPlatformVacancyId = vacancyId;
+    const config = platformConfig[platform];
+    
+    if (!config) return;
+    
+    document.getElementById('platformIcon').className = config.icon;
+    document.getElementById('platformIcon').style.color = config.color;
+    document.getElementById('platformTitle').innerText = `Публикация в ${config.name}`;
+    document.getElementById('platformVacancyTitle').innerText = title;
+    document.getElementById('platformLoginMessage').innerText = config.loginMessage;
+    document.getElementById('emailLabel').innerText = config.emailLabel;
+    document.getElementById('publishIcon').className = config.icon;
+    document.getElementById('publishBtn').innerHTML = `<i class="${config.icon}"></i> Опубликовать в ${config.name}`;
+    
+    const extraFields = document.getElementById('extraFields');
+    if (extraFields) extraFields.innerHTML = config.extraFields;
+    
+    document.getElementById('platformLoginStep').style.display = 'block';
+    document.getElementById('platformPublishStep').style.display = 'none';
+    document.getElementById('platformSuccessStep').style.display = 'none';
+    document.getElementById('platformErrorStep').style.display = 'none';
+    
+    document.getElementById('platformEmail').value = '';
+    document.getElementById('platformPassword').value = '';
+    document.getElementById('platformRemember').checked = false;
+    
+    const modal = document.getElementById('platformPublishModal');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.closePlatformModal = function() {
+    const modal = document.getElementById('platformPublishModal');
+    if (modal) modal.style.display = 'none';
+    currentPlatform = null;
+    currentPlatformVacancyId = null;
+};
+
+window.publishToPlatform = async function() {
+    const email = document.getElementById('platformEmail')?.value;
+    const password = document.getElementById('platformPassword')?.value;
+    const remember = document.getElementById('platformRemember')?.checked;
+    const phone = document.getElementById('platformPhone')?.value;
+    const city = document.getElementById('platformCity')?.value;
+    const category = document.getElementById('platformCategory')?.value;
+    
+    if (!email || !password) {
+        alert('Введите email и пароль');
+        return;
+    }
+    
+    const config = platformConfig[currentPlatform];
+    if (!config) return;
+    
+    document.getElementById('platformLoginStep').style.display = 'none';
+    document.getElementById('platformPublishStep').style.display = 'block';
+    
+    const body = {
+        vacancy_id: currentPlatformVacancyId,
+        email: email,
+        password: password,
+        remember: remember
+    };
+    
+    if (phone) body.phone = phone;
+    if (city) body.city = city;
+    if (category) body.category_id = parseInt(category);
+    
+    try {
+        const res = await fetch(config.apiEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+            document.getElementById('platformPublishStep').style.display = 'none';
+            document.getElementById('successMessage').innerText = data.message || `Вакансия опубликована в ${config.name}`;
+            
+            if (data.url || data.hh_url) {
+                const link = document.getElementById('platformLink');
+                link.href = data.url || data.hh_url;
+                link.style.display = 'inline-block';
+            } else {
+                document.getElementById('platformLink').style.display = 'none';
+            }
+            
+            document.getElementById('platformSuccessStep').style.display = 'block';
+            setTimeout(() => loadVacancies(), 2000);
+        } else {
+            throw new Error(data.error || 'Ошибка публикации');
+        }
+    } catch(e) {
+        document.getElementById('platformPublishStep').style.display = 'none';
+        document.getElementById('platformErrorText').innerText = e.message;
+        document.getElementById('platformErrorStep').style.display = 'block';
+    }
+};
+
+window.retryPlatformPublish = function() {
+    document.getElementById('platformErrorStep').style.display = 'none';
+    document.getElementById('platformLoginStep').style.display = 'block';
+};
+
+// ==================== ОТКЛИКИ И СИНХРОНИЗАЦИЯ ====================
+
+let currentResponseId = null;
+
+window.syncResponses = async function() {
+    showToastMessage('🔄 Синхронизация откликов...', 'info');
+    
+    try {
+        const res = await fetch('/api/responses/sync', { method: 'POST' });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+            showToastMessage(`✅ ${data.message}`, 'success');
+            loadResponses();
+            updateNewResponsesCount();
+        } else {
+            showToastMessage('❌ Ошибка синхронизации', 'danger');
+        }
+    } catch(e) {
+        showToastMessage('❌ Ошибка: ' + e.message, 'danger');
+    }
+};
+
+window.loadResponses = async function() {
+    const platform = document.getElementById('responsePlatformFilter')?.value || 'all';
+    const tbody = document.getElementById('responsesList');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Загрузка...</td></tr>';
+    
+    try {
+        let url = '/api/responses/';
+        if (platform !== 'all') {
+            url += `?platform=${platform}`;
+        }
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        const responses = data.responses || [];
+        
+        if (responses.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Нет откликов</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        for (let r of responses) {
+            const platformIcon = r.platform === 'hh' ? '<i class="fab fa-hh"></i>' : 
+                                (r.platform === 'avito' ? '<i class="fas fa-store"></i>' : '<i class="fas fa-briefcase"></i>');
+            const statusBadge = getStatusBadge(r.status);
+            const isNew = !r.viewed && r.status === 'new' ? 'style="font-weight:bold; background:rgba(251,191,36,0.1);"' : '';
+            
+            html += `
+                <tr ${isNew} onclick="openResponseModal('${r.id}')" style="cursor:pointer;">
+                    <td><strong>${escapeHtml(r.candidate_name || 'Аноним')}</strong><br><small>${escapeHtml(r.candidate_email || r.candidate_phone || '')}</small></td>
+                    <td><small>Вакансия #${r.vacancy_id?.substring(0, 8)}</small></td>
+                    <td>${platformIcon} ${r.platform === 'hh' ? 'HH' : (r.platform === 'avito' ? 'Avito' : 'Работа.ру')}</td>
+                    <td>${escapeHtml(r.cover_letter?.substring(0, 100) || 'Нет сообщения')}${r.cover_letter?.length > 100 ? '...' : ''}</td>
+                    <td><small>${new Date(r.created_at).toLocaleString()}</small></td>
+                    <td>${statusBadge}</td>
+                    <td><button class="btn-sm btn-primary" onclick="event.stopPropagation(); openResponseModal('${r.id}')">Подробнее</button></td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    } catch(e) {
+        console.error('Ошибка загрузки откликов:', e);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Ошибка загрузки</td></tr>';
+    }
+};
+
+window.updateNewResponsesCount = async function() {
+    try {
+        const res = await fetch('/api/responses/new/count');
+        const data = await res.json();
+        const badge = document.getElementById('newResponsesBadge');
+        if (badge && data.new_count > 0) {
+            badge.innerText = data.new_count;
+            badge.style.display = 'inline-block';
+        } else if (badge) {
+            badge.style.display = 'none';
+        }
+    } catch(e) {
+        console.error('Ошибка обновления счётчика:', e);
+    }
+};
+
+function getStatusBadge(status) {
+    const statusMap = {
+        'new': '<span class="badge" style="background:#fbbf24; color:#1a1a2e;">🆕 Новый</span>',
+        'in_review': '<span class="badge" style="background:#3b82f6;">🔍 На рассмотрении</span>',
+        'interview': '<span class="badge" style="background:#8b5cf6;">🎤 Собеседование</span>',
+        'offer': '<span class="badge" style="background:#10b981;">📄 Оффер</span>',
+        'hired': '<span class="badge" style="background:#059669;">✅ Принят</span>',
+        'rejected': '<span class="badge" style="background:#ef4444;">❌ Отклонён</span>'
+    };
+    return statusMap[status] || '<span class="badge" style="background:#6b7280;">Новый</span>';
+}
+
+window.openResponseModal = async function(responseId) {
+    currentResponseId = responseId;
+    
+    try {
+        const res = await fetch(`/api/responses/${responseId}`);
+        const data = await res.json();
+        const r = data.response;
+        
+        document.getElementById('responseCandidateName').innerText = r.candidate_name || 'Анонимный кандидат';
+        document.getElementById('responseStatusSelect').value = r.status || 'new';
+        
+        let detailsHtml = `
+            <div style="background:rgba(0,0,0,0.3); border-radius:16px; padding:20px; margin-top:15px;">
+                <p><strong>📧 Email:</strong> ${escapeHtml(r.candidate_email || '—')}</p>
+                <p><strong>📞 Телефон:</strong> ${escapeHtml(r.candidate_phone || '—')}</p>
+                <p><strong>💼 Платформа:</strong> ${r.platform === 'hh' ? 'HeadHunter' : (r.platform === 'avito' ? 'Avito' : 'Работа.ру')}</p>
+                <p><strong>📅 Дата отклика:</strong> ${new Date(r.responded_at || r.created_at).toLocaleString()}</p>
+                <hr style="border-color:rgba(251,191,36,0.3);">
+                <p><strong>💬 Сообщение кандидата:</strong></p>
+                <div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:15px; margin-top:5px;">
+                    ${escapeHtml(r.cover_letter || 'Сообщение отсутствует')}
+                </div>
+        `;
+        
+        if (r.external_data) {
+            if (r.external_data.resume_url) {
+                detailsHtml += `<p style="margin-top:15px;"><strong>📄 Резюме:</strong> <a href="${r.external_data.resume_url}" target="_blank" style="color:#fbbf24;">Посмотреть резюме →</a></p>`;
+            }
+        }
+        
+        detailsHtml += `</div>`;
+        document.getElementById('responseDetails').innerHTML = detailsHtml;
+        
+        await fetch(`/api/responses/${responseId}/view`, { method: 'POST' });
+        
+        const modal = document.getElementById('responseModal');
+        if (modal) modal.style.display = 'flex';
+        
+        loadResponses();
+        updateNewResponsesCount();
+    } catch(e) {
+        console.error('Ошибка загрузки деталей:', e);
+        alert('Ошибка загрузки деталей отклика');
+    }
+};
+
+window.closeResponseModal = function() {
+    const modal = document.getElementById('responseModal');
+    if (modal) modal.style.display = 'none';
+    currentResponseId = null;
+};
+
+window.updateResponseStatus = async function() {
+    const newStatus = document.getElementById('responseStatusSelect')?.value;
+    if (!currentResponseId || !newStatus) return;
+    
+    try {
+        const res = await fetch(`/api/responses/${currentResponseId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (res.ok) {
+            showToastMessage('✅ Статус обновлён', 'success');
+            loadResponses();
+            closeResponseModal();
+        } else {
+            showToastMessage('❌ Ошибка обновления статуса', 'danger');
+        }
+    } catch(e) {
+        showToastMessage('❌ Ошибка: ' + e.message, 'danger');
+    }
+};
+
+function showToastMessage(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
+    toast.setAttribute('role', 'alert');
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// Запускаем обновление счётчика
+setInterval(updateNewResponsesCount, 30000);
 </script>
+
+<style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spinner-border {
+        display: inline-block;
+        width: 2rem;
+        height: 2rem;
+        vertical-align: text-bottom;
+        border: 0.25em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+    }
+    .btn-hh, .btn-avito, .btn-rabota {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+        cursor: pointer;
+    }
+    .btn-hh { background: rgba(229,57,53,0.2); border: 1px solid #e53935; color: #e53935; }
+    .btn-avito { background: rgba(0,165,80,0.2); border: 1px solid #00a550; color: #00a550; }
+    .btn-rabota { background: rgba(255,107,107,0.2); border: 1px solid #ff6b6b; color: #ff6b6b; }
+    .btn-hh:hover { background: rgba(229,57,53,0.4); transform: translateY(-1px); }
+    .btn-avito:hover { background: rgba(0,165,80,0.4); transform: translateY(-1px); }
+    .btn-rabota:hover { background: rgba(255,107,107,0.4); transform: translateY(-1px); }
+    .btn-group-custom { display: flex; gap: 6px; flex-wrap: wrap; }
+    .platform-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; margin: 2px; }
+    .platform-hh { background: #e53935; color: white; }
+    .platform-avito { background: #00a550; color: white; }
+    .platform-rabota { background: #ff6b6b; color: white; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 {{end}}

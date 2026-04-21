@@ -740,6 +740,37 @@ hr := r.Group("/hr")
     hr.POST("/api/orders/generate", handlers.GenerateOrderHandler)
     hr.GET("/api/departments", handlers.GetDepartmentsHandler)
 }
+
+// HH Integration маршруты
+hhAPI := r.Group("/api/hh")
+hhAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    hhAPI.GET("/references", handlers.GetHHReferences)
+    hhAPI.POST("/vacancies/publish", handlers.PublishVacancyToHHClient)
+    hhAPI.GET("/vacancies/:id/status", handlers.GetVacancyPublishStatus)
+
+
+}
+
+// Платформы для публикации
+platformAPI := r.Group("/api/platforms")
+platformAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    platformAPI.POST("/avito/publish", handlers.PublishToAvito)
+    platformAPI.POST("/rabota/publish", handlers.PublishToRabotaRu)
+    platformAPI.GET("/:platform/:id/status", handlers.GetPlatformPublishStatus)
+}
+
+// ========== ОТКЛИКИ И ПЕРЕПИСКА ==========
+responsesAPI := r.Group("/api/responses")
+responsesAPI.Use(middleware.AuthMiddleware(cfg))
+{
+    responsesAPI.POST("/sync", handlers.SyncAllPlatformResponses)
+    responsesAPI.GET("/", handlers.GetPlatformResponses)
+    responsesAPI.PUT("/:id/status", handlers.UpdateResponseStatus)
+    responsesAPI.POST("/:id/view", handlers.MarkResponseViewed)
+    responsesAPI.GET("/new/count", handlers.GetNewResponsesCount)
+}
     // ========== АРХИВ ==========
     archiveGroup := r.Group("/archive")
     archiveGroup.Use(middleware.AuthMiddleware(cfg))
@@ -2341,6 +2372,8 @@ r.PUT("/api/orders/:id/remaining", middleware.AuthMiddleware(cfg), middleware.Ad
     r.GET("/favicon.ico", func(c *gin.Context) {
         c.File("./static/favicon.ico")
     })  
+
+
 
 // AI Assistant widget (добавить после инициализации шаблонов)
 r.GET("/api/ai/widget", func(c *gin.Context) {
