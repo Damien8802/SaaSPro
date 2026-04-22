@@ -3,6 +3,7 @@ package handlers
 import (
     "log"
     "net/http"
+    "os"
 
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
@@ -10,7 +11,7 @@ import (
     "subscription-system/services"
 )
 
-func SimpleAIHandler(c *gin.Context) {
+func YandexHRHandler(c *gin.Context) {
     tenantID := c.GetString("tenant_id")
     if tenantID == "" {
         tenantID = "11111111-1111-1111-1111-111111111111"
@@ -30,16 +31,25 @@ func SimpleAIHandler(c *gin.Context) {
         return
     }
 
-    log.Printf("🤖 Запрос: %s", req.Message)
+    log.Printf("🤖 YandexHR запрос: %s", req.Message)
 
-    ai := services.NewSimpleAI(database.Pool)
+    apiKey := os.Getenv("YANDEX_API_KEY")
+    folderID := os.Getenv("YANDEX_FOLDER_ID")
+
+    if apiKey == "" || folderID == "" {
+        c.JSON(http.StatusOK, gin.H{"reply": "❌ YandexGPT не настроен"})
+        return
+    }
+
+    ai := services.NewYandexHRAssistant(database.Pool, apiKey, folderID)
 
     tenantUUID, _ := uuid.Parse(tenantID)
     userUUID, _ := uuid.Parse(userID)
 
     reply, err := ai.Process(tenantUUID, userUUID, req.Message)
     if err != nil {
-        c.JSON(http.StatusOK, gin.H{"reply": "❌ Ошибка"})
+        log.Printf("❌ Ошибка: %v", err)
+        c.JSON(http.StatusOK, gin.H{"reply": "❌ Ошибка обработки"})
         return
     }
 

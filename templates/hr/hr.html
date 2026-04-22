@@ -595,38 +595,55 @@
         chatWindow.style.display = chatOpen ? 'flex' : 'none';
     };
 
-    window.sendChatMessage = async function() {
-        const input = document.getElementById('chatInput');
-        const message = input.value.trim();
-        if (!message) return;
-        
-        const messagesContainer = document.getElementById('chatMessages');
-        
-        messagesContainer.innerHTML += '<div class="message-user">' + escapeHtml(message) + '</div>';
-        input.value = '';
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        messagesContainer.innerHTML += '<div class="typing-indicator" id="typingIndicator"><i class="fas fa-ellipsis-h"></i> Печатает...</div>';
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        try {
-            const res = await fetch('/api/ai/assistant', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message, context: 'hr' })
-            });
-            const data = await res.json();
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-            messagesContainer.innerHTML += '<div class="message-bot">' + escapeHtml(data.reply || 'Извините, не могу ответить.') + '</div>';
-        } catch(e) {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-            messagesContainer.innerHTML += '<div class="message-bot">❌ Ошибка соединения</div>';
-        }
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+ window.sendChatMessage = async function() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+    
+    const messagesContainer = document.getElementById('chatMessages');
+    
+    messagesContainer.innerHTML += '<div class="message-user">' + escapeHtml(message) + '</div>';
+    input.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    messagesContainer.innerHTML += '<div class="typing-indicator" id="typingIndicator"><i class="fas fa-ellipsis-h"></i> Печатает...</div>';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Получаем токен из localStorage (где он хранится после входа)
+   const token = localStorage.getItem('token') || localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    
+    const headers = {
+        'Content-Type': 'application/json'
     };
-
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    try {
+   const res = await fetch('/api/ai/yandex', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify({ message: message })
+});
+        const data = await res.json();
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.remove();
+        
+        if (res.ok) {
+            messagesContainer.innerHTML += '<div class="message-bot">' + escapeHtml(data.reply || 'Извините, не могу ответить.') + '</div>';
+        } else if (res.status === 401) {
+            messagesContainer.innerHTML += '<div class="message-bot">🔐 Требуется авторизация. <a href="/login" style="color:#fbbf24;">Войти</a></div>';
+        } else {
+            messagesContainer.innerHTML += '<div class="message-bot">❌ Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
+        }
+    } catch(e) {
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.remove();
+        messagesContainer.innerHTML += '<div class="message-bot">❌ Ошибка соединения: ' + e.message + '</div>';
+    }
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+};
     function escapeHtml(text) {
         if (!text) return '';
         return text.replace(/[&<>]/g, function(m) {
@@ -672,7 +689,7 @@
                 let html = '';
                 for (let i = 0; i < Math.min(5, employees.length); i++) {
                     const e = employees[i];
-                    html += '<tr><td><strong>' + escapeHtml(e.full_name || e.name || '—') + '</strong></td>' +
+                    html += 'tr><td><strong>' + escapeHtml(e.full_name || e.name || '—') + '</strong></td>' +
                         '<td>' + escapeHtml(e.position || '—') + '</td>' +
                         '<td>' + escapeHtml(e.department || '—') + '</td>' +
                         '<td><span class="badge-active">Активен</span></td></tr>';
@@ -824,7 +841,7 @@
             const tbody = document.getElementById('vacanciesList');
             if (tbody) {
                 if (vacancies.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Нет вакансий</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Нет вакансий</td></td>';
                     return;
                 }
                 let html = '';
@@ -1392,7 +1409,7 @@ window.loadResponses = async function() {
         tbody.innerHTML = html;
     } catch(e) {
         console.error('Ошибка загрузки откликов:', e);
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Ошибка загрузки</td></tr>';
+        tbody.innerHTML = '<td><td colspan="7" class="text-center">Ошибка загрузки</td></tr>';
     }
 };
 

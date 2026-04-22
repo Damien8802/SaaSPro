@@ -9,9 +9,9 @@ import (
     "net/http"
     "strings"
     "time"
-    "io"
-    "net"
-    "strconv"
+    //"io"
+    //"net"
+    //"strconv"
      "os" 
 
     "github.com/gin-gonic/gin"
@@ -249,6 +249,17 @@ universalAI := handlers.NewUniversalAIAssistant(
     database.Pool,
 )
     log.Println("✅ Universal AI Assistant инициализирован")
+
+aiExecutor := services.NewAIActionExecutor(database.Pool)
+log.Println("✅ AI Action Executor инициализирован")
+
+// Workflow engine для автономных цепочек
+workflowEngine := services.NewWorkflowEngine(database.Pool)
+log.Println("✅ AI Workflow Engine инициализирован")
+
+// Запускаем фоновый планировщик автономных задач
+go services.StartAutonomousScheduler(database.Pool)
+log.Println("✅ AI Autonomous Scheduler запущен")
     
     // Обработчик заказов на разработку
   individualOrdersHandler := handlers.NewIndividualOrdersHandler(
@@ -276,9 +287,8 @@ universalAI := handlers.NewUniversalAIAssistant(
 
   //r.Use(middleware.AIWidgetMiddleware())
 // AI Assistant API
-r.POST("/api/ai/assistant", handlers.AIAssistantHandler)
-
-
+// AI Assistant API
+r.POST("/api/ai/yandex", middleware.AuthMiddleware(cfg), handlers.YandexHRHandler)
     r.Use(gin.Logger())
     r.Use(gin.Recovery())
     r.Use(middleware.Logger())
@@ -473,10 +483,189 @@ r.DELETE("/api/journal/entry/:id", middleware.AuthMiddleware(cfg), handlers.Dele
     })
     
     // Universal AI Assistant API
-    r.POST("/api/ai/universal/chat", universalAI.ChatHandler)
+  // AI Assistant - использует executor для реальных действий
+r.POST("/api/ai/universal/chat", func(c *gin.Context) {
+    // Получаем данные
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "default"
+    }
+    userID := c.GetString("user_id")
+    if userID == "" {
+        userID = "system"
+    }
+    
+    var req struct {
+        Message string `json:"message"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Используем AI Executor для анализа и выполнения
+    intent, entities := services.AnalyzeIntentExtended(req.Message)
+    
+    // Если это HR запрос - обрабатываем отдельно
+    if strings.Contains(strings.ToLower(req.Message), "ваканс") {
+        result := handleHRRequest(c, tenantID, userID, req.Message)
+        c.JSON(200, gin.H{
+            "response": result,
+            "success":  true,
+        })
+        return
+    }
+    
+    // Выполняем действие
+    result := aiExecutor.ExecuteAction(tenantID, userID, intent, entities)
+    
+    // Сохраняем историю
+    aiExecutor.SaveActionHistory(tenantID, userID, intent.Action, entities, result.Data, result.Error)
+    
+    // Запускаем workflows
+    if result.Success {
+        var resultData map[string]interface{}
+        if result.Data != nil {
+            if data, ok := result.Data.(map[string]interface{}); ok {
+                resultData = data
+            }
+        }
+        workflowResults := workflowEngine.ExecuteWorkflows(tenantID, intent.Action, resultData)
+        if len(workflowResults) > 0 {
+            result.Message += "\n\n📋 Автоматически выполнено:\n" + strings.Join(workflowResults, "\n")
+        }
+    }
+    
+    c.JSON(200, gin.H{
+        "response": result.Message,
+        "success":  result.Success,
+        "action":   intent.Action,
+    })
+})
     r.GET("/api/ai/universal/history", universalAI.GetHistory)
     r.GET("/api/ai/universal/actions", universalAI.GetActions)
     r.GET("/api/ai/universal/settings", universalAI.GetSettings)
+
+// ========== НОВЫЕ РОУТЫ ДЛЯ АВТОНОМНОГО AI ==========
+// AI Executor - выполняет действия
+r.POST("/api/ai/executor/chat", func(c *gin.Context) {
+    // Получаем tenant_id из контекста
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "default"
+    }
+    userID := c.GetString("user_id")
+    if userID == "" {
+        userID = "system"
+    }
+    
+    var req struct {
+        Message string `json:"message"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Анализируем намерение
+    intent, entities := services.AnalyzeIntentExtended(req.Message)
+    
+    // Выполняем действие
+    result := aiExecutor.ExecuteAction(tenantID, userID, intent, entities)
+    
+    // Сохраняем историю
+    aiExecutor.SaveActionHistory(tenantID, userID, intent.Action, entities, result.Data, result.Error)
+    
+    // Запускаем workflows
+    if result.Success {
+        // Приводим result.Data к map[string]interface{}
+var resultData map[string]interface{}
+if result.Data != nil {
+    if data, ok := result.Data.(map[string]interface{}); ok {
+        resultData = data
+    }
+}
+workflowResults := workflowEngine.ExecuteWorkflows(tenantID, intent.Action, resultData)
+        if len(workflowResults) > 0 {
+            result.Message += "\n\n📋 Автоматически выполнено:\n" + strings.Join(workflowResults, "\n")
+        }
+    }
+    
+    c.JSON(200, gin.H{
+        "response": result.Message,
+        "success":  result.Success,
+        "action":   intent.Action,
+        "module":   intent.Module,
+        "data":     result.Data,
+    })
+})
+
+// Получить список workflows
+r.GET("/api/ai/workflows", func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "default"
+    }
+    workflows, err := workflowEngine.GetWorkflows(tenantID)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, workflows)
+})
+
+// Создать workflow
+r.POST("/api/ai/workflows", middleware.AdminMiddleware(cfg), func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "default"
+    }
+    
+    var req struct {
+        Name         string          `json:"name"`
+        TriggerEvent string          `json:"trigger_event"`
+        Actions      json.RawMessage `json:"actions"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    err := workflowEngine.CreateWorkflow(tenantID, req.Name, req.TriggerEvent, req.Actions)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+// Получить историю действий AI
+r.GET("/api/ai/history", func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "default"
+    }
+    history, err := aiExecutor.GetActionHistory(tenantID, 50)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, history)
+})
+
+// Получить рекомендации AI
+r.GET("/api/ai/recommendations", func(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "default"
+    }
+    recommendations, err := workflowEngine.GetRecommendations(tenantID)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, recommendations)
+})
     
     // Individual Orders - страницы
     r.GET("/individual-order", individualOrdersHandler.OrderPage)
@@ -2451,64 +2640,97 @@ if err != nil {
 }
 }
 
-// ========== ВСЕ ФУНКЦИИ ПОСЛЕ main ==========
-
-// SOCKS5 прокси сервер
-func startSOCKS5Proxy(addr string) error {
-    listener, err := net.Listen("tcp", addr)
-    if err != nil {
-        return err
+func handleHRRequest(c *gin.Context, tenantID, userID, message string) string {
+    msg := strings.ToLower(message)
+    
+    // Исправляем tenantID
+    if tenantID == "" || tenantID == "default" {
+        tenantID = "11111111-1111-1111-1111-111111111111"
     }
-
-    log.Printf("✅ SOCKS5 прокси запущен на %s", addr)
-
-    for {
-        conn, err := listener.Accept()
-        if err != nil {
-            log.Printf("SOCKS5 accept error: %v", err)
-            continue
+    
+    // Создание вакансии
+    if strings.Contains(msg, "создай") && strings.Contains(msg, "ваканс") {
+        title := "Новая вакансия"
+        if strings.Contains(msg, "разработчик") {
+            title = "Разработчик Go"
+        } else if strings.Contains(msg, "менеджер") {
+            title = "Менеджер по продажам"
+        } else if strings.Contains(msg, "дизайнер") {
+            title = "UI/UX Дизайнер"
+        } else if strings.Contains(msg, "тестировщик") {
+            title = "QA Инженер"
         }
-        go handleSocks5Connection(conn)
+        
+        _, err := database.Pool.Exec(context.Background(),
+            `INSERT INTO vacancies (title, status, tenant_id, created_at) 
+             VALUES ($1, 'open', $2::uuid, NOW())`,
+            title, tenantID)
+        
+        if err != nil {
+            return fmt.Sprintf("Ошибка создания вакансии: %v", err)
+        }
+        
+        return fmt.Sprintf("✅ Вакансия '%s' успешно создана!", title)
     }
-}
-
-func handleSocks5Connection(client net.Conn) {
-    defer client.Close()
-
-    buf := make([]byte, 256)
-    _, err := client.Read(buf)
-    if err != nil {
-        return
+    
+    // Список вакансий
+    if strings.Contains(msg, "список") && strings.Contains(msg, "ваканс") {
+        rows, err := database.Pool.Query(context.Background(),
+            `SELECT title, status, created_at FROM vacancies 
+             WHERE tenant_id = $1::uuid ORDER BY created_at DESC LIMIT 10`,
+            tenantID)
+        if err != nil {
+            return "Ошибка получения списка вакансий"
+        }
+        defer rows.Close()
+        
+        var vacancies []string
+        for rows.Next() {
+            var title, status string
+            var createdAt time.Time
+            rows.Scan(&title, &status, &createdAt)
+            statusIcon := "🟢"
+            if status != "open" {
+                statusIcon = "🔴"
+            }
+            vacancies = append(vacancies, fmt.Sprintf("%s %s (%s) - %s", statusIcon, title, status, createdAt.Format("02.01.2006")))
+        }
+        
+        if len(vacancies) == 0 {
+            return "📋 Вакансий пока нет. Создайте первую: 'создай вакансию разработчик'"
+        }
+        
+        return "📋 **Список вакансий:**\n" + strings.Join(vacancies, "\n")
     }
+    
+    // Статистика
+    if strings.Contains(msg, "статистик") {
+        var total int
+        database.Pool.QueryRow(context.Background(),
+            "SELECT COUNT(*) FROM vacancies WHERE tenant_id = $1::uuid", tenantID).Scan(&total)
+        
+        var open int
+        database.Pool.QueryRow(context.Background(),
+            "SELECT COUNT(*) FROM vacancies WHERE tenant_id = $1::uuid AND status = 'open'", tenantID).Scan(&open)
+        
+        closed := total - open
+        
+        return fmt.Sprintf(`📊 HR Статистика:
+• Всего вакансий: %d
+• Открытых: %d
+• Закрытых: %d
 
-    client.Write([]byte{0x05, 0x00})
-
-    _, err = client.Read(buf)
-    if err != nil {
-        return
+💡 Команды:
+• "создай вакансию разработчик"
+• "список вакансий"`, total, open, closed)
     }
+    
+    return `🤖 Я HR ассистент
 
-    var host string
-    var port int
+Что я могу:
+• создать вакансию разработчик
+• список вакансий
+• статистика
 
-    if buf[3] == 0x03 {
-        domainLen := int(buf[4])
-        host = string(buf[5 : 5+domainLen])
-        port = int(buf[5+domainLen])<<8 | int(buf[6+domainLen])
-    }
-
-    log.Printf("SOCKS5: %s -> %s:%d", client.RemoteAddr(), host, port)
-
-    target, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
-    if err != nil {
-        client.Write([]byte{0x05, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
-        return
-    }
-    defer target.Close()
-
-    client.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
-
-    go func() { io.Copy(target, client) }()
-    io.Copy(client, target)
-
+Просто напишите, что нужно сделать!`
 }

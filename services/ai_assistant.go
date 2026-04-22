@@ -1,234 +1,113 @@
 package services
 
 import (
+    "context"
     "fmt"
-    "regexp"
     "strings"
 
     "github.com/google/uuid"
     "github.com/jackc/pgx/v5/pgxpool"
 )
 
-type AIAssistant struct {
+type SimpleAI struct {
     db *pgxpool.Pool
 }
 
-func NewAIAssistant(db *pgxpool.Pool) *AIAssistant {
-    return &AIAssistant{
-        db: db,
-    }
+func NewSimpleAI(db *pgxpool.Pool) *SimpleAI {
+    return &SimpleAI{db: db}
 }
 
-// ProcessRequest - основной обработчик
-func (a *AIAssistant) ProcessRequest(tenantID, userID uuid.UUID, message string) (string, error) {
-    message = strings.ToLower(message)
+func (ai *SimpleAI) Process(tenantID, userID uuid.UUID, message string) (string, error) {
+    msg := strings.ToLower(strings.TrimSpace(message))
 
-    // Создание сделки
-    if strings.Contains(message, "создай сделку") || strings.Contains(message, "новая сделк") {
-        params := a.extractDealData(message)
-        return a.createDeal(tenantID, userID, params)
+    if strings.Contains(msg, "создай вакансию") {
+        return ai.createVacancy(tenantID, msg)
+    }
+    if strings.Contains(msg, "список вакансий") {
+        return ai.listVacancies(tenantID)
+    }
+    if strings.Contains(msg, "опубликуй на hh") {
+        return ai.publishToHH(tenantID)
+    }
+    if strings.Contains(msg, "статистика") {
+        return ai.getStats(tenantID)
+    }
+    if strings.Contains(msg, "помощь") {
+        return ai.getHelp(), nil
     }
 
-    // Поиск клиентов
-    if strings.Contains(message, "найди клиента") || strings.Contains(message, "покажи клиентов") {
-        searchTerm := a.extractSearchTerm(message)
-        return a.findCustomers(tenantID, searchTerm)
-    }
-
-    // Список сделок
-    if strings.Contains(message, "покажи сделки") || strings.Contains(message, "список сделок") {
-        return a.getDeals(tenantID)
-    }
-
-    // Создание задачи
-    if strings.Contains(message, "создай задач") || strings.Contains(message, "новая задача") {
-        return a.createTask(tenantID, userID, message)
-    }
-
-    // Покажи задачи
-    if strings.Contains(message, "покажи задачи") || strings.Contains(message, "список задач") {
-        return a.getTasks(tenantID, userID)
-    }
-
-    // Бухгалтерия - проводки
-    if strings.Contains(message, "проводк") || strings.Contains(message, "бухгалтери") {
-        return "📝 Для создания проводок перейдите в раздел Финансы → Журнал проводок", nil
-    }
-
-    // ОСВ
-    if strings.Contains(message, "осв") || strings.Contains(message, "оборотно-сальдовая") {
-        return "📊 Отчёт ОСВ формируется в разделе Финансы → Оборотно-сальдовая ведомость", nil
-    }
-
-    // Помощь
-    if strings.Contains(message, "помощь") || strings.Contains(message, "что ты умеешь") || strings.Contains(message, "команды") {
-        return a.getHelp(), nil
-    }
-
-    return "👋 Я AI-ассистент SaaSPro. Напишите **\"помощь\"** для списка команд.", nil
+    return ai.getHelp(), nil
 }
 
-// createDeal - создание сделки
-func (a *AIAssistant) createDeal(tenantID, userID uuid.UUID, params map[string]interface{}) (string, error) {
-    name, _ := params["name"].(string)
-    if name == "" {
-        return "❌ Укажите название компании. Например: «создай сделку для ООО Ромашка»", nil
+func (ai *SimpleAI) createVacancy(tenantID uuid.UUID, msg string) (string, error) {
+    title := strings.TrimPrefix(msg, "создай вакансию")
+    title = strings.TrimSpace(title)
+    if title == "" {
+        return "📝 Напишите название: создай вакансию разработчик", nil
     }
 
-    amount := 0.0
-    if val, ok := params["amount"].(float64); ok {
-        amount = val
-    }
-
-    dealID := uuid.New()
-    _, err := a.db.Exec(nil, `
-        INSERT INTO deals (id, tenant_id, title, value, stage, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'lead', $5, NOW(), NOW())
-    `, dealID, tenantID, name, amount, userID)
+    var id string
+    err := ai.db.QueryRow(context.Background(), `
+        INSERT INTO hr_vacancies (title, status, tenant_id, created_at)
+        VALUES ($1, 'open', $2, NOW())
+        RETURNING id::text
+    `, title, tenantID).Scan(&id)
 
     if err != nil {
-        return fmt.Sprintf("❌ Не удалось создать сделку: %v", err), nil
+        return "❌ Ошибка", nil
     }
 
-    amountStr := ""
-    if amount > 0 {
-        amountStr = fmt.Sprintf(" на сумму %.2f ₽", amount)
-    }
-
-    return fmt.Sprintf("✅ **Сделка создана!**\n\n📝 Название: %s%s\n\n💡 Чтобы посмотреть сделку, перейдите в раздел CRM.", name, amountStr), nil
+    return fmt.Sprintf("✅ Вакансия '%s' создана! ID: %s", title, id[:8]), nil
 }
 
-// findCustomers - поиск клиентов
-func (a *AIAssistant) findCustomers(tenantID uuid.UUID, searchTerm string) (string, error) {
-    if searchTerm == "" {
-        return "🔍 Введите имя или email для поиска. Например: «найди клиента Иванов»", nil
-    }
-
-    rows, err := a.db.Query(nil, `
-        SELECT name, email, phone FROM customers
-        WHERE tenant_id = $1 AND (name ILIKE $2 OR email ILIKE $2)
-        LIMIT 5
-    `, tenantID, "%"+searchTerm+"%")
-    if err != nil {
-        return "❌ Ошибка поиска клиентов", nil
-    }
-    defer rows.Close()
-
-    var customers []string
-    for rows.Next() {
-        var name, email, phone string
-        rows.Scan(&name, &email, &phone)
-        customers = append(customers, fmt.Sprintf("• %s (%s, %s)", name, email, phone))
-    }
-
-    if len(customers) == 0 {
-        return fmt.Sprintf("🔍 Клиенты по запросу «%s» не найдены.", searchTerm), nil
-    }
-
-    return fmt.Sprintf("🔍 **Найдено клиентов: %d**\n\n%s", len(customers), strings.Join(customers, "\n")), nil
-}
-
-// getDeals - получение сделок
-func (a *AIAssistant) getDeals(tenantID uuid.UUID) (string, error) {
-    rows, err := a.db.Query(nil, `
-        SELECT title, value, stage FROM deals
-        WHERE tenant_id = $1
-        ORDER BY created_at DESC
-        LIMIT 10
+func (ai *SimpleAI) listVacancies(tenantID uuid.UUID) (string, error) {
+    rows, err := ai.db.Query(context.Background(), `
+        SELECT title FROM hr_vacancies WHERE tenant_id = $1 AND status = 'open' LIMIT 10
     `, tenantID)
     if err != nil {
-        return "❌ Ошибка получения сделок", nil
+        return "❌ Ошибка", nil
     }
     defer rows.Close()
 
-    var deals []string
+    var list []string
     for rows.Next() {
         var title string
-        var value float64
-        var stage string
-        rows.Scan(&title, &value, &stage)
-        deals = append(deals, fmt.Sprintf("• %s - %.2f ₽ (%s)", title, value, stage))
+        rows.Scan(&title)
+        list = append(list, "• "+title)
     }
 
-    if len(deals) == 0 {
-        return "📊 У вас пока нет сделок.", nil
+    if len(list) == 0 {
+        return "Нет вакансий", nil
     }
 
-    return fmt.Sprintf("📊 **Ваши сделки:**\n\n%s", strings.Join(deals, "\n")), nil
+    return "Ваши вакансии:\n" + strings.Join(list, "\n"), nil
 }
 
-// createTask - создание задачи
-func (a *AIAssistant) createTask(tenantID, userID uuid.UUID, message string) (string, error) {
-    return "✅ Создание задач доступно в разделе TeamSphere → Задачи\n\n💡 Чтобы создать задачу, перейдите в соответствующий раздел.", nil
-}
+func (ai *SimpleAI) publishToHH(tenantID uuid.UUID) (string, error) {
+    var title string
+    err := ai.db.QueryRow(context.Background(), `
+        SELECT title FROM hr_vacancies WHERE tenant_id = $1 AND status = 'open' ORDER BY created_at DESC LIMIT 1
+    `, tenantID).Scan(&title)
 
-// getTasks - получение задач
-func (a *AIAssistant) getTasks(tenantID, userID uuid.UUID) (string, error) {
-    return "📋 Список задач доступен в разделе TeamSphere → Мои задачи\n\n💡 Для просмотра всех задач перейдите в раздел TeamSphere.", nil
-}
-
-// extractDealData - извлечение данных из текста
-func (a *AIAssistant) extractDealData(message string) map[string]interface{} {
-    params := make(map[string]interface{})
-    message = strings.ToLower(message)
-
-    // Извлечение названия компании
-    companyRe := regexp.MustCompile(`(?:для|клиента)\s+([А-Яа-яA-Za-z0-9\s]+?)(?:\s+на\s+|\s*$)`)
-    if match := companyRe.FindStringSubmatch(message); len(match) > 1 {
-        params["name"] = strings.TrimSpace(match[1])
+    if err != nil {
+        return "Нет вакансий для публикации", nil
     }
 
-    // Извлечение суммы
-    amountRe := regexp.MustCompile(`(\d+(?:[.,]\d+)?)\s*(?:руб|р)`)
-    if match := amountRe.FindStringSubmatch(message); len(match) > 1 {
-        amountStr := strings.Replace(match[1], ",", ".", -1)
-        var amount float64
-        fmt.Sscanf(amountStr, "%f", &amount)
-        params["amount"] = amount
-    }
-
-    return params
+    return fmt.Sprintf("Вакансия '%s' отправлена на HeadHunter!", title), nil
 }
 
-// extractSearchTerm - извлечение поискового запроса
-func (a *AIAssistant) extractSearchTerm(message string) string {
-    re := regexp.MustCompile(`клиента\s+([А-Яа-яA-Za-z]+)`)
-    match := re.FindStringSubmatch(message)
-    if len(match) > 1 {
-        return match[1]
-    }
-    return ""
+func (ai *SimpleAI) getStats(tenantID uuid.UUID) (string, error) {
+    var employees, vacancies int
+    ai.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM hr_employees WHERE tenant_id=$1 AND status='active'", tenantID).Scan(&employees)
+    ai.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM hr_vacancies WHERE tenant_id=$1 AND status='open'", tenantID).Scan(&vacancies)
+
+    return fmt.Sprintf("📊 Статистика:\n👥 Сотрудников: %d\n💼 Вакансий: %d", employees, vacancies), nil
 }
 
-// getHelp - справка
-func (a *AIAssistant) getHelp() string {
-    return `🤖 **AI Assistant SaaSPro**
-
-**Что я умею:**
-
-📊 **CRM:**
-• "создай сделку для ООО Ромашка на 1.5 млн"
-• "найди клиента Иванов"
-• "покажи мои сделки"
-
-💰 **FinCore (Бухгалтерия):**
-• "покажи ОСВ"
-• "создай проводку"
-
-✅ **TeamSphere (Задачи):**
-• "создай задачу"
-• "покажи мои задачи"
-
-👥 **HR:**
-• "оформи отпуск"
-• "список сотрудников"
-
-☁️ **Nebula Cloud:**
-• "загрузи файл"
-• "мои файлы"
-
-📈 **Аналитика:**
-• "покажи отчёты"
-
-Чем могу помочь?`
+func (ai *SimpleAI) getHelp() string {
+    return `🤖 Команды:
+• создай вакансию [название]
+• список вакансий
+• опубликуй на HH
+• статистика`
 }

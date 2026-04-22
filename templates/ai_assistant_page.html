@@ -14,14 +14,176 @@
             min-height: 100vh;
         }
         
+        /* ========== SIDEBAR ========== */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            transition: all 0.3s;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+        }
+        
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        
+        .sidebar.collapsed .nav-link span,
+        .sidebar.collapsed .logo-area p,
+        .sidebar.collapsed .nav-label {
+            display: none;
+        }
+        
+        .sidebar.collapsed .nav-link i {
+            margin-right: 0;
+            font-size: 20px;
+        }
+        
+        .logo-area {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo-area h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .logo-area p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin: 5px 0 0;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.7);
+            padding: 12px 20px;
+            margin: 4px 12px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+        }
+        
+        .nav-link i {
+            width: 22px;
+            font-size: 18px;
+        }
+        
+        .nav-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .nav-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 15px 20px;
+        }
+        
+        .user-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            transition: all 0.3s;
+            padding: 20px;
+        }
+        
+        .main-content.expanded {
+            margin-left: 80px;
+        }
+        
+        .top-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toggle-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #667eea;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        
+        .toggle-btn:hover {
+            background: #f0f2f5;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        
+        /* ========== CHAT CONTAINER ========== */
         .chat-container {
-            max-width: 800px;
-            margin: 0 auto;
-            height: 100vh;
+            max-width: 900px;
+            margin: 0;
+            height: calc(100vh - 140px);
             display: flex;
             flex-direction: column;
             background: white;
-            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
         }
         
         .chat-header {
@@ -230,212 +392,369 @@
             border-color: #667eea;
         }
         
-        @media (max-width: 600px) {
-            .message-content { max-width: 85%; }
-            .quick-buttons { display: none; }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 1050;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .message-content {
+                max-width: 85%;
+            }
+            .quick-buttons {
+                display: none;
+            }
+        }
+        
+        /* Scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <button class="back-btn" onclick="history.back()">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-            <h1>
-                <i class="fas fa-robot me-2"></i>
-                AI ассистент SaaSPro
-            </h1>
-            <div class="status">
-                <i class="fas fa-circle" style="font-size: 8px; color: #10b981;"></i> Онлайн
-            </div>
+<div class="app-container">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo-area">
+            <h3>SaaSPro</h3>
+            <p>AI Assistant</p>
         </div>
         
-        <div class="chat-messages" id="chatMessages">
-            <div class="message assistant">
-                <div class="message-avatar">🤖</div>
-                <div class="message-content">
-                    <strong>👋 Привет! Я AI-ассистент SaaSPro!</strong><br><br>
-                    <strong>Вот что я умею:</strong><br>
-                    • 🔍 <strong>Поиск цен</strong> - "Сколько стоит разработка телеграм-бота?"<br>
-                    • 📋 <strong>CRM</strong> - "Создай клиента ООО Ромашка"<br>
-                    • 💰 <strong>Бухгалтерия</strong> - "Создай проводку Дт 51 Кт 62"<br>
-                    • 👥 <strong>Задачи</strong> - "Создай задачу позвонить клиенту"<br>
-                    • 🔒 <strong>VPN</strong> - "Сгенерируй VPN-ключ"<br><br>
-                    <strong>💡 Просто напишите свой вопрос!</strong>
+        <div class="nav-menu">
+            <a href="/dashboard-improved" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                <span class="nav-label">Дашборд</span>
+            </a>
+            <a href="/crm" class="nav-link">
+                <i class="fas fa-users"></i>
+                <span class="nav-label">CRM</span>
+            </a>
+            <a href="/ai-assistant" class="nav-link active">
+                <i class="fas fa-robot"></i>
+                <span class="nav-label">AI Ассистент</span>
+            </a>
+            <a href="/teamsphere" class="nav-link">
+                <i class="fas fa-chalkboard-user"></i>
+                <span class="nav-label">TeamSphere</span>
+            </a>
+            <a href="/hr" class="nav-link">
+                <i class="fas fa-user-tie"></i>
+                <span class="nav-label">HR</span>
+            </a>
+            <a href="/finance" class="nav-link">
+                <i class="fas fa-chart-line"></i>
+                <span class="nav-label">Финансы</span>
+            </a>
+            <a href="/inventory" class="nav-link">
+                <i class="fas fa-boxes"></i>
+                <span class="nav-label">Склад</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <a href="/settings" class="nav-link">
+                <i class="fas fa-cog"></i>
+                <span class="nav-label">Настройки</span>
+            </a>
+            <a href="/support" class="nav-link">
+                <i class="fas fa-headset"></i>
+                <span class="nav-label">Поддержка</span>
+            </a>
+        </div>
+        
+        <div class="user-info">
+            <div class="d-flex align-items-center gap-3">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold" style="font-size: 14px;" id="userName">Пользователь</div>
+                    <div style="font-size: 11px; opacity: 0.6;" id="userEmail">user@example.com</div>
                 </div>
             </div>
         </div>
-        
-        <div class="quick-buttons">
-            <button class="quick-btn" onclick="sendQuickMessage('Сколько стоит разработка телеграм-бота?')">🤖 Цена бота</button>
-            <button class="quick-btn" onclick="sendQuickMessage('Создай клиента ООО Ромашка')">➕ Создать клиента</button>
-            <button class="quick-btn" onclick="sendQuickMessage('Создай задачу позвонить клиенту')">✅ Создать задачу</button>
-            <button class="quick-btn" onclick="sendQuickMessage('Что ты умеешь?')">❓ Помощь</button>
-        </div>
-        
-        <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="Напишите сообщение..." onkeypress="if(event.keyCode===13) sendMessage()">
-            <button onclick="sendMessage()">
-                <i class="fas fa-paper-plane"></i> Отправить
-            </button>
-        </div>
     </div>
-
-    <script>
-        let isTyping = false;
-        
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            if (!message) return;
-            
-            addMessage('user', message);
-            input.value = '';
-            showTyping();
-            
-            try {
-                const response = await fetch('/api/ai/universal/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
-                });
-                
-                const data = await response.json();
-                hideTyping();
-                addMessage('assistant', data.response || 'Извините, произошла ошибка. Попробуйте позже.');
-                
-            } catch (error) {
-                hideTyping();
-                addMessage('assistant', '❌ Ошибка соединения. Попробуйте позже.');
-            }
-        }
-        
-        function sendQuickMessage(text) {
-            document.getElementById('messageInput').value = text;
-            sendMessage();
-        }
-        
-        function addMessage(role, text) {
-            const messagesDiv = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${role}`;
-            
-            const avatar = role === 'user' ? '👤' : '🤖';
-            const avatarBg = role === 'user' ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'linear-gradient(135deg, #10b981, #059669)';
-            
-            messageDiv.innerHTML = `
-                <div class="message-avatar" style="background: ${avatarBg}">${avatar}</div>
-                <div class="message-content">${formatText(text)}</div>
-            `;
-            
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-        
-        function formatText(text) {
-            text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            text = text.replace(/\n/g, '<br>');
-            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-            text = text.replace(/• /g, '• ');
-            return text;
-        }
-        
-        function showTyping() {
-            if (isTyping) return;
-            isTyping = true;
-            const messagesDiv = document.getElementById('chatMessages');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message assistant';
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerHTML = `
-                <div class="message-avatar" style="background: linear-gradient(135deg, #10b981, #059669)">🤖</div>
-                <div class="typing-indicator"><span></span><span></span><span></span></div>
-            `;
-            messagesDiv.appendChild(typingDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-        
-        function hideTyping() {
-            const typingDiv = document.getElementById('typingIndicator');
-            if (typingDiv) typingDiv.remove();
-            isTyping = false;
-        }
-    </script>
-
-<!-- AI Widget with Modal -->
-<style>
-.ai-floating-widget{position:fixed;bottom:20px;right:20px;z-index:10000}
-.ai-widget-button{width:56px;height:56px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,0.3);transition:all .3s;border:none;font-size:26px;color:#fff}
-.ai-widget-button:hover{transform:scale(1.1)}
-.ai-widget-tooltip{position:absolute;bottom:65px;right:0;background:rgba(0,0,0,0.8);color:#fff;padding:6px 12px;border-radius:12px;font-size:12px;white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none}
-.ai-floating-widget:hover .ai-widget-tooltip{opacity:1}
-.ai-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(5px);z-index:10001;justify-content:center;align-items:center}
-.ai-modal{width:450px;max-width:90%;height:600px;max-height:80vh;background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);animation:modalFadeIn .3s ease}
-@keyframes modalFadeIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
-.ai-modal-header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
-.ai-modal-header h3{margin:0;font-size:18px;display:flex;align-items:center;gap:10px}
-.ai-modal-header .close-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px}
-.ai-modal-header .close-btn:hover{background:rgba(255,255,255,0.3);transform:scale(1.05)}
-.ai-modal-status{font-size:11px;background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:20px}
-.ai-modal-messages{flex:1;overflow-y:auto;padding:16px;background:#f8f9fa;display:flex;flex-direction:column;gap:12px}
-.ai-msg{display:flex;gap:10px;animation:fadeIn .3s ease}
-.ai-msg.user{flex-direction:row-reverse}
-.ai-msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.ai-msg.user .ai-msg-avatar{background:linear-gradient(135deg,#667eea,#764ba2)}
-.ai-msg.assistant .ai-msg-avatar{background:linear-gradient(135deg,#10b981,#059669)}
-.ai-msg-content{max-width:75%;padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.5}
-.ai-msg.user .ai-msg-content{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-bottom-right-radius:4px}
-.ai-msg.assistant .ai-msg-content{background:#fff;color:#333;border:1px solid #e0e0e0;border-bottom-left-radius:4px}
-.ai-msg-content strong{color:#667eea}
-.ai-modal-input{padding:12px 16px;background:#fff;border-top:1px solid #e0e0e0;display:flex;gap:10px}
-.ai-modal-input input{flex:1;padding:10px 16px;border:1px solid #ddd;border-radius:30px;outline:none;font-size:14px}
-.ai-modal-input input:focus{border-color:#667eea}
-.ai-modal-input button{padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:30px;cursor:pointer;font-weight:600}
-.ai-typing{display:flex;gap:4px;padding:10px 14px;background:#fff;border-radius:18px;width:fit-content;border:1px solid #e0e0e0}
-.ai-typing span{width:8px;height:8px;background:#999;border-radius:50%;animation:typing 1.4s infinite}
-.ai-typing span:nth-child(2){animation-delay:.2s}
-.ai-typing span:nth-child(3){animation-delay:.4s}
-@keyframes typing{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.ai-quick-buttons{display:flex;gap:8px;padding:10px 16px;background:#f8f9fa;border-top:1px solid #e0e0e0;flex-wrap:wrap}
-.ai-quick-btn{background:#fff;border:1px solid #ddd;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer}
-.ai-quick-btn:hover{background:#667eea;color:#fff;border-color:#667eea}
-</style>
-
-<div class="ai-floating-widget">
-    <div class="ai-widget-button" onclick="openAIModal()">🤖</div>
-    <div class="ai-widget-tooltip">AI ассистент</div>
-</div>
-
-<div class="ai-modal-overlay" id="aiModalOverlay" onclick="if(event.target===this) closeAIModal()">
-    <div class="ai-modal">
-        <div class="ai-modal-header">
-            <h3><i class="fas fa-robot"></i> AI ассистент</h3>
-            <div><span class="ai-modal-status"><i class="fas fa-circle" style="font-size:8px;color:#10b981"></i> Онлайн</span>
-            <button class="close-btn" onclick="closeAIModal()">✕</button></div>
-        </div>
-        <div class="ai-modal-messages" id="aiModalMessages">
-            <div class="ai-msg assistant">
-                <div class="ai-msg-avatar">🤖</div>
-                <div class="ai-msg-content"><strong>👋 Привет!</strong><br>Я AI ассистент SaaSPro.<br><br>❓ "Сколько стоит разработка телеграм-бота?"<br>📋 "Создай клиента ООО Ромашка"<br>❓ "Что ты умеешь?"</div>
+    
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+        <div class="top-bar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="toggle-btn" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">
+                    <i class="fas fa-robot me-2" style="color: #667eea;"></i>
+                    AI Ассистент
+                </h1>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary btn-sm" onclick="window.location.href='/dashboard-improved'">
+                    <i class="fas fa-arrow-left me-1"></i> Назад
+                </button>
             </div>
         </div>
-        <div class="ai-quick-buttons">
-            <button class="ai-quick-btn" onclick="sendAIModalMessage('Сколько стоит разработка телеграм-бота?')">🤖 Цена бота</button>
-            <button class="ai-quick-btn" onclick="sendAIModalMessage('Создай клиента ООО Ромашка +7 999 123-45-67')">➕ Клиент</button>
-            <button class="ai-quick-btn" onclick="sendAIModalMessage('Что ты умеешь?')">❓ Помощь</button>
+        
+        <!-- CHAT CONTAINER -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <button class="back-btn" onclick="history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1>
+                    <i class="fas fa-robot me-2"></i>
+                    AI ассистент SaaSPro
+                </h1>
+                <div class="status">
+                    <i class="fas fa-circle" style="font-size: 8px; color: #10b981;"></i> Онлайн
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <strong>👋 Привет! Я AI-ассистент SaaSPro!</strong><br><br>
+                        <strong>Вот что я умею:</strong><br>
+                        • 📋 <strong>HR:</strong> создать вакансию, список вакансий, статистика<br>
+                        • 👤 <strong>CRM:</strong> создать клиента, сделку<br>
+                        • 💰 <strong>Финансы:</strong> выставить счёт<br>
+                        • ✅ <strong>Задачи:</strong> создать задачу<br>
+                        • 🔒 <strong>VPN:</strong> сгенерировать VPN-ключ<br><br>
+                        <strong>💡 Примеры команд:</strong><br>
+                        ─────────────────<br>
+                        📋 "создай вакансию разработчик"<br>
+                        📋 "список вакансий"<br>
+                        📊 "статистика"<br>
+                        👤 "создай клиента ООО Ромашка +7 999 123 45 67"<br>
+                        💰 "создай сделку для Ромашки на 500000"<br>
+                        📄 "выставь счёт Ромашке на 500000"<br>
+                        ✅ "создай задачу Позвонить клиенту для Иванова"
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quick-buttons">
+                <button class="quick-btn" onclick="sendQuickMessage('создай вакансию разработчик')">
+                    <i class="fas fa-plus-circle me-1"></i> Создать вакансию
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('список вакансий')">
+                    <i class="fas fa-list me-1"></i> Список вакансий
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('статистика')">
+                    <i class="fas fa-chart-simple me-1"></i> Статистика
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('создай клиента ООО Тест +7 999 888 77 66')">
+                    <i class="fas fa-user-plus me-1"></i> Создать клиента
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('создай сделку для Тест на 500000')">
+                    <i class="fas fa-chart-line me-1"></i> Создать сделку
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('выставь счёт Тест на 500000')">
+                    <i class="fas fa-file-invoice me-1"></i> Выставить счёт
+                </button>
+                <button class="quick-btn" onclick="sendQuickMessage('создай задачу Сделать отчёт для Петрова')">
+                    <i class="fas fa-tasks me-1"></i> Создать задачу
+                </button>
+            </div>
+            
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="Напишите сообщение..." onkeypress="if(event.keyCode===13) sendMessage()">
+                <button onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i> Отправить
+                </button>
+            </div>
         </div>
-        <div class="ai-modal-input">
-            <input type="text" id="aiModalInput" placeholder="Напишите сообщение..." onkeypress="if(event.keyCode===13) sendAIModalMessage()">
-            <button onclick="sendAIModalMessage()"><i class="fas fa-paper-plane"></i> Отправить</button>
+    </div>
+</div>
+
+<!-- AI Widget Floating Button -->
+<div class="ai-floating-widget" style="position:fixed;bottom:20px;right:20px;z-index:10000">
+    <div class="ai-widget-button" style="width:56px;height:56px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,0.3);border:none;font-size:26px;color:#fff" onclick="openAIModal()">🤖</div>
+    <div class="ai-widget-tooltip" style="position:absolute;bottom:65px;right:0;background:rgba(0,0,0,0.8);color:#fff;padding:6px 12px;border-radius:12px;font-size:12px;white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none">AI ассистент</div>
+</div>
+
+<!-- AI Modal -->
+<div class="ai-modal-overlay" id="aiModalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(5px);z-index:10001;justify-content:center;align-items:center" onclick="if(event.target===this) closeAIModal()">
+    <div class="ai-modal" style="width:450px;max-width:90%;height:600px;max-height:80vh;background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)">
+        <div class="ai-modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0;font-size:18px"><i class="fas fa-robot"></i> AI ассистент</h3>
+            <div>
+                <span class="ai-modal-status" style="font-size:11px;background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:20px"><i class="fas fa-circle" style="font-size:8px;color:#10b981"></i> Онлайн</span>
+                <button class="close-btn" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;margin-left:10px" onclick="closeAIModal()">✕</button>
+            </div>
+        </div>
+        <div class="ai-modal-messages" id="aiModalMessages" style="flex:1;overflow-y:auto;padding:16px;background:#f8f9fa;display:flex;flex-direction:column;gap:12px">
+            <div class="ai-msg assistant" style="display:flex;gap:10px">
+                <div class="ai-msg-avatar" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#10b981,#059669)">🤖</div>
+                <div class="ai-msg-content" style="max-width:75%;padding:10px 14px;border-radius:18px;background:#fff;border:1px solid #e0e0e0;font-size:13px"><strong>👋 Привет!</strong><br>Я AI ассистент SaaSPro.<br><br>📋 "создай вакансию разработчик"<br>👤 "создай клиента ООО Ромашка"<br>❓ "Что ты умеешь?"</div>
+            </div>
+        </div>
+        <div class="ai-quick-buttons" style="display:flex;gap:8px;padding:10px 16px;background:#f8f9fa;border-top:1px solid #e0e0e0;flex-wrap:wrap">
+            <button class="ai-quick-btn" style="background:#fff;border:1px solid #ddd;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer" onclick="sendAIModalMessage('создай вакансию разработчик')">📋 Вакансия</button>
+            <button class="ai-quick-btn" style="background:#fff;border:1px solid #ddd;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer" onclick="sendAIModalMessage('список вакансий')">📋 Список</button>
+            <button class="ai-quick-btn" style="background:#fff;border:1px solid #ddd;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer" onclick="sendAIModalMessage('статистика')">📊 Статистика</button>
+            <button class="ai-quick-btn" style="background:#fff;border:1px solid #ddd;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer" onclick="sendAIModalMessage('создай клиента ООО Тест +7 999 123 45 67')">👤 Клиент</button>
+            <button class="ai-quick-btn" style="background:#fff;border:1px solid #ddd;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer" onclick="sendAIModalMessage('Что ты умеешь?')">❓ Помощь</button>
+        </div>
+        <div class="ai-modal-input" style="padding:12px 16px;background:#fff;border-top:1px solid #e0e0e0;display:flex;gap:10px">
+            <input type="text" id="aiModalInput" placeholder="Напишите сообщение..." style="flex:1;padding:10px 16px;border:1px solid #ddd;border-radius:30px;outline:none;font-size:14px" onkeypress="if(event.keyCode===13) sendAIModalMessage()">
+            <button onclick="sendAIModalMessage()" style="padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:30px;cursor:pointer;font-weight:600"><i class="fas fa-paper-plane"></i> Отправить</button>
         </div>
     </div>
 </div>
 
 <script>
+// ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+let currentTenantId = localStorage.getItem('tenant_id') || 'default';
+let isTyping = false;
 let aiModalTyping = false;
 
+// ========== ЗАГРУЗКА ИНФОРМАЦИИ О ПОЛЬЗОВАТЕЛЕ ==========
+async function loadUserInfo() {
+    try {
+        const response = await fetch('/api/current-user');
+        if (response.ok) {
+            const user = await response.json();
+            document.getElementById('userName').innerHTML = user.name || user.email || 'Пользователь';
+            document.getElementById('userEmail').innerHTML = user.email || '';
+            if (user.tenant_id) {
+                currentTenantId = user.tenant_id;
+                localStorage.setItem('tenant_id', currentTenantId);
+            }
+        }
+    } catch (error) {
+        console.log('User info not available');
+    }
+}
+
+// ========== SIDEBAR TOGGLE ==========
+const sidebar = document.getElementById('sidebar');
+const mainContent = document.getElementById('mainContent');
+const toggleBtn = document.getElementById('toggleSidebar');
+
+if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    sidebar.classList.add('collapsed');
+    mainContent.classList.add('expanded');
+}
+
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+}
+
+// ========== ФУНКЦИИ ЧАТА ==========
+function formatText(text) {
+    if (!text) return '';
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\n/g, '<br>');
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    text = text.replace(/• /g, '• ');
+    return text;
+}
+
+function addMessage(role, text) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    
+    const avatar = role === 'user' ? '👤' : '🤖';
+    const avatarBg = role === 'user' ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'linear-gradient(135deg, #10b981, #059669)';
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar" style="background: ${avatarBg}">${avatar}</div>
+        <div class="message-content">${formatText(text)}</div>
+    `;
+    
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function showTyping() {
+    if (isTyping) return;
+    isTyping = true;
+    const messagesDiv = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message assistant';
+    typingDiv.id = 'typingIndicator';
+    typingDiv.innerHTML = `
+        <div class="message-avatar" style="background: linear-gradient(135deg, #10b981, #059669)">🤖</div>
+        <div class="typing-indicator"><span></span><span></span><span></span></div>
+    `;
+    messagesDiv.appendChild(typingDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function hideTyping() {
+    const typingDiv = document.getElementById('typingIndicator');
+    if (typingDiv) typingDiv.remove();
+    isTyping = false;
+}
+
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    if (!message) return;
+    
+    addMessage('user', message);
+    input.value = '';
+    showTyping();
+    
+    try {
+        const response = await fetch('/api/ai/universal/chat', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': currentTenantId
+            },
+            body: JSON.stringify({ 
+                message: message,
+                tenant_id: currentTenantId
+            })
+        });
+        
+        const data = await response.json();
+        hideTyping();
+        
+        let responseText = data.response || data.message || 'Извините, произошла ошибка.';
+        if (data.success === false && data.error) {
+            responseText = `❌ Ошибка: ${data.error}`;
+        }
+        
+        addMessage('assistant', responseText);
+        
+    } catch (error) {
+        hideTyping();
+        addMessage('assistant', '❌ Ошибка соединения с сервером. Попробуйте позже.');
+        console.error('Error:', error);
+    }
+}
+
+function sendQuickMessage(message) {
+    document.getElementById('messageInput').value = message;
+    sendMessage();
+}
+
+// ========== ФУНКЦИИ МОДАЛЬНОГО ОКНА ==========
 function openAIModal() {
     document.getElementById('aiModalOverlay').style.display = 'flex';
     document.getElementById('aiModalInput').focus();
@@ -443,6 +762,47 @@ function openAIModal() {
 
 function closeAIModal() {
     document.getElementById('aiModalOverlay').style.display = 'none';
+}
+
+function addAIModalMessage(role, text) {
+    const container = document.getElementById('aiModalMessages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `ai-msg ${role}`;
+    msgDiv.style.display = 'flex';
+    msgDiv.style.gap = '10px';
+    
+    const avatar = role === 'user' ? '👤' : '🤖';
+    const avatarBg = role === 'user' ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'linear-gradient(135deg,#10b981,#059669)';
+    
+    msgDiv.innerHTML = `
+        <div class="ai-msg-avatar" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${avatarBg}">${avatar}</div>
+        <div class="ai-msg-content" style="max-width:75%;padding:10px 14px;border-radius:18px;background:${role === 'user' ? 'linear-gradient(135deg,#667eea,#764ba2)' : '#fff'};color:${role === 'user' ? '#fff' : '#333'};${role !== 'user' ? 'border:1px solid #e0e0e0' : ''};font-size:13px">${formatText(text)}</div>
+    `;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showAIModalTyping() {
+    if (aiModalTyping) return;
+    aiModalTyping = true;
+    const container = document.getElementById('aiModalMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'ai-msg assistant';
+    typingDiv.id = 'aiModalTyping';
+    typingDiv.style.display = 'flex';
+    typingDiv.style.gap = '10px';
+    typingDiv.innerHTML = `
+        <div class="ai-msg-avatar" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#10b981,#059669)">🤖</div>
+        <div class="ai-typing" style="display:flex;gap:4px;padding:10px 14px;background:#fff;border-radius:18px;border:1px solid #e0e0e0"><span></span><span></span><span></span></div>
+    `;
+    container.appendChild(typingDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideAIModalTyping() {
+    const typingDiv = document.getElementById('aiModalTyping');
+    if (typingDiv) typingDiv.remove();
+    aiModalTyping = false;
 }
 
 async function sendAIModalMessage(quickMsg) {
@@ -457,46 +817,52 @@ async function sendAIModalMessage(quickMsg) {
     try {
         const response = await fetch('/api/ai/universal/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message })
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': currentTenantId
+            },
+            body: JSON.stringify({ 
+                message: message,
+                tenant_id: currentTenantId
+            })
         });
+        
         const data = await response.json();
         hideAIModalTyping();
-        addAIModalMessage('assistant', data.response || 'Извините, ошибка. Попробуйте позже.');
+        
+        let responseText = data.response || data.message || 'Извините, ошибка. Попробуйте позже.';
+        if (data.success === false && data.error) {
+            responseText = `❌ Ошибка: ${data.error}`;
+        }
+        
+        addAIModalMessage('assistant', responseText);
     } catch(err) {
         hideAIModalTyping();
-        addAIModalMessage('assistant', '❌ Ошибка соединения');
+        addAIModalMessage('assistant', '❌ Ошибка соединения с сервером');
+        console.error('Error:', err);
     }
 }
 
-function addAIModalMessage(role, text) {
-    const container = document.getElementById('aiModalMessages');
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `ai-msg ${role}`;
-    const avatar = role === 'user' ? '👤' : '🤖';
-    const avatarBg = role === 'user' ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'linear-gradient(135deg,#10b981,#059669)';
-    msgDiv.innerHTML = `<div class="ai-msg-avatar" style="background:${avatarBg}">${avatar}</div><div class="ai-msg-content">${text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>`;
-    container.appendChild(msgDiv);
-    container.scrollTop = container.scrollHeight;
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+loadUserInfo();
+
+// Сохраняем историю чата в localStorage
+function saveChatHistory() {
+    const messages = document.getElementById('chatMessages').innerHTML;
+    localStorage.setItem('ai_chat_history', messages);
 }
 
-function showAIModalTyping() {
-    if (aiModalTyping) return;
-    aiModalTyping = true;
-    const container = document.getElementById('aiModalMessages');
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'ai-msg assistant';
-    typingDiv.id = 'aiModalTyping';
-    typingDiv.innerHTML = `<div class="ai-msg-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">🤖</div><div class="ai-typing"><span></span><span></span><span></span></div>`;
-    container.appendChild(typingDiv);
-    container.scrollTop = container.scrollHeight;
+// Загружаем историю чата
+function loadChatHistory() {
+    const saved = localStorage.getItem('ai_chat_history');
+    if (saved) {
+        document.getElementById('chatMessages').innerHTML = saved;
+    }
 }
 
-function hideAIModalTyping() {
-    const typingDiv = document.getElementById('aiModalTyping');
-    if (typingDiv) typingDiv.remove();
-    aiModalTyping = false;
-}
+loadChatHistory();
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

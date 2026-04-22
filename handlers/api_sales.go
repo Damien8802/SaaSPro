@@ -49,18 +49,19 @@ var apiPlans = []APIPlan{
 }
 
 // Временная структура для хранения ключей в памяти (пока нет БД)
-var tempKeys = make(map[string]struct {
+type KeyData struct {
     UserID        string
     PlanID        int
     RequestsToday int
     LastReset     time.Time
-})
+}
+
+var tempKeys = make(map[string]KeyData)
 
 // ВРЕМЕННАЯ функция для получения тестового user_id
 func getTestUserID(c *gin.Context) (string, bool) {
     // Используем существующего пользователя из логов
     testID := "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
-    fmt.Println("⚠️ Используем тестового пользователя:", testID)
     return testID, true
 }
 
@@ -91,7 +92,7 @@ func GetUserPlan(c *gin.Context) {
         
         c.JSON(http.StatusOK, gin.H{
             "has_key":        true,
-            "key":            userID, // временно используем userID как ключ
+            "key":            userID,
             "plan":           plan,
             "requests_today": keyData.RequestsToday,
             "requests_left":  plan.RequestsLimit - keyData.RequestsToday,
@@ -148,12 +149,7 @@ func CreateAPIKey(c *gin.Context) {
     }
     
     // Сохраняем ключ в памяти
-    tempKeys[userID] = struct {
-        UserID        string
-        PlanID        int
-        RequestsToday int
-        LastReset     time.Time
-    }{
+    tempKeys[userID] = KeyData{
         UserID:        userID,
         PlanID:        selectedPlan.ID,
         RequestsToday: 0,
@@ -266,9 +262,13 @@ func PublicSearchAPI(c *gin.Context) {
         return
     }
     
-    // Ищем в интернете (используем ваши функции из ai.go)
-    price := getAveragePrice(query)
-    advice := getAdvice(query)
+    // ИСПРАВЛЕНО: парсим цену из запроса
+    var price float64
+    fmt.Sscanf(query, "%f", &price)
+    if price == 0 {
+        price = 50000 // значение по умолчанию
+    }
+    advice := getAdvice(price)
     
     // Увеличиваем счетчик
     keyData.RequestsToday++
@@ -330,4 +330,39 @@ func APISalesPageHandler(c *gin.Context) {
     c.HTML(http.StatusOK, "api-sales.html", gin.H{
         "plans": apiPlans,
     })
+}
+
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+
+// getAveragePrice - расчет средней цены (принимает массив цен)
+func getAveragePrice(prices []float64) float64 {
+    if len(prices) == 0 {
+        return 0
+    }
+    sum := 0.0
+    for _, p := range prices {
+        sum += p
+    }
+    return sum / float64(len(prices))
+}
+
+// getAdvice - рекомендация по цене (принимает float64)
+func getAdvice(price float64) string {
+    if price < 10000 {
+        return "💰 Цена ниже рыночной, можно повысить"
+    } else if price > 100000 {
+        return "💎 Премиум сегмент, добавьте дополнительные услуги"
+    }
+    return "✅ Оптимальная цена для рынка"
+}
+
+// formatPrice - форматирование цены
+func formatPrice(price float64) string {
+    if price == 0 {
+        return "Бесплатно"
+    }
+    if price >= 1000000 {
+        return fmt.Sprintf("%.1f млн ₽", price/1000000)
+    }
+    return fmt.Sprintf("%.0f ₽", price)
 }
