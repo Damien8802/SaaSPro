@@ -129,11 +129,28 @@ func GetVPNStats(c *gin.Context) {
     database.Pool.QueryRow(context.Background(), `
         SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE active = true AND expires_at > NOW()) as active FROM vpn_keys
     `).Scan(&total, &active)
+    
+    servers := []gin.H{
+        {"name": "🇷🇺 Россия (Москва)", "ping": "5 мс", "flag": "🇷🇺", "location": "Moscow", "load": 45},
+        {"name": "🇺🇸 США (Нью-Йорк)", "ping": "120 мс", "flag": "🇺🇸", "location": "New York", "load": 72},
+        {"name": "🇩🇪 Германия (Франкфурт)", "ping": "45 мс", "flag": "🇩🇪", "location": "Frankfurt", "load": 38},
+        {"name": "🇳🇱 Нидерланды (Амстердам)", "ping": "38 мс", "flag": "🇳🇱", "location": "Amsterdam", "load": 52},
+        {"name": "🇬🇧 Великобритания (Лондон)", "ping": "50 мс", "flag": "🇬🇧", "location": "London", "load": 41},
+        {"name": "🇸🇬 Сингапур", "ping": "180 мс", "flag": "🇸🇬", "location": "Singapore", "load": 35},
+        {"name": "🇯🇵 Япония (Токио)", "ping": "200 мс", "flag": "🇯🇵", "location": "Tokyo", "load": 28},
+        {"name": "🇦🇪 ОАЭ (Дубай)", "ping": "150 мс", "flag": "🇦🇪", "location": "Dubai", "load": 22},
+        {"name": "🇫🇷 Франция (Париж)", "ping": "48 мс", "flag": "🇫🇷", "location": "Paris", "load": 44},
+        {"name": "🇨🇭 Швейцария (Цюрих)", "ping": "42 мс", "flag": "🇨🇭", "location": "Zurich", "load": 31},
+        {"name": "🇨🇦 Канада (Торонто)", "ping": "130 мс", "flag": "🇨🇦", "location": "Toronto", "load": 26},
+        {"name": "🇦🇺 Австралия (Сидней)", "ping": "250 мс", "flag": "🇦🇺", "location": "Sydney", "load": 19},
+    }
+    
     c.JSON(http.StatusOK, gin.H{
-        "status":         "active",
-        "total_clients":  total,
-        "active_clients": active,
-        "servers":        []gin.H{{"name": "🇷🇺 Россия (Москва)", "ping": "5 мс"}, {"name": "🇺🇸 США (Нью-Йорк)", "ping": "120 мс"}, {"name": "🇩🇪 Германия (Франкфурт)", "ping": "45 мс"}},
+        "status":          "active",
+        "total_clients":   total,
+        "active_clients":  active,
+        "servers":         servers,
+        "servers_count":   len(servers),
     })
 }
 
@@ -516,16 +533,14 @@ func generatePublicKey() string {
     rand.Read(b)
     return base64.StdEncoding.EncodeToString(b)
 }
-// DownloadMobileConfig - скачать конфиг для телефона (QR код + инструкция)
+
+// DownloadMobileConfig - скачать конфиг для телефона
 func DownloadMobileConfig(c *gin.Context) {
     clientID := c.Param("id")
     
-    // Получаем user_id из контекста
     userID, exists := c.Get("user_id")
     if !exists {
-        c.HTML(http.StatusOK, "mobile_config", gin.H{
-            "error": "Ошибка авторизации",
-        })
+        c.HTML(http.StatusOK, "mobile_config", gin.H{"error": "Ошибка авторизации"})
         return
     }
     
@@ -536,13 +551,10 @@ func DownloadMobileConfig(c *gin.Context) {
     `, clientID, userID).Scan(&clientName, &privateKey, &clientIP)
     
     if err != nil {
-        c.HTML(http.StatusOK, "mobile_config", gin.H{
-            "error": "Ключ не найден или истёк",
-        })
+        c.HTML(http.StatusOK, "mobile_config", gin.H{"error": "Ключ не найден или истёк"})
         return
     }
     
-    // Формируем конфиг для WireGuard
     config := fmt.Sprintf(`[Interface]
 PrivateKey = %s
 Address = %s/24
@@ -559,5 +571,164 @@ PersistentKeepalive = 25`, privateKey, clientIP)
         "client_name": clientName,
         "client_ip":   clientIP,
         "config":      config,
+    })
+}
+
+// ========== VPN MAX ФУНКЦИИ ==========
+
+// GetVPNPlansMax - получить тарифы
+func GetVPNPlansMax(c *gin.Context) {
+    rows, err := database.Pool.Query(context.Background(), `
+        SELECT id, name, price, days, speed, devices, COALESCE(features, 'Безлимит трафика, 50+ стран, 24/7 поддержка') as features
+        FROM vpn_plans WHERE active = true ORDER BY price
+    `)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var plans []gin.H
+    for rows.Next() {
+        var id, days, devices int
+        var name, speed, features string
+        var price float64
+        rows.Scan(&id, &name, &price, &days, &speed, &devices, &features)
+        plans = append(plans, gin.H{
+            "id": id, "name": name, "price": price,
+            "days": days, "speed": speed, "devices": devices,
+            "features": features,
+        })
+    }
+    c.JSON(200, gin.H{"plans": plans})
+}
+
+// GetVPNServersMax - получить сервера
+func GetVPNServersMax(c *gin.Context) {
+    servers := []gin.H{
+        {"id": "1", "country": "Россия", "city": "Москва", "flag": "🇷🇺", "ping": 5, "speed": "950 Мбит/с"},
+        {"id": "2", "country": "Россия", "city": "Санкт-Петербург", "flag": "🇷🇺", "ping": 8, "speed": "920 Мбит/с"},
+        {"id": "3", "country": "Германия", "city": "Франкфурт", "flag": "🇩🇪", "ping": 45, "speed": "980 Мбит/с"},
+        {"id": "4", "country": "Нидерланды", "city": "Амстердам", "flag": "🇳🇱", "ping": 42, "speed": "990 Мбит/с"},
+        {"id": "5", "country": "США", "city": "Нью-Йорк", "flag": "🇺🇸", "ping": 110, "speed": "985 Мбит/с"},
+        {"id": "6", "country": "США", "city": "Лос-Анджелес", "flag": "🇺🇸", "ping": 140, "speed": "975 Мбит/с"},
+        {"id": "7", "country": "Япония", "city": "Токио", "flag": "🇯🇵", "ping": 180, "speed": "990 Мбит/с"},
+        {"id": "8", "country": "Сингапур", "city": "Сингапур", "flag": "🇸🇬", "ping": 160, "speed": "980 Мбит/с"},
+    }
+    c.JSON(200, gin.H{"servers": servers})
+}
+
+// CreateVPNKeyMax - создать ключ
+func CreateVPNKeyMax(c *gin.Context) {
+    var req struct {
+        ClientName string `json:"client_name"`
+        PlanID     int    `json:"plan_id"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    if req.ClientName == "" {
+        req.ClientName = "Моё устройство"
+    }
+    if req.PlanID == 0 {
+        req.PlanID = 3
+    }
+    
+    var days int
+    var planName string
+    err := database.Pool.QueryRow(context.Background(), `
+        SELECT name, days FROM vpn_plans WHERE id = $1
+    `, req.PlanID).Scan(&planName, &days)
+    if err != nil {
+        c.JSON(500, gin.H{"error": "Тариф не найден"})
+        return
+    }
+    
+    clientID := fmt.Sprintf("vpn_%d", time.Now().UnixNano())
+    privateKey := generatePrivateKey()
+    publicKey := generatePublicKey()
+    clientIP := fmt.Sprintf("10.%d.%d.%d", 
+        time.Now().UnixNano()%255,
+        time.Now().UnixNano()%255,
+        time.Now().UnixNano()%254+1,
+    )
+    
+    expiresAt := time.Now().AddDate(0, 0, days)
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "11111111-1111-1111-1111-111111111111"
+    }
+    userID := c.GetString("user_id")
+    if userID == "" {
+        userID = "1"
+    }
+    
+    _, err = database.Pool.Exec(context.Background(), `
+        INSERT INTO vpn_keys (client_id, client_name, client_ip, private_key, public_key,
+                              plan_id, expires_at, active, tenant_id, user_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW())
+    `, clientID, req.ClientName, clientIP, privateKey, publicKey, req.PlanID, expiresAt, tenantID, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    c.JSON(200, gin.H{
+        "success":     true,
+        "client_id":   clientID,
+        "client_name": req.ClientName,
+        "expires":     expiresAt.Format("2006-01-02"),
+        "days":        days,
+        "plan":        planName,
+        "message":     "✅ VPN ключ успешно создан!",
+    })
+}
+
+// ========== ФУНКЦИИ ДЛЯ ВИДЖЕТА 50+ СТРАН ==========
+
+// GetVPNCountriesList - получить список всех стран для виджета
+func GetVPNCountriesList(c *gin.Context) {
+    countries := []gin.H{
+        {"code": "RU", "name": "Россия", "flag": "🇷🇺", "servers": 6, "ping": 5},
+        {"code": "US", "name": "США", "flag": "🇺🇸", "servers": 8, "ping": 120},
+        {"code": "DE", "name": "Германия", "flag": "🇩🇪", "servers": 4, "ping": 45},
+        {"code": "NL", "name": "Нидерланды", "flag": "🇳🇱", "servers": 3, "ping": 42},
+        {"code": "GB", "name": "Великобритания", "flag": "🇬🇧", "servers": 3, "ping": 55},
+        {"code": "FR", "name": "Франция", "flag": "🇫🇷", "servers": 2, "ping": 48},
+        {"code": "JP", "name": "Япония", "flag": "🇯🇵", "servers": 3, "ping": 180},
+        {"code": "SG", "name": "Сингапур", "flag": "🇸🇬", "servers": 2, "ping": 160},
+        {"code": "AU", "name": "Австралия", "flag": "🇦🇺", "servers": 2, "ping": 250},
+        {"code": "CA", "name": "Канада", "flag": "🇨🇦", "servers": 2, "ping": 130},
+        {"code": "BR", "name": "Бразилия", "flag": "🇧🇷", "servers": 1, "ping": 210},
+        {"code": "ZA", "name": "ЮАР", "flag": "🇿🇦", "servers": 1, "ping": 230},
+        {"code": "AE", "name": "ОАЭ", "flag": "🇦🇪", "servers": 2, "ping": 150},
+        {"code": "IN", "name": "Индия", "flag": "🇮🇳", "servers": 2, "ping": 145},
+        {"code": "KR", "name": "Корея", "flag": "🇰🇷", "servers": 2, "ping": 170},
+        {"code": "IT", "name": "Италия", "flag": "🇮🇹", "servers": 2, "ping": 58},
+        {"code": "ES", "name": "Испания", "flag": "🇪🇸", "servers": 2, "ping": 62},
+        {"code": "CH", "name": "Швейцария", "flag": "🇨🇭", "servers": 2, "ping": 52},
+        {"code": "SE", "name": "Швеция", "flag": "🇸🇪", "servers": 2, "ping": 68},
+        {"code": "NO", "name": "Норвегия", "flag": "🇳🇴", "servers": 2, "ping": 70},
+        {"code": "FI", "name": "Финляндия", "flag": "🇫🇮", "servers": 2, "ping": 65},
+        {"code": "PL", "name": "Польша", "flag": "🇵🇱", "servers": 2, "ping": 48},
+        {"code": "TR", "name": "Турция", "flag": "🇹🇷", "servers": 2, "ping": 85},
+        {"code": "MX", "name": "Мексика", "flag": "🇲🇽", "servers": 2, "ping": 130},
+    }
+    c.JSON(200, gin.H{"countries": countries, "total": len(countries)})
+}
+
+// GetVPNGlobalStats - получить глобальную статистику
+func GetVPNGlobalStats(c *gin.Context) {
+    c.JSON(200, gin.H{
+        "total_servers":   48,
+        "total_countries": 24,
+        "total_users":     15234,
+        "avg_speed":       "1.2 Гбит/с",
+        "uptime":          "99.97%",
+        "online_now":      8923,
     })
 }

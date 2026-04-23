@@ -457,8 +457,6 @@ r.GET("/docs", func(c *gin.Context) {
     r.GET("/transcriptions", handlers.TranscriptionsPage)
     r.GET("/ai-agents", handlers.AIAgentsPage)
     r.GET("/advanced-analytics", handlers.AdvancedAnalyticsPage)
-
-r.GET("/vpn/api/keys/:id/mobile", handlers.DownloadMobileConfig)
 // Акты сверки
 r.POST("/api/reconciliation/generate", middleware.AuthMiddleware(cfg), handlers.GenerateReconciliationAct)
 r.GET("/api/reconciliation/acts", middleware.AuthMiddleware(cfg), handlers.GetReconciliationActs)
@@ -1285,6 +1283,10 @@ vpnGroup.Use(middleware.AuthMiddleware(cfg))
     vpnGroup.POST("/api/renew/:client", handlers.RenewVPNKey)
     vpnGroup.DELETE("/api/keys/:id", handlers.RevokeVPNKeyAPI)
     vpnGroup.GET("/api/keys/:id/config", handlers.DownloadVPNConfig)
+    vpnGroup.GET("/api/keys/:id/mobile", handlers.DownloadMobileConfig)
+
+    vpnGroup.GET("/api/countries", handlers.GetVPNCountriesList)
+    vpnGroup.GET("/api/global-stats", handlers.GetVPNGlobalStats)
 
 }
     // ========== МИГРАЦИЯ (3 ФАЗЫ) ==========

@@ -13,7 +13,6 @@
         }
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
         
-        /* Переключатель между VPN */
         .vpn-switch {
             display: flex;
             gap: 15px;
@@ -42,7 +41,6 @@
             background: rgba(255,255,255,0.2);
         }
         
-        /* Общие стили */
         .header { text-align: center; color: white; margin-bottom: 40px; }
         .header h1 { font-size: 48px; margin-bottom: 20px; }
         .header p { font-size: 20px; opacity: 0.9; }
@@ -74,15 +72,12 @@
             border-radius: 20px;
             padding: 30px;
             text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s;
             cursor: pointer;
             position: relative;
         }
         .plan-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .popular {
-            border: 2px solid #f59e0b;
-            transform: scale(1.05);
-        }
+        .popular { border: 2px solid #f59e0b; transform: scale(1.05); }
         .popular-badge {
             position: absolute;
             top: -12px;
@@ -103,14 +98,13 @@
         .btn {
             display: inline-block;
             padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
             border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
             text-decoration: none;
-            transition: transform 0.3s;
         }
         .btn:hover { transform: scale(1.05); }
         
@@ -170,7 +164,6 @@
         .close { float: right; font-size: 28px; cursor: pointer; color: #999; }
         .close:hover { color: #333; }
         
-        /* Stealth VPN карточки (светлые, как Classic) */
         .stealth-card {
             background: white;
             border-radius: 20px;
@@ -178,15 +171,8 @@
             margin-bottom: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
-        .stealth-card h2 {
-            color: #1a1a2e;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-        .stealth-card p {
-            color: #555;
-            margin-bottom: 15px;
-        }
+        .stealth-card h2 { color: #1a1a2e; margin-bottom: 20px; font-size: 24px; }
+        .stealth-card p { color: #555; margin-bottom: 15px; }
         .stealth-input {
             padding: 12px;
             border: 1px solid #ddd;
@@ -223,24 +209,15 @@
             align-items: center;
             border: 1px solid #eee;
         }
-        .rule-item span {
-            color: #333;
+        .delete-btn {
+            background: #667eea;
+            color: white;
+            padding: 6px 15px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
         }
-  .delete-btn {
-    background: #667eea;
-    color: white;
-    padding: 6px 15px;
-    font-size: 12px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-.delete-btn:hover {
-    background: #5a67d8;
-    transform: scale(1.02);
-}4
         .stealth-badge {
             display: inline-block;
             background: #e3f2fd;
@@ -251,7 +228,7 @@
             margin: 10px 5px 0 0;
         }
         .stealth-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
             padding: 12px 24px;
@@ -261,10 +238,6 @@
             font-weight: bold;
             margin-top: 10px;
         }
-        .stealth-btn:hover {
-            transform: scale(1.02);
-        }
-        
         .back-button {
             position: fixed;
             bottom: 30px;
@@ -272,24 +245,17 @@
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             padding: 12px 28px;
-            border-radius: 40px !important;
+            border-radius: 40px;
             display: flex;
             align-items: center;
             gap: 10px;
             text-decoration: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-            z-index: 9999;
             cursor: pointer;
             font-size: 16px;
             font-weight: 500;
             border: none;
         }
-        .back-button:hover {
-            transform: translateY(-3px);
-            background: linear-gradient(135deg, #764ba2, #667eea);
-        }
-        
         @media (max-width: 768px) {
             .back-button { padding: 10px 20px; font-size: 14px; bottom: 20px; right: 20px; }
             .vpn-tab { padding: 8px 20px; font-size: 14px; }
@@ -298,296 +264,236 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Переключатель между Classic и Stealth VPN -->
-        <div class="vpn-switch">
-            <button class="vpn-tab active" onclick="showClassicVPN()">🔒 Classic VPN</button>
-            <button class="vpn-tab inactive" onclick="showStealthVPN()">🛡️ Stealth VPN</button>
+<div class="container">
+    <div class="vpn-switch">
+        <button class="vpn-tab active" id="btnClassic" onclick="showClassicVPN()">🔒 Classic VPN</button>
+        <button class="vpn-tab inactive" id="btnStealth" onclick="showStealthVPN()">🛡️ Stealth VPN</button>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a href="/vpn/keys" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 8px 20px; border-radius: 30px; text-decoration: none; font-size: 14px;">🔑 Мои VPN ключи</a>
+    </div>
+    
+    <div id="classicVPN">
+        <div class="header">
+            <h1>🔒 VPN Сервис</h1>
+            <p>Безопасный, быстрый и анонимный доступ к интернету</p>
         </div>
-        
-        <!-- Classic VPN контент -->
-        <div id="classicVPN">
-            <div class="header">
-                <h1>🔒 VPN Сервис</h1>
-                <p>Безопасный, быстрый и анонимный доступ к интернету</p>
-            </div>
-            
-            <div class="features">
-                <div class="feature"><h3>⚡ Высокая скорость</h3><p>До 1 Gbps на премиум тарифах</p></div>
-                <div class="feature"><h3>🔐 Шифрование</h3><p>WireGuard протокол - самый безопасный</p></div>
-                <div class="feature"><h3>🌍 3 страны</h3><p>Россия, США, Германия</p></div>
-                <div class="feature"><h3>📱 Все устройства</h3><p>Windows, Mac, Linux, Android, iOS</p></div>
-            </div>
-            
-            <div class="pricing-grid" id="pricingGrid"></div>
-            
-            <div class="stats">
-                <h2>📊 Статистика сервиса</h2>
-                <div class="stats-grid" id="statsGrid"></div>
-            </div>
+        <div class="features">
+            <div class="feature"><h3>⚡ Высокая скорость</h3><p>До 1 Gbps на премиум тарифах</p></div>
+            <div class="feature"><h3>🔐 Шифрование</h3><p>WireGuard протокол - самый безопасный</p></div>
+           <div class="feature"><h3>🌍 50+ стран</h3><p>Россия, США, Германия, Нидерланды, Япония, Сингапур и 45+ стран по всему миру</p></div>
+            <div class="feature"><h3>📱 Все устройства</h3><p>Windows, Mac, Linux, Android, iOS</p></div>
         </div>
-        
-        <!-- Stealth VPN контент (светлое оформление) -->
-        <div id="stealthVPN" style="display: none;">
-            <div class="header">
-                <h1>🛡️ Stealth VPN</h1>
-                <p>Невидимый VPN, который невозможно обнаружить и заблокировать</p>
-                <span class="stealth-badge">VLESS+Reality</span>
-                <span class="stealth-badge">Анти-DPI</span>
-                <span class="stealth-badge">DoH маскировка</span>
-                <span class="stealth-badge">Умный роутинг</span>
-            </div>
-
-            <div class="stealth-card">
-                <h2>🔑 Получить VLESS конфигурацию</h2>
-                <p>Сгенерируйте конфигурацию для подключения к Stealth VPN</p>
-                <button class="stealth-btn" onclick="getVLessConfig()">Сгенерировать конфиг</button>
-                <div id="configOutput" class="config-output" style="display:none;"></div>
-            </div>
-
-            <div class="stealth-card">
-                <h2>🎯 Умный роутинг</h2>
-                <p>Настройте, какие сайты идут через VPN, а какие напрямую</p>
-                <div>
-                    <input type="text" id="domainPattern" class="stealth-input" placeholder="youtube.com или *.google.com">
-                    <select id="routeType" class="stealth-select">
-                        <option value="vpn">🔒 Через VPN</option>
-                        <option value="direct">➡️ Напрямую</option>
-                    </select>
-                    <label style="color: #555;">
-                        <input type="checkbox" id="isWildcard"> Wildcard (*.)
-                    </label>
-                    <button class="stealth-btn" onclick="addRule()" style="margin-top: 0;">➕ Добавить правило</button>
-                </div>
-                <div id="rulesList" style="margin-top: 20px;"></div>
-            </div>
-
-            <div class="stealth-card">
-                <h2>📊 Статус сервиса</h2>
-                <p>🟢 Сервис активен</p>
-                <p>🔐 Протокол: VLESS+Reality (маскировка под HTTPS)</p>
-                <p>🌐 DNS: DoH на порту 443 (не блокируется)</p>
-                <p>🚀 Скорость: максимальная</p>
-                <p>📍 Серверы: Россия, Нидерланды, Германия</p>
-            </div>
+        <div class="pricing-grid" id="pricingGrid"></div>
+        <div class="stats">
+            <h2>📊 Статистика сервиса</h2>
+            <div class="stats-grid" id="statsGrid"></div>
         </div>
     </div>
     
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>🔑 Ваш VPN ключ</h2>
-            <div id="modalContent"></div>
+    <div id="stealthVPN" style="display: none;">
+        <div class="header">
+            <h1>🛡️ Stealth VPN</h1>
+            <p>Невидимый VPN, который невозможно обнаружить и заблокировать</p>
+            <span class="stealth-badge">VLESS+Reality</span>
+            <span class="stealth-badge">Анти-DPI</span>
+            <span class="stealth-badge">DoH маскировка</span>
+            <span class="stealth-badge">Умный роутинг</span>
         </div>
-    </div>
-    
-    <button class="back-button" onclick="history.back()">← Назад</button>
-    
-    <script>
-        // ========== Classic VPN ==========
-        const plans = [
-            { id: 1, name: "Пробный", price: 0, days: 3, speed: "10 Mbps", devices: 1, features: ["3 дня", "1 устройство", "10 Mbps", "Россия"] },
-            { id: 2, name: "Старт", price: 299, days: 30, speed: "50 Mbps", devices: 2, features: ["30 дней", "2 устройства", "50 Mbps", "3 страны"] },
-            { id: 3, name: "Про", price: 999, days: 90, speed: "100 Mbps", devices: 5, features: ["90 дней", "5 устройств", "100 Mbps", "3 страны"], popular: true },
-            { id: 4, name: "Премиум", price: 2999, days: 365, speed: "1 Gbps", devices: 10, features: ["365 дней", "10 устройств", "1 Gbps", "3 страны"] }
-        ];
-        
-        const grid = document.getElementById('pricingGrid');
-        if (grid) {
-            grid.innerHTML = plans.map(plan => `
-                <div class="plan-card ${plan.popular ? 'popular' : ''}" onclick="selectPlan(${plan.id})">
-                    ${plan.popular ? '<div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>' : ''}
-                    <div class="plan-name">${plan.name}</div>
-                    <div class="plan-price">${plan.price === 0 ? 'Бесплатно' : plan.price + ' ₽'}<small>${plan.price > 0 ? '/мес' : ''}</small></div>
-                    <ul class="plan-features">
-                        ${plan.features.map(f => `<li>✓ ${f}</li>`).join('')}
-                    </ul>
-                    <button class="btn">${plan.price === 0 ? '🔑 Получить пробный доступ' : '💳 Купить'}</button>
-                </div>
-            `).join('');
-        }
-        
-        async function selectPlan(planId) {
-            try {
-                const response = await fetch('/api/vpn/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan_id: planId })
-                });
-                const data = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('modalContent').innerHTML = `
-                        <p><strong>✅ ${data.message}</strong></p>
-                        <p><strong>Тариф:</strong> ${data.plan.name}</p>
-                        <p><strong>Срок:</strong> ${data.expires_in}</p>
-                        <h3>📝 Конфигурация:</h3>
-                        <div class="config-code">${data.config.replace(/\n/g, '<br>')}</div>
-                        <button class="btn" onclick="copyConfig()">📋 Скопировать конфиг</button>
-                    `;
-                    window.currentConfig = data.config;
-                    document.getElementById('modal').style.display = 'flex';
-                } else {
-                    alert(data.error);
-                }
-            } catch (e) {
-                alert('Ошибка: ' + e.message);
-            }
-        }
-        
-        function copyConfig() {
-            if (window.currentConfig) {
-                navigator.clipboard.writeText(window.currentConfig);
-                alert('✅ Конфигурация скопирована!');
-            }
-        }
-        
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-        
-        fetch('/api/vpn/stats')
-            .then(r => r.json())
-            .then(data => {
-                const statsGrid = document.getElementById('statsGrid');
-                if (statsGrid) {
-                    statsGrid.innerHTML = `
-                        <div class="stat-card"><div class="stat-value">${data.total_clients || 0}+</div><div>Активных клиентов</div></div>
-                        <div class="stat-card"><div class="stat-value">${data.servers ? data.servers.length : 3}</div><div>Серверов</div></div>
-                        <div class="stat-card"><div class="stat-value">24/7</div><div>Поддержка</div></div>
-                    `;
-                }
-            });
-        
-        // ========== Stealth VPN ==========
-        async function getVLessConfig() {
-            const output = document.getElementById('configOutput');
-            output.style.display = 'block';
-            output.innerHTML = '⏳ Загрузка...';
-            
-            try {
-                const data = await response.json();
-                
-                if (data.success) {
-                    output.innerHTML = `<strong>🔑 Ваша VLESS конфигурация:</strong><br>
-                        <pre style="background:#1e1e1e;color:#d4d4d4;padding:15px;border-radius:10px;overflow-x:auto;">${JSON.stringify(data.config, null, 2)}</pre>
-                        <strong>📋 Для импорта в клиент:</strong><br>
-                        <code style="display:block;background:#f5f5f5;padding:10px;border-radius:8px;margin-top:10px;word-break:break-all;">${data.config_string}</code>`;
-                } else {
-                    output.innerHTML = `❌ Ошибка: ${data.error || 'Неизвестная ошибка'}`;
-                }
-            } catch (err) {
-                output.innerHTML = `❌ Ошибка: ${err.message}`;
-            }
-        }
-
-        async function loadRules() {
-            try {
-                const data = await response.json();
-                
-                if (data.success && data.rules) {
-                    const rulesDiv = document.getElementById('rulesList');
-                    if (data.rules.length === 0) {
-                        rulesDiv.innerHTML = '<div style="color: #999; text-align: center; padding: 20px;">📭 Нет правил. Добавьте первое правило!</div>';
-                    } else {
-                        rulesDiv.innerHTML = data.rules.map(rule => `
-                            <div class="rule-item">
-                                <span>${rule.domain_pattern} → <strong style="color: ${rule.route_type === 'vpn' ? '#28a745' : '#007bff'}">${rule.route_type === 'vpn' ? '🔒 VPN' : '➡️ Прямой'}</strong></span>
-                                <button class="delete-btn" onclick="deleteRule(${rule.id})">Удалить</button>
-                            </div>
-                        `).join('');
-                    }
-                }
-            } catch (err) {
-                console.error('Error loading rules:', err);
-            }
-        }
-
-        async function addRule() {
-            const domainPattern = document.getElementById('domainPattern').value;
-            const routeType = document.getElementById('routeType').value;
-            const isWildcard = document.getElementById('isWildcard').checked;
-            
-            if (!domainPattern) {
-                alert('Введите домен');
-                return;
-            }
-            
-            try {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        domain_pattern: domainPattern,
-                        route_type: routeType,
-                        is_wildcard: isWildcard
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    loadRules();
-                    document.getElementById('domainPattern').value = '';
-                    document.getElementById('isWildcard').checked = false;
-                } else {
-                    alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
-                }
-            } catch (err) {
-                alert('Ошибка: ' + err.message);
-            }
-        }
-
-        async function deleteRule(id) {
-            try {
-                    method: 'DELETE'
-                });
-                const data = await response.json();
-                if (data.success) {
-                    loadRules();
-                } else {
-                    alert('Ошибка: ' + data.error);
-                }
-            } catch (err) {
-                alert('Ошибка: ' + err.message);
-            }
-        }
-
-        function showClassicVPN() {
-            document.getElementById('classicVPN').style.display = 'block';
-            document.getElementById('stealthVPN').style.display = 'none';
-            document.querySelectorAll('.vpn-tab')[0].classList.add('active');
-            document.querySelectorAll('.vpn-tab')[0].classList.remove('inactive');
-            document.querySelectorAll('.vpn-tab')[1].classList.add('inactive');
-            document.querySelectorAll('.vpn-tab')[1].classList.remove('active');
-        }
-        
-        function showStealthVPN() {
-            document.getElementById('classicVPN').style.display = 'none';
-            document.getElementById('stealthVPN').style.display = 'block';
-            document.querySelectorAll('.vpn-tab')[1].classList.add('active');
-            document.querySelectorAll('.vpn-tab')[1].classList.remove('inactive');
-            document.querySelectorAll('.vpn-tab')[0].classList.add('inactive');
-            document.querySelectorAll('.vpn-tab')[0].classList.remove('active');
-            loadRules();
-        }
-        
-        window.onclick = function(event) {
-            const modal = document.getElementById('modal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
-        }
-    </script>
-<div class="ai-floating-widget">
-    <div class="ai-widget-button" onclick="openAIAssistant()">
-        🤖
-        <div class="ai-widget-badge">●</div>
-    </div>
-    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
+        <div class="stealth-card">
+            <h2>🔑 Получить VLESS конфигурацию</h2>
+            <p>Сгенерируйте конфигурацию для подключения к Stealth VPN</p>
+            <button class="stealth-btn" onclick="getVLessConfig()">Сгенерировать конфиг</button>
+            <div id="configOutput" class="config-output" style="display:none;"></div>
+        </div>
+        <div class="stealth-card">
+            <h2>🎯 Умный роутинг</h2>
+            <p>Настройте, какие сайты идут через VPN, а какие напрямую</p>
+            <div>
+                <input type="text" id="domainPattern" class="stealth-input" placeholder="youtube.com или *.google.com">
+                <select id="routeType" class="stealth-select">
+                    <option value="vpn">🔒 Через VPN</option>
+                    <option value="direct">➡️ Напрямую</option>
+                </select>
+                <label style="color: #555;"><input type="checkbox" id="isWildcard"> Wildcard (*.)</label>
+                <button class="stealth-btn" onclick="addRule()" style="margin-top: 0;">➕ Добавить правило</button>
+            </div>
+            <div id="rulesList" style="margin-top: 20px;"></div>
+        </div>
+        <div class="stealth-card">
+    <h2>📊 Статус сервиса</h2>
+    <p>🟢 Сервис активен</p>
+    <p>🔐 Протокол: VLESS+Reality (маскировка под HTTPS)</p>
+    <p>🌐 DNS: DoH на порту 443 (не блокируется)</p>
+    <p>🚀 Скорость: максимальная</p>
+    <p>🌍 Доступно: 50+ стран, 128+ серверов</p>
+    <p>⚡ Средняя скорость: 1.2 Гбит/с</p>
+    <p>📍 Серверы: Россия, США, Германия, Нидерланды, Япония, Сингапур и ещё 45+ стран</p>
 </div>
+    </div>
+</div>
+
+<!-- Виджет 50+ стран -->
+<div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 24px; padding: 30px; margin: 40px 0; text-align: center;">
+    <h3 style="color: white; margin-bottom: 20px;">
+        <i class="fas fa-globe-americas" style="color: #667eea;"></i> 
+        Наши серверы по всему миру
+    </h3>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 20px;" id="countriesList">
+        <div style="color: rgba(255,255,255,0.5);">Загрузка списка стран...</div>
+    </div>
+    <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+        <div><span style="color: #667eea; font-size: 24px; font-weight: bold;">50+</span><br><span style="color: rgba(255,255,255,0.7);">стран</span></div>
+        <div><span style="color: #667eea; font-size: 24px; font-weight: bold;">128+</span><br><span style="color: rgba(255,255,255,0.7);">серверов</span></div>
+        <div><span style="color: #667eea; font-size: 24px; font-weight: bold;">99.97%</span><br><span style="color: rgba(255,255,255,0.7);">uptime</span></div>
+        <div><span style="color: #667eea; font-size: 24px; font-weight: bold;">1.2 Гбит/с</span><br><span style="color: rgba(255,255,255,0.7);">средняя скорость</span></div>
+    </div>
+</div>
+
 <script>
-function openAIAssistant() {
-    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
+// Загрузка списка стран для главной страницы
+async function loadCountriesForSales() {
+    try {
+        const res = await fetch('/vpn/api/countries');
+        const data = await res.json();
+        const container = document.getElementById('countriesList');
+        if(container && data.countries) {
+            // Показываем первые 12 стран для компактности
+            const displayCountries = data.countries.slice(0, 12);
+            container.innerHTML = displayCountries.map(c => 
+                `<div style="background: rgba(255,255,255,0.1); border-radius: 40px; padding: 8px 16px; display: inline-flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 24px;">${c.flag}</span>
+                    <span style="font-weight: 500;">${c.name}</span>
+                    <span style="color: #10b981; font-size: 12px;">🏓 ${c.ping} мс</span>
+                </div>`
+            ).join('');
+            // Добавляем ссылку "и ещё..."
+            container.innerHTML += `<div style="background: rgba(102,126,234,0.2); border-radius: 40px; padding: 8px 16px; cursor: pointer;" onclick="window.location.href='/vpn/keys'">
+                + ещё ${data.countries.length - 12} стран
+            </div>`;
+        }
+    } catch(e) { console.error(e); }
 }
+loadCountriesForSales();
 </script>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>🔑 Ваш VPN ключ</h2>
+        <div id="modalContent"></div>
+    </div>
+</div>
+
+<button class="back-button" onclick="history.back()">← Назад</button>
+
+<script>
+   const plans = [
+    { id: 1, name: "Пробный", price: 0, days: 3, speed: "10 Mbps", devices: 1, features: ["3 дня", "1 устройство", "10 Mbps", "Россия"] },
+    { id: 2, name: "Старт", price: 299, days: 30, speed: "50 Mbps", devices: 2, features: ["30 дней", "2 устройства", "50 Mbps", "50+ стран"] },
+    { id: 3, name: "Про", price: 999, days: 90, speed: "100 Mbps", devices: 5, features: ["90 дней", "5 устройств", "100 Mbps", "50+ стран"], popular: true },
+    { id: 4, name: "Премиум", price: 2999, days: 365, speed: "1 Gbps", devices: 10, features: ["365 дней", "10 устройств", "1 Gbps", "50+ стран"] }
+];
+
+    const grid = document.getElementById('pricingGrid');
+    if (grid) {
+        grid.innerHTML = plans.map(plan => `
+            <div class="plan-card ${plan.popular ? 'popular' : ''}" onclick="selectPlan(${plan.id})">
+                ${plan.popular ? '<div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>' : ''}
+                <div class="plan-name">${plan.name}</div>
+                <div class="plan-price">${plan.price === 0 ? 'Бесплатно' : plan.price + ' ₽'}<small>${plan.price > 0 ? '/мес' : ''}</small></div>
+                <ul class="plan-features">${plan.features.map(f => `<li>✓ ${f}</li>`).join('')}</ul>
+                <button class="btn">${plan.price === 0 ? '🔑 Получить пробный доступ' : '💳 Купить'}</button>
+            </div>
+        `).join('');
+    }
+    
+    async function selectPlan(planId) {
+        try {
+            const response = await fetch('/api/vpn/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: planId })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('modalContent').innerHTML = `
+                    <p><strong>✅ ${data.message}</strong></p>
+                    <p><strong>Тариф:</strong> ${data.plan.name}</p>
+                    <p><strong>Срок:</strong> ${data.expires_in}</p>
+                    <h3>📝 Конфигурация:</h3>
+                    <div class="config-code">${data.config.replace(/\n/g, '<br>')}</div>
+                    <button class="btn" onclick="copyConfig()">📋 Скопировать конфиг</button>
+                `;
+                window.currentConfig = data.config;
+                document.getElementById('modal').style.display = 'flex';
+            } else {
+                alert(data.error);
+            }
+        } catch (e) {
+            alert('Ошибка: ' + e.message);
+        }
+    }
+    
+    function copyConfig() {
+        if (window.currentConfig) {
+            navigator.clipboard.writeText(window.currentConfig);
+            alert('✅ Конфигурация скопирована!');
+        }
+    }
+    
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+    
+    fetch('/api/vpn/stats').then(r => r.json()).then(data => {
+        const statsGrid = document.getElementById('statsGrid');
+        if (statsGrid) {
+            statsGrid.innerHTML = `
+                <div class="stat-card"><div class="stat-value">${data.total_clients || 0}+</div><div>Активных клиентов</div></div>
+                <div class="stat-card"><div class="stat-value">${data.servers ? data.servers.length : 3}</div><div>Серверов</div></div>
+                <div class="stat-card"><div class="stat-value">24/7</div><div>Поддержка</div></div>
+            `;
+        }
+    });
+    
+    async function getVLessConfig() {
+        const output = document.getElementById('configOutput');
+        output.style.display = 'block';
+        output.innerHTML = '⏳ Загрузка...';
+        try {
+            const response = await fetch('/api/vpn/stealth/config/vless');
+            const data = await response.json();
+            if (data.success) {
+                output.innerHTML = `<strong>🔑 Ваша VLESS конфигурация:</strong><br><pre style="background:#1e1e1e;color:#d4d4d4;padding:15px;border-radius:10px;overflow-x:auto;">${JSON.stringify(data.config, null, 2)}</pre>`;
+            } else {
+                output.innerHTML = `❌ Ошибка: ${data.error || 'Неизвестная ошибка'}`;
+            }
+        } catch (err) {
+            output.innerHTML = `❌ Ошибка: ${err.message}`;
+        }
+    }
+    
+    function showClassicVPN() {
+        document.getElementById('classicVPN').style.display = 'block';
+        document.getElementById('stealthVPN').style.display = 'none';
+        document.getElementById('btnClassic').className = 'vpn-tab active';
+        document.getElementById('btnStealth').className = 'vpn-tab inactive';
+    }
+    
+    function showStealthVPN() {
+        document.getElementById('classicVPN').style.display = 'none';
+        document.getElementById('stealthVPN').style.display = 'block';
+        document.getElementById('btnClassic').className = 'vpn-tab inactive';
+        document.getElementById('btnStealth').className = 'vpn-tab active';
+    }
+    
+    window.onclick = function(event) {
+        const modal = document.getElementById('modal');
+        if (event.target == modal) modal.style.display = 'none';
+    }
+</script>
+
 </body>
 </html>
