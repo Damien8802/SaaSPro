@@ -457,6 +457,8 @@ r.GET("/docs", func(c *gin.Context) {
     r.GET("/transcriptions", handlers.TranscriptionsPage)
     r.GET("/ai-agents", handlers.AIAgentsPage)
     r.GET("/advanced-analytics", handlers.AdvancedAnalyticsPage)
+
+r.GET("/vpn/api/keys/:id/mobile", handlers.DownloadMobileConfig)
 // Акты сверки
 r.POST("/api/reconciliation/generate", middleware.AuthMiddleware(cfg), handlers.GenerateReconciliationAct)
 r.GET("/api/reconciliation/acts", middleware.AuthMiddleware(cfg), handlers.GetReconciliationActs)
@@ -481,6 +483,7 @@ r.DELETE("/api/journal/entry/:id", middleware.AuthMiddleware(cfg), handlers.Dele
             "title": "AI-ассистент SaaSPro",
         })
     })
+
     
     // Universal AI Assistant API
   // AI Assistant - использует executor для реальных действий
@@ -1267,14 +1270,23 @@ taxAPI.Use(middleware.AuthMiddleware(cfg))
         adminOAuth.POST("/clients", handlers.CreateOAuthClient)
     }
     
-    // VPN маршруты
-    r.GET("/vpn", handlers.VPNSalesPageHandler)
-    r.POST("/api/vpn/create", handlers.CreateVPNKey)
-    r.GET("/api/vpn/config/:client", handlers.GetVPNConfig)
-    r.GET("/api/vpn/status/:client", handlers.CheckVPNKey)
-    r.GET("/api/vpn/stats", handlers.GetVPNStats)
-    r.POST("/api/vpn/renew/:client", handlers.RenewVPNKey)
+  // ========== VPN МАРШРУТЫ ==========
+vpnGroup := r.Group("/vpn")
+vpnGroup.Use(middleware.AuthMiddleware(cfg))
+{
+    vpnGroup.GET("/", handlers.VPNSalesPageHandler)
+    vpnGroup.GET("/keys", handlers.GetVPNKeysPage)
+    vpnGroup.GET("/api/keys", handlers.GetVPNKeysAPI)
+    vpnGroup.GET("/api/stats", handlers.GetVPNStatsAPI)
+    vpnGroup.POST("/api/create", handlers.CreateVPNKey)
+    vpnGroup.POST("/api/keys", handlers.CreateVPNKeyAPI)
+    vpnGroup.GET("/api/config/:client", handlers.GetVPNConfig)
+    vpnGroup.GET("/api/status/:client", handlers.CheckVPNKey)
+    vpnGroup.POST("/api/renew/:client", handlers.RenewVPNKey)
+    vpnGroup.DELETE("/api/keys/:id", handlers.RevokeVPNKeyAPI)
+    vpnGroup.GET("/api/keys/:id/config", handlers.DownloadVPNConfig)
 
+}
     // ========== МИГРАЦИЯ (3 ФАЗЫ) ==========
     migrationAPI := r.Group("/api/migration")
     migrationAPI.Use(middleware.AuthMiddleware(cfg))

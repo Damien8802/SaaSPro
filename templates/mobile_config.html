@@ -1,0 +1,274 @@
+{{define "mobile_config"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SaaSPro VPN | Настройка телефона</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            box-shadow: 0 10px 30px rgba(102,126,234,0.3);
+        }
+        .logo i { font-size: 36px; color: white; }
+        .logo-text { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #fff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo-badge { font-size: 12px; background: rgba(102,126,234,0.3); padding: 4px 12px; border-radius: 20px; display: inline-block; margin-top: 8px; }
+        
+        .device-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .device-name { font-size: 20px; font-weight: 700; color: white; margin-bottom: 5px; }
+        .device-ip { font-size: 13px; color: rgba(255,255,255,0.5); font-family: monospace; }
+        
+        .qr-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+        .qr-title { font-size: 18px; font-weight: 600; color: white; margin-bottom: 20px; }
+        .qr-code { background: white; padding: 20px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
+        .qr-hint { font-size: 13px; color: rgba(255,255,255,0.6); }
+        
+        .steps-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .steps-title { font-size: 16px; font-weight: 600; color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+        }
+        .step-text { flex: 1; font-size: 14px; color: rgba(255,255,255,0.8); }
+        .step-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        
+        .config-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .config-title { font-size: 16px; font-weight: 600; color: white; margin-bottom: 15px; }
+        .config-content {
+            background: #0d0d0d;
+            border-radius: 16px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #10b981;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .btn-group { display: flex; gap: 12px; margin-bottom: 25px; }
+        .btn-primary, .btn-secondary {
+            flex: 1;
+            padding: 14px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+        .btn-primary:hover, .btn-secondary:hover { transform: translateY(-2px); }
+        
+        .back-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+            border: none;
+            color: white;
+            font-size: 20px;
+        }
+        .back-btn:hover { transform: scale(1.1); }
+        
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 2000;
+            animation: fadeOut 2s forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        
+        @media (max-width: 480px) { .btn-group { flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo"><i class="fas fa-shield-alt"></i></div>
+        <div class="logo-text">SaaSPro</div>
+        <div class="logo-badge">SECURE VPN</div>
+    </div>
+    
+    <div class="device-card">
+        <div class="device-name">📱 {{.client_name}}</div>
+        <div class="device-ip">{{.client_ip}}</div>
+    </div>
+    
+    <div class="qr-card" id="qrCard">
+        <div class="qr-title">📷 QR код для настройки</div>
+        <div class="qr-code" id="qrcode"></div>
+        <div class="qr-hint">Наведите камеру на QR код → Откроется WireGuard</div>
+    </div>
+    
+    <div class="steps-card">
+        <div class="steps-title">📋 Инструкция</div>
+        <div class="step"><div class="step-number">1</div><div class="step-text">Установите WireGuard</div><div class="step-icon">📱</div></div>
+        <div class="step"><div class="step-number">2</div><div class="step-text">Наведите камеру на QR код</div><div class="step-icon">🔍</div></div>
+        <div class="step"><div class="step-number">3</div><div class="step-text">Нажмите "Подключиться"</div><div class="step-icon">✅</div></div>
+    </div>
+    
+    <div class="config-card">
+        <div class="config-title">🔧 Конфигурация</div>
+        <div class="config-content" id="configText"></div>
+    </div>
+    
+    <div class="btn-group">
+        <button class="btn-primary" onclick="copyConfig()">📋 Копировать</button>
+        <button class="btn-secondary" onclick="downloadConfig()">💾 Скачать</button>
+    </div>
+</div>
+
+<div class="back-btn" onclick="history.back()">←</div>
+
+<script src="https://kit.fontawesome.com/a2e9d3b7f2.js" crossorigin="anonymous"></script>
+<script>
+const privateKey = '{{.private_key}}';
+const clientIP = '{{.client_ip}}';
+
+const config = `[Interface]
+PrivateKey = ${privateKey}
+Address = ${clientIP}/24
+DNS = 1.1.1.1, 8.8.8.8
+
+[Peer]
+PublicKey = 6FoNHb43qPnTSDCppXSb6s+krs35CJpSfz6b+5VWcQQ=
+Endpoint = vpn.your-server.com:51820
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25`;
+
+// Формируем WireGuard URI для автоматического открытия на телефоне
+const wireguardUri = 'wireguard://' + encodeURIComponent(config);
+
+document.getElementById('configText').innerText = config;
+
+// Генерация QR кода с WireGuard URI
+const qrContainer = document.getElementById('qrcode');
+const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(wireguardUri);
+qrContainer.innerHTML = '<img src="' + qrUrl + '" width="220" height="220" style="border-radius: 12px;">';
+
+// При клике на QR код - открываем WireGuard
+document.getElementById('qrCard').onclick = function() {
+    window.location.href = wireguardUri;
+};
+
+function showToast(msg) {
+    let toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+
+function copyConfig() {
+    navigator.clipboard.writeText(config);
+    showToast('✅ Конфигурация скопирована!');
+}
+
+function downloadConfig() {
+    const blob = new Blob([config], {type: 'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'saaspro_vpn.conf';
+    a.click();
+    showToast('📁 Файл сохранён');
+}
+</script>
+</body>
+</html>
+{{end}}

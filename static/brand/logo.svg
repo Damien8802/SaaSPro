@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+    <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#667eea"/>
+            <stop offset="100%" style="stop-color:#764ba2"/>
+        </linearGradient>
+        <linearGradient id="gradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4a5fc4"/>
+            <stop offset="100%" style="stop-color:#5a3a82"/>
+        </linearGradient>
+    </defs>
+    
+    <!-- Иконка щита -->
+    <rect x="5" y="5" width="50" height="50" rx="12" fill="url(#grad)"/>
+    <path d="M30 15 L30 35 M20 25 L40 25" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="30" cy="35" r="5" fill="white"/>
+    
+    <!-- Текст SaaSPro -->
+    <text x="65" y="38" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="800" fill="url(#grad)">SaaSPro</text>
+    
+    <!-- Подпись VPN -->
+    <text x="65" y="52" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#999" font-weight="600">SECURE VPN</text>
+</svg>

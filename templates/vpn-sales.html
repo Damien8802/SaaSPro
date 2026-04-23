@@ -466,7 +466,6 @@
             output.innerHTML = '⏳ Загрузка...';
             
             try {
-                const response = await fetch('/api/vpn/stealth/config/vless');
                 const data = await response.json();
                 
                 if (data.success) {
@@ -484,7 +483,6 @@
 
         async function loadRules() {
             try {
-                const response = await fetch('/api/vpn/stealth/routing');
                 const data = await response.json();
                 
                 if (data.success && data.rules) {
@@ -516,7 +514,6 @@
             }
             
             try {
-                const response = await fetch('/api/vpn/stealth/routing', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -541,7 +538,6 @@
 
         async function deleteRule(id) {
             try {
-                const response = await fetch(`/api/vpn/stealth/routing/${id}`, {
                     method: 'DELETE'
                 });
                 const data = await response.json();
