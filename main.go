@@ -835,7 +835,31 @@ r.GET("/suppliers", func(c *gin.Context) {
     r.GET("/oauth/authorize", handlers.OAuthAuthorizeHandler)
     r.POST("/oauth/token", handlers.OAuthTokenHandler)
     r.GET("/oauth/userinfo", handlers.OAuthUserInfoHandler)
-    r.GET("/identity-hub", handlers.IdentityHubPageHandler)
+  r.GET("/identity-hub", 
+    middleware.AuthMiddleware(cfg), 
+    middleware.RequireModuleAccess("identity_hub"), 
+    handlers.IdentityHubPageHandler)
+     r.GET("/developer-portal", middleware.AuthMiddleware(cfg), handlers.DeveloperPortalHandler)
+  
+
+    // ========== РАСШИРЕННЫЕ API ДЛЯ IDENTITY HUB ==========
+    identityAPI := r.Group("/api/identity")
+    identityAPI.Use(middleware.AuthMiddleware(cfg))
+    {
+        identityAPI.GET("/stats", handlers.GetIdentityHubStats)
+        identityAPI.GET("/sessions", handlers.GetUserSessionsList)
+        identityAPI.DELETE("/sessions/:id", handlers.RevokeUserSession)
+        identityAPI.GET("/apps", handlers.GetConnectedApps)
+        identityAPI.DELETE("/apps/:id", handlers.RevokeAppAccess)
+        identityAPI.GET("/activity", handlers.GetActivityLog)
+    }
+
+    // Админские API для OAuth клиентов
+    adminOAuthAPI := r.Group("/api/admin/oauth")
+    adminOAuthAPI.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg))
+    {
+        adminOAuthAPI.GET("/clients", handlers.GetOAuthClientsList)
+    }
 
     // ========== ОТЧЕТЫ И АНАЛИТИКА ==========
     r.GET("/api/reports/turnover-balance", handlers.GetTurnoverBalanceSheet)
@@ -1268,9 +1292,10 @@ taxAPI.Use(middleware.AuthMiddleware(cfg))
         adminOAuth.POST("/clients", handlers.CreateOAuthClient)
     }
     
-  // ========== VPN МАРШРУТЫ ==========
+
+// ========== VPN МАРШРУТЫ ==========
 vpnGroup := r.Group("/vpn")
-vpnGroup.Use(middleware.AuthMiddleware(cfg))
+vpnGroup.Use(middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("vpn"))
 {
     vpnGroup.GET("/", handlers.VPNSalesPageHandler)
     vpnGroup.GET("/keys", handlers.GetVPNKeysPage)
@@ -1447,7 +1472,7 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
     adminGroup.GET("/database-admin", handlers.DatabaseAdminHandler)
     adminGroup.GET("/users", handlers.UsersHandler)
     adminGroup.GET("/subscriptions", handlers.SubscriptionsHandler)
-    adminGroup.GET("/crm", handlers.CRMHandler)
+    r.GET("/crm", middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("crm"), handlers.CRMHandler)
     adminGroup.GET("/admin/api-keys", handlers.AdminAPIKeysHandler)
 
     admin2FA := r.Group("/api/admin/2fa")
@@ -1526,6 +1551,10 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         api.PUT("/notifications/settings", handlers.UpdateNotificationSettings)
         api.GET("/health", handlers.HealthHandler)
         api.GET("/crm/health", handlers.CRMHealthHandler)
+api.GET("/user/role", func(c *gin.Context) {
+    role := c.GetString("role")
+    c.JSON(200, gin.H{"role": role})
+})
         api.GET("/system/stats", handlers.SystemStatsHandler)
         api.GET("/test", handlers.TestHandler)
         api.POST("/user/profile", handlers.UpdateProfileHandler)
@@ -1641,7 +1670,52 @@ api.POST("/sessions/limit", handlers.SetMaxSessions)
         
         c.JSON(http.StatusOK, gin.H{"success": true, "message": "Подписка отменена"})
     })
+
+ // ========== ТРИАЛЬНЫЙ ПЕРИОД ==========
+    api.POST("/trial/start", func(c *gin.Context) {
+        moduleName := c.Query("module")
+        userID := c.GetString("user_id")
+        
+        if moduleName == "" {
+            c.JSON(400, gin.H{"error": "module parameter required"})
+            return
+        }
+        
+        err := middleware.StartModuleTrial(userID, moduleName)
+        if err != nil {
+            c.JSON(500, gin.H{"error": err.Error()})
+            return
+        }
+        
+        c.JSON(200, gin.H{
+            "success":     true,
+            "message":     "14-дневный пробный период активирован!",
+            "trial_days":  14,
+        })
+    })
     }
+
+    // ========== ТРИАЛЬНЫЙ ПЕРИОД ДЛЯ РАЗРАБОТЧИКОВ ==========
+    api.POST("/developer/trial/start", func(c *gin.Context) {
+        userID := c.GetString("user_id")
+        
+        if userID == "" {
+            c.JSON(401, gin.H{"error": "unauthorized"})
+            return
+        }
+        
+        err := middleware.StartDeveloperTrial(userID)
+        if err != nil {
+            c.JSON(500, gin.H{"error": err.Error()})
+            return
+        }
+        
+        c.JSON(200, gin.H{
+            "success":     true,
+            "message":     "14-дневный пробный период разработчика активирован!",
+            "trial_days":  14,
+        })
+    })
 
     // ========== API KEYS MANAGEMENT ==========
     apiKeysGroup := r.Group("/api/keys")

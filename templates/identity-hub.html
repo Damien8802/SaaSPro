@@ -2,295 +2,612 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Identity Hub | SaaSPro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Identity Hub | SaaSPro - Центр управления идентификацией</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #5b21b6 100%);
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
-        /* НАВИГАЦИЯ */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            animation: floatParticle 20s infinite ease-in-out;
+        }
+        
+        @keyframes floatParticle {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            50% { transform: translateY(-80px) translateX(40px); opacity: 0.6; }
+        }
+        
         .navbar {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            padding: 15px 40px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            padding: 16px 40px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            z-index: 10;
         }
+        
         .navbar-brand {
-            font-size: 24px;
-            font-weight: 700;
-            color: white !important;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c4b5fd, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
+        
         .nav-link {
-            color: rgba(255,255,255,0.9) !important;
+            color: rgba(255,255,255,0.85) !important;
             transition: all 0.3s;
+            font-weight: 500;
+            margin: 0 5px;
         }
+        
         .nav-link:hover {
             color: white !important;
             transform: translateY(-2px);
         }
+        
+        .nav-link.active {
+            background: rgba(139,91,246,0.3);
+            border-radius: 30px;
+            color: white !important;
+        }
+        
         .btn-login {
-            background: rgba(255,255,255,0.2);
+            background: rgba(139,91,246,0.3);
             border-radius: 50px;
             padding: 8px 25px !important;
         }
+        
         .btn-register {
             background: white;
-            color: #667eea !important;
+            color: #7c3aed !important;
             border-radius: 50px;
             padding: 8px 25px !important;
             font-weight: 600;
         }
         
-        /* ГЕРОЙ */
-        .hero {
+        .main-container {
+            position: relative;
+            z-index: 5;
+            padding: 40px 20px 80px;
+        }
+        
+        .hero-section {
             text-align: center;
-            padding: 80px 20px 60px;
+            padding: 60px 20px;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(15px);
+            border-radius: 48px;
+            margin-bottom: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: fadeInUp 0.8s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hero-section h1 {
+            font-size: 64px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c4b5fd, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+        }
+        
+        .hero-section p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.85);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .hero-badge {
+            display: inline-block;
+            background: rgba(139,91,246,0.3);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            margin-top: 25px;
+            color: #c4b5fd;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+        
+        .stat-card {
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(15px);
+            border-radius: 28px;
+            padding: 28px 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            cursor: default;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            background: rgba(0,0,0,0.35);
+            border-color: rgba(139,91,246,0.5);
+        }
+        
+        .stat-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-number {
+            font-size: 44px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.65);
+            font-weight: 500;
+        }
+        
+        .activity-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+        
+        .activity-card {
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(15px);
+            border-radius: 28px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-5px);
+            background: rgba(0,0,0,0.35);
+        }
+        
+        .activity-number {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        
+        .activity-number.today { color: #10b981; }
+        .activity-number.week { color: #f59e0b; }
+        .activity-number.month { color: #a78bfa; }
+        
+        .activity-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .glass-card {
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(15px);
+            border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            margin-bottom: 40px;
+            transition: all 0.3s;
+        }
+        
+        .glass-card:hover {
+            background: rgba(0,0,0,0.35);
+            border-color: rgba(139,91,246,0.5);
+        }
+        
+        .card-header-glass {
+            background: rgba(0,0,0,0.4);
+            padding: 20px 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .card-header-glass h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
             color: white;
         }
-        .hero h1 {
-            font-size: 56px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #fff 0%, #ffd89b 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero p {
-            font-size: 20px;
-            opacity: 0.9;
-            max-width: 800px;
-            margin: 0 auto;
+        
+        .card-header-glass i {
+            margin-right: 12px;
+            color: #a78bfa;
         }
         
-        /* КОНТЕНТ */
-        .content-wrapper {
-            background: white;
-            border-radius: 40px 40px 0 0;
-            padding: 60px 0 80px;
+        .session-item, .app-item, .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
-        /* ФИЧИ */
-        .features {
-            max-width: 1200px;
-            margin: 0 auto 80px;
-            padding: 0 20px;
+        .session-item:hover, .app-item:hover, .activity-item:hover {
+            background: rgba(255,255,255,0.04);
         }
-        .features h2 {
+        
+        .session-info, .app-info, .activity-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .device-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(139,91,246,0.3), rgba(167,139,250,0.2));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .device-details {
+            flex: 1;
+        }
+        
+        .device-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .device-meta {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .badge-current {
+            background: rgba(16,185,129,0.2);
+            color: #10b981;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .btn-glass {
+            background: rgba(239,68,68,0.15);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: #f87171;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-glass:hover {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.02);
+        }
+        
+        .features-section {
+            margin-top: 60px;
+        }
+        
+        .section-title {
             text-align: center;
             font-size: 36px;
-            color: #333;
+            font-weight: 700;
+            color: white;
             margin-bottom: 15px;
         }
-        .features-subtitle {
+        
+        .section-subtitle {
             text-align: center;
-            color: #666;
+            color: rgba(255,255,255,0.7);
             margin-bottom: 50px;
             font-size: 18px;
         }
+        
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
         }
+        
         .feature-card {
-            background: #f8f9fa;
-            border-radius: 24px;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
             padding: 35px 25px;
             text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
             transition: all 0.3s;
         }
+        
         .feature-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.35);
+            border-color: rgba(139,91,246,0.5);
         }
+        
         .feature-icon {
-            font-size: 48px;
+            font-size: 52px;
             margin-bottom: 20px;
         }
+        
         .feature-card h3 {
             font-size: 22px;
+            font-weight: 600;
             margin-bottom: 15px;
-            color: #667eea;
+            color: white;
         }
+        
         .feature-card p {
-            color: #666;
+            color: rgba(255,255,255,0.65);
             line-height: 1.6;
         }
         
-        /* ТАРИФЫ */
-        .pricing {
-            max-width: 1200px;
-            margin: 0 auto 80px;
-            padding: 0 20px;
+        .pricing-section {
+            margin-top: 60px;
         }
-        .pricing h2 {
-            text-align: center;
-            font-size: 36px;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .pricing-subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 50px;
-            font-size: 18px;
-        }
+        
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 30px;
         }
+        
         .pricing-card {
-            background: white;
-            border-radius: 24px;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
             padding: 35px 25px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
             transition: all 0.3s;
             position: relative;
-            border: 1px solid #eee;
         }
+        
         .pricing-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transform: translateY(-8px);
+            background: rgba(0,0,0,0.35);
         }
+        
         .pricing-card.popular {
-            border: 2px solid #667eea;
+            border: 2px solid #a78bfa;
             transform: scale(1.02);
         }
+        
         .popular-badge {
             position: absolute;
             top: -12px;
             right: 20px;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
-            padding: 5px 15px;
+            padding: 6px 18px;
             border-radius: 50px;
             font-size: 12px;
             font-weight: 600;
         }
+        
         .plan-name {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
             margin-bottom: 15px;
-            color: #333;
+            color: white;
         }
+        
         .plan-price {
             font-size: 48px;
             font-weight: 800;
-            color: #667eea;
+            color: #c4b5fd;
             margin-bottom: 5px;
         }
+        
         .plan-price small {
             font-size: 16px;
-            color: #999;
+            color: rgba(255,255,255,0.5);
         }
+        
         .plan-period {
-            color: #999;
+            color: rgba(255,255,255,0.5);
             margin-bottom: 25px;
         }
+        
         .plan-features {
             list-style: none;
             margin: 25px 0;
             text-align: left;
         }
+        
         .plan-features li {
             padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             font-size: 14px;
-            color: #555;
+            color: rgba(255,255,255,0.75);
         }
+        
         .plan-features li:before {
             content: "✓ ";
-            color: #4caf50;
+            color: #10b981;
             font-weight: 600;
+            margin-right: 8px;
         }
+        
         .btn-plan {
             display: block;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
             color: white;
             text-decoration: none;
             border-radius: 50px;
             font-weight: 600;
             transition: all 0.3s;
         }
+        
         .btn-plan:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102,126,234,0.4);
-        }
-        .btn-plan.free {
-            background: #6c757d;
+            box-shadow: 0 8px 25px rgba(124,58,237,0.4);
         }
         
-        /* ДОКУМЕНТАЦИЯ */
-        .docs {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+        .docs-section {
+            margin-top: 60px;
         }
-        .docs h2 {
-            text-align: center;
-            font-size: 36px;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .docs-subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 40px;
-            font-size: 18px;
-        }
+        
         .docs-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
         }
+        
         .doc-card {
-            background: #1a1a2e;
-            border-radius: 20px;
-            padding: 25px;
-            color: #eee;
-        }
-        .doc-card h4 {
-            color: #ffd700;
-            margin-bottom: 15px;
-        }
-        .endpoint {
-            background: #0f0f1a;
-            padding: 12px 15px;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            margin-bottom: 10px;
-            word-break: break-all;
-        }
-        .endpoint-code {
-            color: #4caf50;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 28px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        /* ФУТЕР */
+        .doc-card h4 {
+            color: #c4b5fd;
+            margin-bottom: 18px;
+            font-size: 18px;
+        }
+        
+        .endpoint {
+            background: rgba(0,0,0,0.5);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-bottom: 12px;
+            word-break: break-all;
+            color: #4ade80;
+        }
+        
         .footer {
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.4);
             backdrop-filter: blur(10px);
-            padding: 40px 20px;
+            padding: 50px 20px 40px;
             text-align: center;
+            color: rgba(255,255,255,0.7);
+            margin-top: 60px;
+        }
+        
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+            border: none;
             color: white;
+            font-size: 24px;
+        }
+        
+        .back-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(124,58,237,0.5);
+        }
+        
+        .dev-block {
+            background: linear-gradient(135deg, rgba(139,91,246,0.2), rgba(167,139,250,0.1));
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(167,139,250,0.3);
+        }
+        
+        .dev-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            transition: all 0.3s;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .dev-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         
         @media (max-width: 768px) {
-            .hero h1 { font-size: 36px; }
+            .navbar { padding: 12px 20px; }
+            .hero-section h1 { font-size: 36px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .activity-stats { grid-template-columns: 1fr; }
+            .session-item, .app-item { flex-direction: column; align-items: flex-start; }
+            .btn-glass { align-self: flex-start; margin-top: 10px; }
             .pricing-card.popular { transform: scale(1); }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .docs-grid { grid-template-columns: 1fr; }
+            .dev-button { font-size: 14px; padding: 10px 20px; }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .main-container { padding: 20px 15px 60px; }
         }
     </style>
 </head>
 <body>
-    <!-- НАВИГАЦИЯ -->
+    <div class="particles" id="particles"></div>
+    
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">🚀 SaaSPro</a>
@@ -298,220 +615,464 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto" id="navMenu">
                     <li class="nav-item"><a class="nav-link" href="/">Главная</a></li>
                     <li class="nav-item"><a class="nav-link" href="/dashboard-improved">Дашборд</a></li>
                     <li class="nav-item"><a class="nav-link" href="/vpn">VPN</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/identity-hub">Identity Hub</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/ai">AI Чат</a></li>
                     <li class="nav-item"><a class="nav-link" href="/crm">CRM</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/pricing">Тарифы</a></li>
-                    <li class="nav-item"><a class="nav-link btn-login" href="/login">Вход</a></li>
+                    <li class="nav-item" id="devNavButton" style="display: none;">
+                        <a class="nav-link" href="/developer-portal" style="background: rgba(139,91,246,0.3); border-radius: 30px;">
+                                              <li class="nav-item"><a class="nav-link btn-login" href="/login">Вход</a></li>
                     <li class="nav-item"><a class="nav-link btn-register" href="/register">Регистрация</a></li>
                 </ul>
             </div>
         </div>
     </nav>
-
-    <!-- ГЕРОЙ -->
-    <div class="hero">
-        <h1>🔐 Identity Hub</h1>
-        <p>Первый в России Identity Provider, работающий по модели SaaS</p>
-        <p style="font-size: 16px; margin-top: 20px;">Без необходимости разворачивать on‑premises решения. Без долгих установок.</p>
+    
+    <div class="main-container">
+        <div class="container">
+            <div class="hero-section">
+                <h1>🔐 Identity Hub</h1>
+                <p>Централизованное управление идентификацией, SSO, OAuth2 и безопасность на максимальном уровне</p>
+                <div class="hero-badge">
+                    <i class="fas fa-shield-alt me-2"></i> Первый в России IdP сервис
+                </div>
+            </div>
+            
+                  <!-- Блок для разработчиков -->
+            <div id="devInfoBlock" style="display: none;" class="dev-block">
+             <div class="row align-items-center">
+    <div class="col-md-8">
+        <h4 style="color: white; margin-bottom: 10px;">
+            <i class="fas fa-code"></i> 🚀 Станьте разработчиком!
+        </h4>
+        <p style="margin-bottom: 5px; color: rgba(255,255,255,0.85);">
+            Создавайте OAuth-приложения, интегрируйте их с Identity Hub и получайте доступ к API.
+        </p>
+        <p style="margin-bottom: 0; font-size: 14px; color: rgba(255,255,255,0.7);">
+            <i class="fas fa-gift me-1"></i> Первые 14 дней — бесплатно!
+        </p>
     </div>
-
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
-    <div class="content-wrapper">
-        <!-- ВОЗМОЖНОСТИ -->
-        <div class="features">
-            <h2>⚡ Что умеет Identity Hub</h2>
-            <p class="features-subtitle">Полноценный IdP сервис для вашего бизнеса</p>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🔑</div>
-                    <h3>Single Sign-On (SSO)</h3>
-                    <p>Один аккаунт для всех ваших сервисов. Пользователи входят один раз — доступны все приложения</p>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="/developer-portal" class="dev-button" style="padding: 10px 24px; font-size: 16px;">
+            🔧 Перейти в Developer Portal
+        </a>
+    </div>
+</div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">Всего пользователей</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3>OAuth2 / OpenID Connect</h3>
-                    <p>Поддержка всех современных протоколов авторизации. Легко подключайте любые приложения</p>
+                <div class="stat-card">
+                    <div class="stat-icon">🔌</div>
+                    <div class="stat-number" id="totalClients">0</div>
+                    <div class="stat-label">OAuth клиентов</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3>2FA и MFA</h3>
-                    <p>Двухфакторная аутентификация, резервные коды, доверенные устройства — максимальная безопасность</p>
+                <div class="stat-card">
+                    <div class="stat-icon">💻</div>
+                    <div class="stat-number" id="activeSessions">0</div>
+                    <div class="stat-label">Активных сессий</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
-                    <h3>Управление пользователями</h3>
-                    <p>Создание, блокировка, роли, группы. Полный контроль над доступом к приложениям</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Аналитика и логи</h3>
-                    <p>Детальные логи авторизаций, статистика использования, аудит безопасности</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔌</div>
-                    <h3>API интеграции</h3>
-                    <p>REST API для управления пользователями, проверки токенов, создания клиентов</p>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-number" id="totalConsents">0</div>
+                    <div class="stat-label">Согласий выдано</div>
                 </div>
             </div>
-        </div>
-
-        <!-- ТАРИФЫ -->
-        <div class="pricing">
-            <h2>💰 Тарифы Identity Hub</h2>
-            <p class="pricing-subtitle">Выберите план под ваш бизнес</p>
-            <div class="pricing-grid">
-                <div class="pricing-card">
-                    <div class="plan-name">Бесплатный</div>
-                    <div class="plan-price">0 ₽<small>/мес</small></div>
-                    <div class="plan-period">Для тестирования</div>
-                    <ul class="plan-features">
-                        <li>До 100 пользователей</li>
-                        <li>1 OAuth клиент</li>
-                        <li>SSO для 1 приложения</li>
-                        <li>Базовая поддержка</li>
-                        <li>Email уведомления</li>
-                    </ul>
-                    <a href="/register" class="btn-plan free">Начать бесплатно</a>
+            
+            <div class="activity-stats">
+                <div class="activity-card">
+                    <div class="activity-number today" id="todayLogins">0</div>
+                    <div class="activity-label">Входов сегодня</div>
                 </div>
-                <div class="pricing-card popular">
-                    <div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>
-                    <div class="plan-name">Бизнес</div>
-                    <div class="plan-price">₽4 990<small>/мес</small></div>
-                    <div class="plan-period">Для растущего бизнеса</div>
-                    <ul class="plan-features">
-                        <li>До 1 000 пользователей</li>
-                        <li>До 10 OAuth клиентов</li>
-                        <li>SSO для всех приложений</li>
-                        <li>2FA и MFA</li>
-                        <li>Приоритетная поддержка 24/7</li>
-                        <li>Расширенная аналитика</li>
-                        <li>API управление пользователями</li>
-                    </ul>
-                    <a href="/payment?plan=business&price=4990" class="btn-plan">Выбрать тариф</a>
+                <div class="activity-card">
+                    <div class="activity-number week" id="weekLogins">0</div>
+                    <div class="activity-label">За неделю</div>
                 </div>
-                <div class="pricing-card">
-                    <div class="plan-name">Корпоративный</div>
-                    <div class="plan-price">₽14 990<small>/мес</small></div>
-                    <div class="plan-period">Для крупного бизнеса</div>
-                    <ul class="plan-features">
-                        <li>Неограниченно пользователей</li>
-                        <li>Неограниченно OAuth клиентов</li>
-                        <li>White-label решение</li>
-                        <li>SLA 99.9%</li>
-                        <li>Персональный менеджер</li>
-                        <li>Аудит безопасности</li>
-                        <li>On-premise развертывание</li>
-                    </ul>
-                    <a href="/contact" class="btn-plan">Связаться с нами</a>
+                <div class="activity-card">
+                    <div class="activity-number month" id="monthLogins">0</div>
+                    <div class="activity-label">За месяц</div>
                 </div>
             </div>
-        </div>
-
-        <!-- ДОКУМЕНТАЦИЯ -->
-        <div class="docs">
-            <h2>📚 Документация для разработчиков</h2>
-            <p class="docs-subtitle">Быстрая интеграция с вашими приложениями</p>
-            <div class="docs-grid">
-                <div class="doc-card">
-                    <h4>🔑 OpenID Connect эндпоинты</h4>
-                    <div class="endpoint">GET <span class="endpoint-code">/.well-known/openid-configuration</span></div>
-                    <div class="endpoint">GET <span class="endpoint-code">/oauth/authorize</span></div>
-                    <div class="endpoint">POST <span class="endpoint-code">/oauth/token</span></div>
-                    <div class="endpoint">GET <span class="endpoint-code">/oauth/userinfo</span></div>
-                    <div class="endpoint">GET <span class="endpoint-code">/oauth/jwks</span></div>
+            
+            <div class="glass-card">
+                <div class="card-header-glass">
+                    <h3><i class="fas fa-laptop"></i> Активные сессии</h3>
                 </div>
-                <div class="doc-card">
-                    <h4>📝 Пример авторизации</h4>
-                    <div class="endpoint" style="font-size: 11px;">
-                        /oauth/authorize?response_type=code<br>
-                        &client_id=YOUR_CLIENT_ID<br>
-                        &redirect_uri=https://app.com/callback<br>
-                        &scope=openid%20profile%20email<br>
-                        &state=random_string
+                <div id="sessionsList" style="min-height: 100px;">
+                    <div class="text-center py-4 text-white-50">Загрузка...</div>
+                </div>
+            </div>
+            
+            <div class="glass-card">
+                <div class="card-header-glass">
+                    <h3><i class="fas fa-th-large"></i> Подключенные приложения</h3>
+                </div>
+                <div id="appsList" style="min-height: 100px;">
+                    <div class="text-center py-4 text-white-50">Загрузка...</div>
+                </div>
+            </div>
+            
+            <div class="glass-card">
+                <div class="card-header-glass">
+                    <h3><i class="fas fa-history"></i> История активности</h3>
+                </div>
+                <div id="activityList" style="min-height: 100px;">
+                    <div class="text-center py-4 text-white-50">Загрузка...</div>
+                </div>
+            </div>
+            
+            <div class="features-section">
+                <h2 class="section-title">⚡ Что умеет Identity Hub</h2>
+                <p class="section-subtitle">Полноценный IdP сервис для вашего бизнеса</p>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔑</div>
+                        <h3>Single Sign-On (SSO)</h3>
+                        <p>Один аккаунт для всех ваших сервисов. Пользователи входят один раз — доступны все приложения</p>
                     </div>
-                    <h4 class="mt-3">🔑 Получение токена</h4>
-                    <div class="endpoint" style="font-size: 11px;">
-                        POST /oauth/token<br>
-                        grant_type=authorization_code<br>
-                        &code=AUTH_CODE<br>
-                        &client_id=YOUR_CLIENT_ID<br>
-                        &client_secret=YOUR_SECRET
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>OAuth2 / OpenID Connect</h3>
+                        <p>Поддержка всех современных протоколов авторизации. Легко подключайте любые приложения</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3>2FA и MFA</h3>
+                        <p>Двухфакторная аутентификация, резервные коды, доверенные устройства</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">👥</div>
+                        <h3>Управление пользователями</h3>
+                        <p>Создание, блокировка, роли, группы. Полный контроль над доступом</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Аналитика и логи</h3>
+                        <p>Детальные логи авторизаций, статистика использования, аудит безопасности</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔌</div>
+                        <h3>API интеграции</h3>
+                        <p>REST API для управления пользователями, проверки токенов, создания клиентов</p>
                     </div>
                 </div>
-                <div class="doc-card">
-                    <h4>💡 Пример кода (JavaScript)</h4>
-                    <div class="endpoint" style="font-size: 11px;">
-                        const params = new URLSearchParams({<br>
-                        &nbsp;&nbsp;response_type: 'code',<br>
-                        &nbsp;&nbsp;client_id: 'YOUR_CLIENT_ID',<br>
-                        &nbsp;&nbsp;redirect_uri: window.location.origin + '/callback',<br>
-                        &nbsp;&nbsp;scope: 'openid profile email'<br>
-                        });<br>
-                        window.location.href = `/oauth/authorize?${params}`;
+            </div>
+            
+            <div class="pricing-section">
+                <h2 class="section-title">💰 Тарифы Identity Hub</h2>
+                <p class="section-subtitle">Выберите план под ваш бизнес. Первые 14 дней — бесплатно!</p>
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <div class="plan-name">Старт</div>
+                        <div class="plan-price">2 990 ₽<small>/мес</small></div>
+                        <div class="plan-period">Для малого бизнеса</div>
+                        <ul class="plan-features">
+                            <li>До 500 пользователей</li>
+                            <li>До 5 OAuth клиентов</li>
+                            <li>SSO до 3 приложений</li>
+                            <li>Базовая поддержка</li>
+                            <li>Email уведомления</li>
+                            <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
+                        </ul>
+                        <a href="/payment?plan=identity_start&price=2990" class="btn-plan">Начать 14-дневный пробный период</a>
+                    </div>
+                    <div class="pricing-card popular">
+                        <div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>
+                        <div class="plan-name">Бизнес</div>
+                        <div class="plan-price">7 990 ₽<small>/мес</small></div>
+                        <div class="plan-period">Для растущего бизнеса</div>
+                        <ul class="plan-features">
+                            <li>До 5 000 пользователей</li>
+                            <li>До 25 OAuth клиентов</li>
+                            <li>SSO для всех приложений</li>
+                            <li>2FA и MFA</li>
+                            <li>Приоритетная поддержка 24/7</li>
+                            <li>Расширенная аналитика</li>
+                            <li>API управление пользователями</li>
+                            <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
+                        </ul>
+                        <a href="/payment?plan=identity_business&price=7990" class="btn-plan">Начать 14-дневный пробный период</a>
+                    </div>
+                    <div class="pricing-card">
+                        <div class="plan-name">Корпоративный</div>
+                        <div class="plan-price">19 990 ₽<small>/мес</small></div>
+                        <div class="plan-period">Для крупного бизнеса</div>
+                        <ul class="plan-features">
+                            <li>Неограниченно пользователей</li>
+                            <li>Неограниченно OAuth клиентов</li>
+                            <li>White-label решение</li>
+                            <li>SLA 99.9%</li>
+                            <li>Персональный менеджер</li>
+                            <li>Аудит безопасности</li>
+                            <li>On-premise развертывание</li>
+                            <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
+                        </ul>
+                        <a href="/contact" class="btn-plan">Связаться с нами</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="docs-section">
+                <h2 class="section-title">📚 Документация</h2>
+                <p class="section-subtitle">Быстрая интеграция с вашими приложениями</p>
+                <div class="docs-grid">
+                    <div class="doc-card">
+                        <h4>🔑 OpenID Connect эндпоинты</h4>
+                        <div class="endpoint">GET /.well-known/openid-configuration</div>
+                        <div class="endpoint">GET /oauth/authorize</div>
+                        <div class="endpoint">POST /oauth/token</div>
+                        <div class="endpoint">GET /oauth/userinfo</div>
+                        <div class="endpoint">GET /oauth/jwks</div>
+                    </div>
+                    <div class="doc-card">
+                        <h4>💡 Пример авторизации</h4>
+                        <div class="endpoint">
+                            /oauth/authorize?response_type=code<br>
+                            &client_id=YOUR_CLIENT_ID<br>
+                            &redirect_uri=https://app.com/callback<br>
+                            &scope=openid%20profile%20email
+                        </div>
+                        <h4 class="mt-3" style="color:#c4b5fd;">🔑 Получение токена</h4>
+                        <div class="endpoint">
+                            POST /oauth/token<br>
+                            grant_type=authorization_code<br>
+                            &code=AUTH_CODE<br>
+                            &client_id=YOUR_CLIENT_ID
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- ФУТЕР -->
+    
     <div class="footer">
         <div class="container">
-            <p>© 2024 SaaSPro Identity Hub. Первый российский IdP сервис.</p>
+            <p>© 2025 SaaSPro Identity Hub. Первый российский IdP сервис.</p>
             <p class="mt-2">
-                <a href="/docs" class="text-white text-decoration-none me-3">Документация</a>
-                <a href="/support" class="text-white text-decoration-none me-3">Поддержка</a>
-                <a href="/privacy" class="text-white text-decoration-none">Политика конфиденциальности</a>
+                <a href="/docs" class="text-white-50 text-decoration-none me-3">Документация</a>
+                <a href="/support" class="text-white-50 text-decoration-none me-3">Поддержка</a>
+                <a href="/privacy" class="text-white-50 text-decoration-none">Политика конфиденциальности</a>
             </p>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<style>
-.back-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s;
-    z-index: 1000;
-    cursor: pointer;
-}
-.back-button:hover {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, #764ba2, #667eea);
-    color: white;
-}
-</style>
-<a href="javascript:history.back()" class="back-button" title="Go Back">
-    <i class="fas fa-arrow-left fa-lg"></i>
-</a>
-<div class="ai-floating-widget">
-    <div class="ai-widget-button" onclick="openAIAssistant()">
-        🤖
-        <div class="ai-widget-badge">●</div>
+    
+    <div class="back-button" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i>
     </div>
-    <div class="ai-widget-tooltip">💬 Спросить AI ассистента</div>
-</div>
-<script>
-function openAIAssistant() {
-    window.open('/ai-assistant', '_blank', 'width=500,height=700,left=' + (screen.width - 520) + ',top=100');
-}
-</script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for(let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 200 + 80;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = 15 + Math.random() * 15 + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+        
+        // Показываем кнопки для разработчиков
+        async function showDevButtons() {
+            try {
+                const res = await fetch('/api/user/role');
+                const data = await res.json();
+                if (data.role === 'developer' || data.role === 'admin') {
+                    const devButton = document.getElementById('devButtonBlock');
+                    const devNavButton = document.getElementById('devNavButton');
+                    const devInfoBlock = document.getElementById('devInfoBlock');
+                    if (devButton) devButton.style.display = 'block';
+                    if (devNavButton) devNavButton.style.display = 'block';
+                    if (devInfoBlock) devInfoBlock.style.display = 'block';
+                }
+            } catch(e) {}
+        }
+        
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/current-user');
+                const data = await res.json();
+                if (data && data.email) {
+                    const navMenu = document.getElementById('navMenu');
+                    if (navMenu) {
+                        navMenu.innerHTML = `
+                            <li class="nav-item"><a class="nav-link" href="/">Главная</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/dashboard-improved">Дашборд</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/vpn">VPN</a></li>
+                            <li class="nav-item"><a class="nav-link active" href="/identity-hub">Identity Hub</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/crm">CRM</a></li>
+                            <li class="nav-item" id="devNavButtonTemp" style="display: none;">
+                                <a class="nav-link" href="/developer-portal" style="background: rgba(139,91,246,0.3); border-radius: 30px;">
+                                    <i class="fas fa-code me-1"></i> 🔧 Dev Portal
+                                </a>
+                            </li>
+                            <li class="nav-item"><a class="nav-link" href="#">
+                                <i class="fas fa-user-circle me-1"></i> ${data.name || data.email}
+                            </a></li>
+                            <li class="nav-item"><a class="nav-link btn-login" href="/logout" style="background:rgba(239,68,68,0.2); color:#f87171 !important;">
+                                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+                            </a></li>
+                        `;
+                        
+                        // Показываем кнопку для разработчика
+                        const roleRes = await fetch('/api/user/role');
+                        const roleData = await roleRes.json();
+                        if (roleData.role === 'developer' || roleData.role === 'admin') {
+                            const devBtnTemp = document.getElementById('devNavButtonTemp');
+                            if (devBtnTemp) devBtnTemp.style.display = 'block';
+                        }
+                    }
+                }
+            } catch(e) {
+                console.log('User not authorized');
+            }
+        }
+        
+        async function loadIdentityStats() {
+            try {
+                const res = await fetch('/api/identity/stats');
+                const data = await res.json();
+                document.getElementById('totalUsers').innerText = data.total_users || 0;
+                document.getElementById('totalClients').innerText = data.total_clients || 0;
+                document.getElementById('activeSessions').innerText = data.active_sessions || 0;
+                document.getElementById('totalConsents').innerText = data.total_consents || 0;
+                document.getElementById('todayLogins').innerText = data.today_logins || 0;
+                document.getElementById('weekLogins').innerText = data.week_logins || 0;
+                document.getElementById('monthLogins').innerText = data.month_logins || 0;
+            } catch(e) { console.error(e); }
+        }
+        
+        async function loadSessions() {
+            try {
+                const res = await fetch('/api/identity/sessions');
+                const data = await res.json();
+                const container = document.getElementById('sessionsList');
+                if(container && data.sessions && data.sessions.length > 0) {
+                    container.innerHTML = data.sessions.map(s => `
+                        <div class="session-item">
+                            <div class="session-info">
+                                <div class="device-icon">
+                                    <i class="fas fa-${s.device.includes('iPhone') ? 'mobile-alt' : (s.device.includes('Mac') ? 'apple' : 'laptop')}"></i>
+                                </div>
+                                <div class="device-details">
+                                    <div class="device-name">${s.device}</div>
+                                    <div class="device-meta">IP: ${s.ip} • ${s.location}</div>
+                                    <div class="device-meta">Последняя активность: ${s.last_active}</div>
+                                </div>
+                                ${s.is_current ? '<span class="badge-current">Текущая сессия</span>' : ''}
+                            </div>
+                            ${!s.is_current ? `<button class="btn-glass" onclick="revokeSession('${s.id}')">Отозвать</button>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-4 text-white-50">Нет активных сессий</div>';
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        async function revokeSession(sessionId) {
+            if(!confirm('Отозвать эту сессию?')) return;
+            try {
+                const res = await fetch('/api/identity/sessions/' + sessionId, {method: 'DELETE'});
+                const data = await res.json();
+                if(data.success) {
+                    alert('Сессия отозвана');
+                    loadSessions();
+                }
+            } catch(e) { alert('Ошибка'); }
+        }
+        
+        async function loadApps() {
+            try {
+                const res = await fetch('/api/identity/apps');
+                const data = await res.json();
+                const container = document.getElementById('appsList');
+                if(container && data.apps && data.apps.length > 0) {
+                    container.innerHTML = data.apps.map(a => `
+                        <div class="app-item">
+                            <div class="app-info">
+                                <div class="device-icon">
+                                    <i class="fas fa-${a.icon === 'bi-cloud' ? 'cloud' : (a.icon === 'bi-graph-up' ? 'chart-line' : 'shield-alt')}"></i>
+                                </div>
+                                <div class="device-details">
+                                    <div class="device-name">${a.name}</div>
+                                    <div class="device-meta">Права: ${a.scopes}</div>
+                                    <div class="device-meta">Последнее использование: ${a.last_used}</div>
+                                </div>
+                            </div>
+                            <button class="btn-glass" onclick="revokeApp('${a.id}')">Отозвать доступ</button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-4 text-white-50">Нет подключенных приложений</div>';
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        async function revokeApp(appId) {
+            if(!confirm('Отозвать доступ приложения?')) return;
+            try {
+                const res = await fetch('/api/identity/apps/' + appId, {method: 'DELETE'});
+                const data = await res.json();
+                if(data.success) {
+                    alert('Доступ отозван');
+                    loadApps();
+                }
+            } catch(e) { alert('Ошибка'); }
+        }
+        
+        async function loadActivity() {
+            try {
+                const res = await fetch('/api/identity/activity');
+                const data = await res.json();
+                const container = document.getElementById('activityList');
+                if(container && data.logs && data.logs.length > 0) {
+                    container.innerHTML = data.logs.map(l => `
+                        <div class="activity-item">
+                            <div class="activity-info">
+                                <div class="device-icon">
+                                    <i class="fas fa-${l.action === 'login' ? 'sign-in-alt' : 'shield-alt'}"></i>
+                                </div>
+                                <div class="device-details">
+                                    <div class="device-name">${l.action === 'login' ? 'Вход в систему' : (l.action === 'oauth_authorize' ? 'Авторизация приложения' : (l.action === 'token_refresh' ? 'Обновление токена' : 'Обновление профиля'))}</div>
+                                    <div class="device-meta">${l.details} • IP: ${l.ip}</div>
+                                    <div class="device-meta"><span class="badge-current" style="background:rgba(16,185,129,0.2);">${l.status === 'success' ? 'Успешно' : l.status}</span></div>
+                                </div>
+                            </div>
+                            <div class="text-white-50 small">${l.timestamp}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-4 text-white-50">Нет активности</div>';
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        checkAuth();
+        loadIdentityStats();
+        loadSessions();
+        loadApps();
+        loadActivity();
+        showDevButtons();
+        
+        setInterval(() => {
+            loadIdentityStats();
+            loadSessions();
+            loadApps();
+            loadActivity();
+        }, 30000);
+    </script>
 </body>
 </html>
-

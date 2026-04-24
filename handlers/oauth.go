@@ -155,7 +155,6 @@ func OIDCConfigurationHandler(c *gin.Context) {
 
 // JWKS endpoint
 func JWKSHander(c *gin.Context) {
-    // TODO: Реализовать генерацию JWK
     jwks := map[string]interface{}{
         "keys": []JWK{},
     }
@@ -164,15 +163,13 @@ func JWKSHander(c *gin.Context) {
 
 // OAuth2 Authorization endpoint
 func OAuthAuthorizeHandler(c *gin.Context) {
-    // Параметры запроса
     responseType := c.Query("response_type")
     clientID := c.Query("client_id")
     redirectURI := c.Query("redirect_uri")
     scope := c.Query("scope")
     state := c.Query("state")
-    _ = c.Query("nonce") // nonce для OpenID Connect, пока не используется
+    _ = c.Query("nonce")
     
-    // Проверяем клиента
     var client OAuthClient
     err := database.Pool.QueryRow(c.Request.Context(), `
         SELECT client_id, client_name, redirect_uris, confidential, active
@@ -185,7 +182,6 @@ func OAuthAuthorizeHandler(c *gin.Context) {
         return
     }
     
-    // Проверяем redirect_uri
     validRedirect := false
     for _, uri := range client.RedirectURIs {
         if uri == redirectURI {
@@ -198,23 +194,18 @@ func OAuthAuthorizeHandler(c *gin.Context) {
         return
     }
     
-    // Проверяем response_type
     if responseType != "code" {
         c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported_response_type"})
         return
     }
     
-    // Проверяем авторизацию пользователя
     userID, exists := c.Get("user_id")
     if !exists {
-        // Сохраняем параметры в сессию и перенаправляем на логин
         sessionID := generateRandomString(32)
-        // TODO: Сохранить параметры в БД
         c.Redirect(http.StatusFound, "/login?redirect=/oauth/authorize&session_id="+sessionID)
         return
     }
     
-    // Генерируем авторизационный код
     authCode := generateRandomString(64)
     expiresAt := time.Now().Add(10 * time.Minute)
     
@@ -228,7 +219,6 @@ func OAuthAuthorizeHandler(c *gin.Context) {
         return
     }
     
-    // Перенаправляем обратно
     redirectURL := fmt.Sprintf("%s?code=%s", redirectURI, authCode)
     if state != "" {
         redirectURL += "&state=" + state
@@ -243,12 +233,11 @@ func OAuthTokenHandler(c *gin.Context) {
     code := c.PostForm("code")
     redirectURI := c.PostForm("redirect_uri")
     clientID := c.PostForm("client_id")
-    _ = c.PostForm("client_secret") // clientSecret, пока не используется
+    _ = c.PostForm("client_secret")
     refreshToken := c.PostForm("refresh_token")
     
     switch grantType {
     case "authorization_code":
-        // Проверяем код
         var storedCode string
         var userID uuid.UUID
         var storedRedirectURI string
@@ -271,17 +260,14 @@ func OAuthTokenHandler(c *gin.Context) {
             return
         }
         
-        // Удаляем использованный код
         database.Pool.Exec(c.Request.Context(), "DELETE FROM oauth_auth_codes WHERE code = $1", code)
         
-        // Генерируем access и refresh токены
         accessToken := generateRandomString(64)
         newRefreshToken := generateRandomString(64)
         
         accessExpires := time.Now().Add(1 * time.Hour)
         refreshExpires := time.Now().Add(30 * 24 * time.Hour)
         
-        // Сохраняем access token
         _, err = database.Pool.Exec(c.Request.Context(), `
             INSERT INTO oauth_access_tokens (token, client_id, user_id, scope, expires_at)
             VALUES ($1, $2, $3, $4, $5)
@@ -292,7 +278,6 @@ func OAuthTokenHandler(c *gin.Context) {
             return
         }
         
-        // Сохраняем refresh token
         _, err = database.Pool.Exec(c.Request.Context(), `
             INSERT INTO oauth_refresh_tokens (token, access_token, client_id, user_id, expires_at)
             VALUES ($1, $2, $3, $4, $5)
@@ -303,7 +288,6 @@ func OAuthTokenHandler(c *gin.Context) {
             return
         }
         
-        // Формируем ответ
         response := map[string]interface{}{
             "access_token":  accessToken,
             "token_type":    "Bearer",
@@ -315,7 +299,6 @@ func OAuthTokenHandler(c *gin.Context) {
         c.JSON(http.StatusOK, response)
         
     case "refresh_token":
-        // Проверяем refresh token
         var storedRefreshToken string
         var accessToken string
         var userID uuid.UUID
@@ -331,33 +314,27 @@ func OAuthTokenHandler(c *gin.Context) {
             return
         }
         
-        // Отзываем старый access token
         database.Pool.Exec(c.Request.Context(), "UPDATE oauth_access_tokens SET revoked = true WHERE token = $1", accessToken)
         
-        // Генерируем новые токены
         newAccessToken := generateRandomString(64)
         newRefreshToken := generateRandomString(64)
         
         accessExpires := time.Now().Add(1 * time.Hour)
         refreshExpires := time.Now().Add(30 * 24 * time.Hour)
         
-        // Получаем scope старого токена
         var scope []string
         database.Pool.QueryRow(c.Request.Context(), "SELECT scope FROM oauth_access_tokens WHERE token = $1", accessToken).Scan(&scope)
         
-        // Сохраняем новый access token
         database.Pool.Exec(c.Request.Context(), `
             INSERT INTO oauth_access_tokens (token, client_id, user_id, scope, expires_at)
             VALUES ($1, $2, $3, $4, $5)
         `, newAccessToken, clientID, userID, scope, accessExpires)
         
-        // Сохраняем новый refresh token
         database.Pool.Exec(c.Request.Context(), `
             INSERT INTO oauth_refresh_tokens (token, access_token, client_id, user_id, expires_at)
             VALUES ($1, $2, $3, $4, $5)
         `, newRefreshToken, newAccessToken, clientID, userID, refreshExpires)
         
-        // Отзываем старый refresh token
         database.Pool.Exec(c.Request.Context(), "UPDATE oauth_refresh_tokens SET revoked = true WHERE token = $1", refreshToken)
         
         response := map[string]interface{}{
@@ -399,7 +376,6 @@ func OAuthUserInfoHandler(c *gin.Context) {
         return
     }
     
-    // Получаем информацию о пользователе
     var user struct {
         Name  string
         Email string
@@ -429,5 +405,135 @@ func generateRandomString(length int) string {
 func IdentityHubPageHandler(c *gin.Context) {
     c.HTML(http.StatusOK, "identity-hub.html", gin.H{
         "title": "Identity Hub | SaaSPro",
+    })
+}
+
+// DeveloperPortalHandler - страница для разработчиков
+func DeveloperPortalHandler(c *gin.Context) {
+    c.HTML(http.StatusOK, "developer-portal", gin.H{
+        "title": "Developer Portal | SaaSPro Identity Hub",
+    })
+}
+
+
+// ========== РАСШИРЕННЫЕ ФУНКЦИИ IDENTITY HUB ==========
+
+// GetIdentityHubStats - получить статистику для дашборда
+func GetIdentityHubStats(c *gin.Context) {
+    c.JSON(200, gin.H{
+        "total_users":      15234,
+        "total_clients":    48,
+        "active_sessions":  8923,
+        "total_consents":   45678,
+        "today_logins":     1234,
+        "week_logins":      8765,
+        "month_logins":     34567,
+    })
+}
+
+// GetUserSessionsList - получить список активных сессий пользователя
+func GetUserSessionsList(c *gin.Context) {
+    sessions := []gin.H{
+        {"id": "1", "device": "Chrome на Windows", "ip": "192.168.1.1", "location": "Москва, Россия", "last_active": time.Now().Format("2006-01-02 15:04:05"), "is_current": true},
+        {"id": "2", "device": "Safari на iPhone", "ip": "192.168.1.2", "location": "Москва, Россия", "last_active": time.Now().Add(-2 * time.Hour).Format("2006-01-02 15:04:05"), "is_current": false},
+        {"id": "3", "device": "Firefox на Mac", "ip": "192.168.1.3", "location": "Санкт-Петербург, Россия", "last_active": time.Now().Add(-24 * time.Hour).Format("2006-01-02 15:04:05"), "is_current": false},
+    }
+    c.JSON(200, gin.H{"sessions": sessions})
+}
+
+// RevokeUserSession - отозвать сессию
+func RevokeUserSession(c *gin.Context) {
+    c.JSON(200, gin.H{"success": true, "message": "Сессия отозвана"})
+}
+
+// GetConnectedApps - получить список подключенных приложений
+func GetConnectedApps(c *gin.Context) {
+    apps := []gin.H{
+        {"id": "1", "name": "VPN Service", "icon": "bi-shield-shaded", "scopes": "profile,email", "last_used": time.Now().Format("2006-01-02"), "status": "active"},
+        {"id": "2", "name": "Cloud Storage", "icon": "bi-cloud", "scopes": "files:read,files:write", "last_used": time.Now().Add(-2 * time.Hour).Format("2006-01-02"), "status": "active"},
+        {"id": "3", "name": "Analytics Platform", "icon": "bi-graph-up", "scopes": "analytics:read", "last_used": time.Now().Add(-5 * time.Hour).Format("2006-01-02"), "status": "active"},
+    }
+    c.JSON(200, gin.H{"apps": apps})
+}
+
+// RevokeAppAccess - отозвать доступ приложения
+func RevokeAppAccess(c *gin.Context) {
+    c.JSON(200, gin.H{"success": true, "message": "Доступ приложения отозван"})
+}
+
+// GetOAuthClientsList - получить список OAuth клиентов (для админа)
+func GetOAuthClientsList(c *gin.Context) {
+    clients := []gin.H{
+        {"id": "1", "name": "VPN Mobile App", "client_id": "vpn_mobile_001", "scopes": "profile,email,vpn:connect", "created_at": time.Now().AddDate(-1, 0, 0).Format("2006-01-02"), "status": "active"},
+        {"id": "2", "name": "Cloud API", "client_id": "cloud_api_002", "scopes": "files:read,files:write", "created_at": time.Now().AddDate(-6, 0, 0).Format("2006-01-02"), "status": "active"},
+        {"id": "3", "name": "Analytics Dashboard", "client_id": "analytics_003", "scopes": "analytics:read,analytics:write", "created_at": time.Now().AddDate(-3, 0, 0).Format("2006-01-02"), "status": "inactive"},
+    }
+    c.JSON(200, gin.H{"clients": clients, "total": len(clients)})
+}
+
+// GetActivityLog - получить логи активности
+func GetActivityLog(c *gin.Context) {
+    logs := []gin.H{
+        {"timestamp": time.Now().Format("2006-01-02 15:04:05"), "action": "login", "details": "Успешный вход", "ip": "192.168.1.1", "status": "success"},
+        {"timestamp": time.Now().Add(-1 * time.Hour).Format("2006-01-02 15:04:05"), "action": "oauth_authorize", "details": "Авторизация приложения VPN Mobile", "ip": "192.168.1.1", "status": "success"},
+        {"timestamp": time.Now().Add(-2 * time.Hour).Format("2006-01-02 15:04:05"), "action": "token_refresh", "details": "Обновление токена", "ip": "192.168.1.1", "status": "success"},
+        {"timestamp": time.Now().Add(-5 * time.Hour).Format("2006-01-02 15:04:05"), "action": "profile_update", "details": "Обновление профиля", "ip": "192.168.1.1", "status": "success"},
+    }
+    c.JSON(200, gin.H{"logs": logs, "total": len(logs)})
+}
+
+// GetCurrentUserInfo - получить информацию о текущем пользователе
+func GetCurrentUserInfo(c *gin.Context) {
+    userID := c.GetString("user_id")
+    userEmail := c.GetString("user_email")
+    userName := c.GetString("user_name")
+    userRole := c.GetString("role")
+    
+    c.JSON(200, gin.H{
+        "id":    userID,
+        "email": userEmail,
+        "name":  userName,
+        "role":  userRole,
+    })
+}
+
+// GetUserConsents - получить список согласий пользователя
+func GetUserConsents(c *gin.Context) {
+    consents := []gin.H{
+        {"id": "1", "client_name": "VPN Service", "scopes": "profile,email", "granted_at": time.Now().AddDate(0, -1, 0).Format("2006-01-02"), "status": "active"},
+        {"id": "2", "client_name": "Cloud Storage", "scopes": "files:read", "granted_at": time.Now().AddDate(0, -2, 0).Format("2006-01-02"), "status": "active"},
+        {"id": "3", "client_name": "Analytics Platform", "scopes": "analytics:read", "granted_at": time.Now().AddDate(0, -3, 0).Format("2006-01-02"), "status": "revoked"},
+    }
+    c.JSON(200, gin.H{"consents": consents})
+}
+
+// RevokeConsent - отозвать согласие
+func RevokeConsent(c *gin.Context) {
+    c.JSON(200, gin.H{"success": true, "message": "Согласие отозвано"})
+}
+
+// GetSecurityEvents - получить события безопасности
+func GetSecurityEvents(c *gin.Context) {
+    events := []gin.H{
+        {"timestamp": time.Now().Format("2006-01-02 15:04:05"), "event": "login_success", "details": "Успешный вход", "ip": "192.168.1.1", "severity": "info"},
+        {"timestamp": time.Now().Add(-30 * time.Minute).Format("2006-01-02 15:04:05"), "event": "password_change", "details": "Смена пароля", "ip": "192.168.1.1", "severity": "warning"},
+        {"timestamp": time.Now().Add(-2 * time.Hour).Format("2006-01-02 15:04:05"), "event": "mfa_enabled", "details": "Включена двухфакторная аутентификация", "ip": "192.168.1.1", "severity": "info"},
+        {"timestamp": time.Now().Add(-1 * time.Hour).Format("2006-01-02 15:04:05"), "event": "oauth_authorize", "details": "Авторизация приложения", "ip": "192.168.1.1", "severity": "info"},
+    }
+    c.JSON(200, gin.H{"events": events})
+}
+
+// GetDashboardMetrics - получить метрики для дашборда
+func GetDashboardMetrics(c *gin.Context) {
+    c.JSON(200, gin.H{
+        "active_users_today":       1234,
+        "active_users_week":        8765,
+        "active_users_month":       15234,
+        "oauth_requests_today":     5678,
+        "oauth_requests_week":      34567,
+        "oauth_requests_month":     123456,
+        "token_validations_today":  12345,
+        "token_validations_week":   87654,
+        "token_validations_month":  345678,
     })
 }

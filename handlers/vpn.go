@@ -414,72 +414,48 @@ function mobileConfig(id) { window.open('/vpn/api/keys/' + id + '/mobile', '_bla
 async function renewKey(id) { if(confirm('Продлить?')){ await fetch('/vpn/api/renew/' + id, {method:'POST'}); alert('Продлён'); loadKeys(); } }
 async function revokeKey(id) { if(confirm('Отключить?')){ await fetch('/vpn/api/keys/' + id, {method:'DELETE'}); alert('Отключён'); loadKeys(); } }
 
-// ========== ВЫБОР СТРАНЫ С РАДИОКНОПКАМИ (12 СТРАН) ==========
+// ========== ВЫБОР СТРАНЫ С РАДИОКНОПКАМИ (ГАЛОЧКАМИ) ==========
 function showCountrySelector(clientId) {
     const modalDiv = document.createElement('div');
     modalDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;justify-content:center;align-items:center;';
     
-    modalDiv.innerHTML = '<div style="background:#1a1a2e;border-radius:24px;padding:30px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">' +
+    modalDiv.innerHTML = '<div style="background:#1a1a2e;border-radius:24px;padding:30px;max-width:400px;width:90%;">' +
         '<h3 style="color:white;margin-bottom:20px;text-align:center;">🌍 Выберите страну</h3>' +
         
         '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
         '<input type="radio" name="country" value="RU" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇷🇺</span><span style="color:white;font-size:16px;">Россия</span>' +
+        '<span style="font-size:28px;margin-right:12px;">🇷🇺</span>' +
+        '<span style="color:white;font-size:16px;">Россия</span>' +
         '</label>' +
         
         '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
         '<input type="radio" name="country" value="US" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇺🇸</span><span style="color:white;font-size:16px;">США</span>' +
+        '<span style="font-size:28px;margin-right:12px;">🇺🇸</span>' +
+        '<span style="color:white;font-size:16px;">США</span>' +
         '</label>' +
         
         '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
         '<input type="radio" name="country" value="DE" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇩🇪</span><span style="color:white;font-size:16px;">Германия</span>' +
+        '<span style="font-size:28px;margin-right:12px;">🇩🇪</span>' +
+        '<span style="color:white;font-size:16px;">Германия</span>' +
         '</label>' +
         
         '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
         '<input type="radio" name="country" value="NL" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇳🇱</span><span style="color:white;font-size:16px;">Нидерланды</span>' +
-        '</label>' +
-        
-        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
-        '<input type="radio" name="country" value="GB" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇬🇧</span><span style="color:white;font-size:16px;">Великобритания</span>' +
-        '</label>' +
-        
-        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
-        '<input type="radio" name="country" value="FR" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇫🇷</span><span style="color:white;font-size:16px;">Франция</span>' +
+        '<span style="font-size:28px;margin-right:12px;">🇳🇱</span>' +
+        '<span style="color:white;font-size:16px;">Нидерланды</span>' +
         '</label>' +
         
         '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
         '<input type="radio" name="country" value="JP" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇯🇵</span><span style="color:white;font-size:16px;">Япония</span>' +
+        '<span style="font-size:28px;margin-right:12px;">🇯🇵</span>' +
+        '<span style="color:white;font-size:16px;">Япония</span>' +
         '</label>' +
         
         '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
         '<input type="radio" name="country" value="SG" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇸🇬</span><span style="color:white;font-size:16px;">Сингапур</span>' +
-        '</label>' +
-        
-        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
-        '<input type="radio" name="country" value="CA" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇨🇦</span><span style="color:white;font-size:16px;">Канада</span>' +
-        '</label>' +
-        
-        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
-        '<input type="radio" name="country" value="AU" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇦🇺</span><span style="color:white;font-size:16px;">Австралия</span>' +
-        '</label>' +
-        
-        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
-        '<input type="radio" name="country" value="BR" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇧🇷</span><span style="color:white;font-size:16px;">Бразилия</span>' +
-        '</label>' +
-        
-        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
-        '<input type="radio" name="country" value="IN" style="width:20px;height:20px;margin-right:15px;"> ' +
-        '<span style="font-size:28px;margin-right:12px;">🇮🇳</span><span style="color:white;font-size:16px;">Индия</span>' +
+        '<span style="font-size:28px;margin-right:12px;">🇸🇬</span>' +
+        '<span style="color:white;font-size:16px;">Сингапур</span>' +
         '</label>' +
         
         '<div style="display:flex;gap:10px;margin-top:25px;">' +
@@ -531,10 +507,10 @@ function confirmSwitch(clientId) {
 }
 
 function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m){ return m==='&'?'&amp;':m==='<'?'&lt;':'>'?'&gt;':m; }); }
-
 loadStats();
 loadKeys();
 </script>
+<button onclick='history.back()' style='position:fixed;bottom:30px;right:30px;padding:12px 24px;border-radius:40px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:white;font-size:14px;font-weight:500;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,0.3);z-index:1000;display:flex;align-items:center;gap:8px;'>← Назад</button>
 </body>
 </html>`)
 }
@@ -967,26 +943,6 @@ func SwitchServerForKey(c *gin.Context) {
     case "DE":
         serverHost = "de.vpn.saaspro.ru"
         serverPubKey = "SERVER_PUBLIC_KEY_DE"
-        serverPort = 51820
-    case "NL":
-        serverHost = "nl.vpn.saaspro.ru"
-        serverPubKey = "SERVER_PUBLIC_KEY_NL"
-        serverPort = 51820
-    case "GB":
-        serverHost = "gb.vpn.saaspro.ru"
-        serverPubKey = "SERVER_PUBLIC_KEY_GB"
-        serverPort = 51820
-    case "FR":
-        serverHost = "fr.vpn.saaspro.ru"
-        serverPubKey = "SERVER_PUBLIC_KEY_FR"
-        serverPort = 51820
-    case "JP":
-        serverHost = "jp.vpn.saaspro.ru"
-        serverPubKey = "SERVER_PUBLIC_KEY_JP"
-        serverPort = 51820
-    case "SG":
-        serverHost = "sg.vpn.saaspro.ru"
-        serverPubKey = "SERVER_PUBLIC_KEY_SG"
         serverPort = 51820
     default:
         serverHost = "vpn.your-server.com"
