@@ -1318,7 +1318,19 @@ vpnGroup.Use(middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("vpn
     // Переключение между странами
     vpnGroup.POST("/api/switch-server/:id", handlers.SwitchServerForKey)
     vpnGroup.POST("/api/create-for-country", handlers.CreateKeyForCountry)
+}
 
+// ========== VPN API АЛИАСЫ (для совместимости с фронтендом) ==========
+// Добавляем алиасы чтобы работал /api/vpn/stats (без /vpn в начале)
+vpnAlias := r.Group("/api/vpn")
+vpnAlias.Use(middleware.AuthMiddleware(cfg))
+{
+    vpnAlias.GET("/stats", handlers.GetVPNStatsAPI)
+    vpnAlias.GET("/keys", handlers.GetVPNKeysAPI)
+    vpnAlias.POST("/keys", handlers.CreateVPNKeyAPI)
+    vpnAlias.DELETE("/keys/:id", handlers.RevokeVPNKeyAPI)
+    vpnAlias.GET("/countries", handlers.GetVPNCountriesList)
+    vpnAlias.GET("/global-stats", handlers.GetVPNGlobalStats)
 }
     // ========== МИГРАЦИЯ (3 ФАЗЫ) ==========
     migrationAPI := r.Group("/api/migration")

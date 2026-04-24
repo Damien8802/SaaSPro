@@ -1,8 +1,10 @@
 package handlers
 
 import (
+    "context"
     "crypto/rand"
     "encoding/base64"
+    "encoding/json"
     "fmt"
     "net/http"
     "strings"
@@ -13,7 +15,6 @@ import (
     
     "subscription-system/database"
 )
-
 // OAuth2 клиент
 type OAuthClient struct {
     ID           uuid.UUID `json:"id"`
@@ -418,122 +419,367 @@ func DeveloperPortalHandler(c *gin.Context) {
 
 // ========== РАСШИРЕННЫЕ ФУНКЦИИ IDENTITY HUB ==========
 
-// GetIdentityHubStats - получить статистику для дашборда
+// GetIdentityHubStats - получить статистику для дашборда (РЕАЛЬНЫЕ ДАННЫЕ)
 func GetIdentityHubStats(c *gin.Context) {
+    var totalUsers int64
+    var totalClients int64
+    var activeSessions int64
+    var totalConsents int64
+    var todayLogins int64
+    var weekLogins int64
+    var monthLogins int64
+    
+    ctx := c.Request.Context()
+    
+    // Реальное количество пользователей
+    database.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&totalUsers)
+    
+    // Реальное количество OAuth клиентов
+    database.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM oauth_clients WHERE status = 'active'").Scan(&totalClients)
+    
+    // Активные сессии за последние 30 минут
+    database.Pool.QueryRow(ctx, `
+        SELECT COUNT(*) FROM user_sessions 
+        WHERE last_active > NOW() - INTERVAL '30 minutes' AND revoked = false
+    `).Scan(&activeSessions)
+    
+    // Количество активных согласий OAuth
+    database.Pool.QueryRow(ctx, `
+        SELECT COUNT(*) FROM oauth_authorizations WHERE revoked = false
+    `).Scan(&totalConsents)
+    
+    // Логины за сегодня
+    database.Pool.QueryRow(ctx, `
+        SELECT COUNT(*) FROM activity_logs 
+        WHERE action = 'login' AND DATE(created_at) = CURRENT_DATE
+    `).Scan(&todayLogins)
+    
+    // Логины за неделю
+    database.Pool.QueryRow(ctx, `
+        SELECT COUNT(*) FROM activity_logs 
+        WHERE action = 'login' AND created_at > NOW() - INTERVAL '7 days'
+    `).Scan(&weekLogins)
+    
+    // Логины за месяц
+    database.Pool.QueryRow(ctx, `
+        SELECT COUNT(*) FROM activity_logs 
+        WHERE action = 'login' AND created_at > NOW() - INTERVAL '30 days'
+    `).Scan(&monthLogins)
+    
     c.JSON(200, gin.H{
-        "total_users":      15234,
-        "total_clients":    48,
-        "active_sessions":  8923,
-        "total_consents":   45678,
-        "today_logins":     1234,
-        "week_logins":      8765,
-        "month_logins":     34567,
+        "total_users":      totalUsers,
+        "total_clients":    totalClients,
+        "active_sessions":  activeSessions,
+        "total_consents":   totalConsents,
+        "today_logins":     todayLogins,
+        "week_logins":      weekLogins,
+        "month_logins":     monthLogins,
     })
 }
 
-// GetUserSessionsList - получить список активных сессий пользователя
+// GetUserSessionsList - получить список активных сессий пользователя (РЕАЛЬНЫЕ ДАННЫЕ)
 func GetUserSessionsList(c *gin.Context) {
-    sessions := []gin.H{
-        {"id": "1", "device": "Chrome на Windows", "ip": "192.168.1.1", "location": "Москва, Россия", "last_active": time.Now().Format("2006-01-02 15:04:05"), "is_current": true},
-        {"id": "2", "device": "Safari на iPhone", "ip": "192.168.1.2", "location": "Москва, Россия", "last_active": time.Now().Add(-2 * time.Hour).Format("2006-01-02 15:04:05"), "is_current": false},
-        {"id": "3", "device": "Firefox на Mac", "ip": "192.168.1.3", "location": "Санкт-Петербург, Россия", "last_active": time.Now().Add(-24 * time.Hour).Format("2006-01-02 15:04:05"), "is_current": false},
+    userIDVal, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(401, gin.H{"error": "User not authenticated"})
+        return
     }
-    c.JSON(200, gin.H{"sessions": sessions})
+    
+    userID := userIDVal.(string)
+    ctx := c.Request.Context()
+    
+    rows, err := database.Pool.Query(ctx, `
+        SELECT id, COALESCE(device_name, 'Unknown') as device, 
+               COALESCE(ip, '0.0.0.0') as ip, 
+               COALESCE(location, 'Unknown') as location, 
+               last_active, is_current
+        FROM user_sessions
+        WHERE user_id = $1 AND revoked = false
+        ORDER BY last_active DESC
+    `, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    sessionsList := []gin.H{}
+    for rows.Next() {
+        var id, device, ip, location string
+        var lastActive time.Time
+        var isCurrent bool
+        
+        rows.Scan(&id, &device, &ip, &location, &lastActive, &isCurrent)
+        
+        sessionsList = append(sessionsList, gin.H{
+            "id":          id,
+            "device":      device,
+            "ip":          ip,
+            "location":    location,
+            "last_active": lastActive.Format("2006-01-02 15:04:05"),
+            "is_current":  isCurrent,
+        })
+    }
+    
+    c.JSON(200, gin.H{"sessions": sessionsList})
 }
 
-// RevokeUserSession - отозвать сессию
+// RevokeUserSession - отозвать сессию (РЕАЛЬНЫЕ ДАННЫЕ)
 func RevokeUserSession(c *gin.Context) {
+    userIDVal, _ := c.Get("user_id")
+    userID := userIDVal.(string)
+    sessionID := c.Param("id")
+    
+    ctx := c.Request.Context()
+    
+    result, err := database.Pool.Exec(ctx, `
+        UPDATE user_sessions 
+        SET revoked = true, is_current = false
+        WHERE id = $1 AND user_id = $2 AND revoked = false
+    `, sessionID, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    if result.RowsAffected() == 0 {
+        c.JSON(404, gin.H{"error": "Session not found"})
+        return
+    }
+    
+    // Логируем действие
+    LogActivity(userID, "revoke_session", "security", sessionID, 
+        gin.H{"session_id": sessionID}, c.ClientIP(), c.Request.UserAgent())
+    
     c.JSON(200, gin.H{"success": true, "message": "Сессия отозвана"})
 }
 
-// GetConnectedApps - получить список подключенных приложений
+// GetConnectedApps - получить список подключенных приложений (РЕАЛЬНЫЕ ДАННЫЕ)
 func GetConnectedApps(c *gin.Context) {
-    apps := []gin.H{
-        {"id": "1", "name": "VPN Service", "icon": "bi-shield-shaded", "scopes": "profile,email", "last_used": time.Now().Format("2006-01-02"), "status": "active"},
-        {"id": "2", "name": "Cloud Storage", "icon": "bi-cloud", "scopes": "files:read,files:write", "last_used": time.Now().Add(-2 * time.Hour).Format("2006-01-02"), "status": "active"},
-        {"id": "3", "name": "Analytics Platform", "icon": "bi-graph-up", "scopes": "analytics:read", "last_used": time.Now().Add(-5 * time.Hour).Format("2006-01-02"), "status": "active"},
+    userIDVal, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(401, gin.H{"error": "User not authenticated"})
+        return
     }
-    c.JSON(200, gin.H{"apps": apps})
+    
+    userID := userIDVal.(string)
+    ctx := c.Request.Context()
+    
+    rows, err := database.Pool.Query(ctx, `
+        SELECT oc.id, oc.name, COALESCE(oc.icon, 'bi-app') as icon, 
+               COALESCE(oa.scopes, 'openid profile') as scopes, 
+               oa.updated_at as last_used
+        FROM oauth_authorizations oa
+        JOIN oauth_clients oc ON oc.id = oa.client_id
+        WHERE oa.user_id = $1 AND oa.revoked = false AND oc.status = 'active'
+        ORDER BY oa.updated_at DESC
+    `, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    appsList := []gin.H{}
+    for rows.Next() {
+        var id, name, icon, scopes string
+        var lastUsed time.Time
+        
+        rows.Scan(&id, &name, &icon, &scopes, &lastUsed)
+        
+        appsList = append(appsList, gin.H{
+            "id":        id,
+            "name":      name,
+            "icon":      icon,
+            "scopes":    scopes,
+            "last_used": lastUsed.Format("2006-01-02"),
+            "status":    "active",
+        })
+    }
+    
+    c.JSON(200, gin.H{"apps": appsList})
 }
 
-// RevokeAppAccess - отозвать доступ приложения
+// RevokeAppAccess - отозвать доступ приложения (РЕАЛЬНЫЕ ДАННЫЕ)
 func RevokeAppAccess(c *gin.Context) {
+    userIDVal, _ := c.Get("user_id")
+    userID := userIDVal.(string)
+    appID := c.Param("id")
+    
+    ctx := c.Request.Context()
+    
+    result, err := database.Pool.Exec(ctx, `
+        UPDATE oauth_authorizations 
+        SET revoked = true, revoked_at = NOW()
+        WHERE user_id = $1 AND client_id = $2 AND revoked = false
+    `, userID, appID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    if result.RowsAffected() == 0 {
+        c.JSON(404, gin.H{"error": "App authorization not found"})
+        return
+    }
+    
+    // Логируем действие
+    LogActivity(userID, "revoke_app", "security", appID,
+        gin.H{"app_id": appID}, c.ClientIP(), c.Request.UserAgent())
+    
     c.JSON(200, gin.H{"success": true, "message": "Доступ приложения отозван"})
+}
+
+// GetActivityLog - получить логи активности (РЕАЛЬНЫЕ ДАННЫЕ)
+func GetActivityLog(c *gin.Context) {
+    userIDVal, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(401, gin.H{"error": "User not authenticated"})
+        return
+    }
+    
+    userID, ok := userIDVal.(string)
+    if !ok {
+        c.JSON(401, gin.H{"error": "Invalid user ID format"})
+        return
+    }
+    
+    ctx := c.Request.Context()
+    
+    // Проверим сначала есть ли данные
+    var count int
+    err := database.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM activity_logs WHERE user_id = $1", userID).Scan(&count)
+    if err != nil {
+        c.JSON(500, gin.H{"error": "Database error: " + err.Error()})
+        return
+    }
+    
+    // Если нет данных, вернем пустой массив
+    if count == 0 {
+        c.JSON(200, gin.H{"logs": []gin.H{}})
+        return
+    }
+    
+    rows, err := database.Pool.Query(ctx, `
+        SELECT created_at, action, 
+               COALESCE(details->>'description', details->>'method', action) as details, 
+               COALESCE(ip, '0.0.0.0') as ip, 
+               COALESCE(status, 'success') as status
+        FROM activity_logs
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 50
+    `, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": "Query error: " + err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    logsList := []gin.H{}
+    for rows.Next() {
+        var timestamp time.Time
+        var action, details, ip, status string
+        
+        err := rows.Scan(&timestamp, &action, &details, &ip, &status)
+        if err != nil {
+            continue
+        }
+        
+        actionName := getActionName(action)
+        
+        logsList = append(logsList, gin.H{
+            "timestamp": timestamp.Format("2006-01-02 15:04:05"),
+            "action":    actionName,
+            "details":   details,
+            "ip":        ip,
+            "status":    status,
+        })
+    }
+    
+    c.JSON(200, gin.H{"logs": logsList})
+}
+// Вспомогательная функция для красивых названий действий
+func getActionName(action string) string {
+    names := map[string]string{
+        "login":           "Вход в систему",
+        "logout":          "Выход из системы",
+        "oauth_authorize": "Авторизация приложения",
+        "token_refresh":   "Обновление токена",
+        "profile_update":  "Обновление профиля",
+        "revoke_session":  "Отзыв сессии",
+        "revoke_app":      "Отзыв доступа приложения",
+        "api_call":        "API запрос",
+        "password_change": "Смена пароля",
+        "2fa_enable":      "Включение 2FA",
+        "2fa_disable":     "Отключение 2FA",
+    }
+    
+    if name, exists := names[action]; exists {
+        return name
+    }
+    return action
+}
+
+// LogActivity - вспомогательная функция для записи логов
+func LogActivity(userID, action, resource, resourceID string, details interface{}, ip, userAgent string) {
+    ctx := context.Background()
+    
+    // Преобразуем details в JSON
+    detailsJSON, _ := json.Marshal(details)
+    
+    _, err := database.Pool.Exec(ctx, `
+        INSERT INTO activity_logs (user_id, action, resource, resource_id, details, ip, user_agent, status, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'success', NOW())
+    `, userID, action, resource, resourceID, detailsJSON, ip, userAgent)
+    
+    if err != nil {
+        // Логируем ошибку но не прерываем выполнение
+        fmt.Printf("Ошибка записи лога активности: %v\n", err)
+    }
 }
 
 // GetOAuthClientsList - получить список OAuth клиентов (для админа)
 func GetOAuthClientsList(c *gin.Context) {
-    clients := []gin.H{
-        {"id": "1", "name": "VPN Mobile App", "client_id": "vpn_mobile_001", "scopes": "profile,email,vpn:connect", "created_at": time.Now().AddDate(-1, 0, 0).Format("2006-01-02"), "status": "active"},
-        {"id": "2", "name": "Cloud API", "client_id": "cloud_api_002", "scopes": "files:read,files:write", "created_at": time.Now().AddDate(-6, 0, 0).Format("2006-01-02"), "status": "active"},
-        {"id": "3", "name": "Analytics Dashboard", "client_id": "analytics_003", "scopes": "analytics:read,analytics:write", "created_at": time.Now().AddDate(-3, 0, 0).Format("2006-01-02"), "status": "inactive"},
+    ctx := c.Request.Context()
+    
+    rows, err := database.Pool.Query(ctx, `
+        SELECT id, client_id, name, redirect_uris, scopes, status, created_at
+        FROM oauth_clients
+        ORDER BY created_at DESC
+    `)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
     }
-    c.JSON(200, gin.H{"clients": clients, "total": len(clients)})
-}
-
-// GetActivityLog - получить логи активности
-func GetActivityLog(c *gin.Context) {
-    logs := []gin.H{
-        {"timestamp": time.Now().Format("2006-01-02 15:04:05"), "action": "login", "details": "Успешный вход", "ip": "192.168.1.1", "status": "success"},
-        {"timestamp": time.Now().Add(-1 * time.Hour).Format("2006-01-02 15:04:05"), "action": "oauth_authorize", "details": "Авторизация приложения VPN Mobile", "ip": "192.168.1.1", "status": "success"},
-        {"timestamp": time.Now().Add(-2 * time.Hour).Format("2006-01-02 15:04:05"), "action": "token_refresh", "details": "Обновление токена", "ip": "192.168.1.1", "status": "success"},
-        {"timestamp": time.Now().Add(-5 * time.Hour).Format("2006-01-02 15:04:05"), "action": "profile_update", "details": "Обновление профиля", "ip": "192.168.1.1", "status": "success"},
+    defer rows.Close()
+    
+    clients := []gin.H{}
+    for rows.Next() {
+        var id, clientID, name, scopes, status string
+        var redirectURIs interface{}
+        var createdAt time.Time
+        
+        rows.Scan(&id, &clientID, &name, &redirectURIs, &scopes, &status, &createdAt)
+        
+        clients = append(clients, gin.H{
+            "id":          id,
+            "client_id":   clientID,
+            "name":        name,
+            "redirect_uris": redirectURIs,
+            "scopes":      scopes,
+            "status":      status,
+            "created_at":  createdAt.Format("2006-01-02 15:04:05"),
+        })
     }
-    c.JSON(200, gin.H{"logs": logs, "total": len(logs)})
-}
-
-// GetCurrentUserInfo - получить информацию о текущем пользователе
-func GetCurrentUserInfo(c *gin.Context) {
-    userID := c.GetString("user_id")
-    userEmail := c.GetString("user_email")
-    userName := c.GetString("user_name")
-    userRole := c.GetString("role")
     
     c.JSON(200, gin.H{
-        "id":    userID,
-        "email": userEmail,
-        "name":  userName,
-        "role":  userRole,
-    })
-}
-
-// GetUserConsents - получить список согласий пользователя
-func GetUserConsents(c *gin.Context) {
-    consents := []gin.H{
-        {"id": "1", "client_name": "VPN Service", "scopes": "profile,email", "granted_at": time.Now().AddDate(0, -1, 0).Format("2006-01-02"), "status": "active"},
-        {"id": "2", "client_name": "Cloud Storage", "scopes": "files:read", "granted_at": time.Now().AddDate(0, -2, 0).Format("2006-01-02"), "status": "active"},
-        {"id": "3", "client_name": "Analytics Platform", "scopes": "analytics:read", "granted_at": time.Now().AddDate(0, -3, 0).Format("2006-01-02"), "status": "revoked"},
-    }
-    c.JSON(200, gin.H{"consents": consents})
-}
-
-// RevokeConsent - отозвать согласие
-func RevokeConsent(c *gin.Context) {
-    c.JSON(200, gin.H{"success": true, "message": "Согласие отозвано"})
-}
-
-// GetSecurityEvents - получить события безопасности
-func GetSecurityEvents(c *gin.Context) {
-    events := []gin.H{
-        {"timestamp": time.Now().Format("2006-01-02 15:04:05"), "event": "login_success", "details": "Успешный вход", "ip": "192.168.1.1", "severity": "info"},
-        {"timestamp": time.Now().Add(-30 * time.Minute).Format("2006-01-02 15:04:05"), "event": "password_change", "details": "Смена пароля", "ip": "192.168.1.1", "severity": "warning"},
-        {"timestamp": time.Now().Add(-2 * time.Hour).Format("2006-01-02 15:04:05"), "event": "mfa_enabled", "details": "Включена двухфакторная аутентификация", "ip": "192.168.1.1", "severity": "info"},
-        {"timestamp": time.Now().Add(-1 * time.Hour).Format("2006-01-02 15:04:05"), "event": "oauth_authorize", "details": "Авторизация приложения", "ip": "192.168.1.1", "severity": "info"},
-    }
-    c.JSON(200, gin.H{"events": events})
-}
-
-// GetDashboardMetrics - получить метрики для дашборда
-func GetDashboardMetrics(c *gin.Context) {
-    c.JSON(200, gin.H{
-        "active_users_today":       1234,
-        "active_users_week":        8765,
-        "active_users_month":       15234,
-        "oauth_requests_today":     5678,
-        "oauth_requests_week":      34567,
-        "oauth_requests_month":     123456,
-        "token_validations_today":  12345,
-        "token_validations_week":   87654,
-        "token_validations_month":  345678,
+        "clients": clients,
+        "total":   len(clients),
     })
 }
