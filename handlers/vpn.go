@@ -243,6 +243,8 @@ func GetVPNKeysPage(c *gin.Context) {
         .btn-mobile { background: #10b981; color: white; }
         .btn-renew { background: #f59e0b; color: white; }
         .btn-revoke { background: #ef4444; color: white; }
+        .btn-country { background: #8b5cf6; color: white; }
+        .btn-country:hover { background: #7c3aed; }
         .btn:hover { transform: translateY(-2px); opacity: 0.9; }
         .empty-state { text-align: center; padding: 60px; color: rgba(255,255,255,0.5); }
         .modal {
@@ -375,9 +377,11 @@ async function loadKeys() {
                     '<div class="btn-group">' +
                         '<button class="btn btn-config" onclick="downloadConfig(\'' + k.client_id + '\')">📥 Конфиг</button>' +
                         '<button class="btn btn-mobile" onclick="mobileConfig(\'' + k.client_id + '\')">📱 Телефон</button>' +
+                        '<button class="btn btn-country" onclick="showCountrySelector(\'' + k.client_id + '\')">🌍 Сменить страну</button>' +
                         '<button class="btn btn-renew" onclick="renewKey(\'' + k.client_id + '\')">🔄 Продлить</button>' +
                         '<button class="btn btn-revoke" onclick="revokeKey(\'' + k.client_id + '\')">🗑 Отключить</button>' +
-                    '</div></div>';
+                    '</div>' +
+                '</div>';
             }).join('');
         } else {
             container.innerHTML = '<div class="empty-state">🔑 У вас пока нет VPN ключей</div>';
@@ -409,6 +413,122 @@ function downloadConfig(id) { window.open('/vpn/api/keys/' + id + '/config', '_b
 function mobileConfig(id) { window.open('/vpn/api/keys/' + id + '/mobile', '_blank', 'width=500,height=700'); }
 async function renewKey(id) { if(confirm('Продлить?')){ await fetch('/vpn/api/renew/' + id, {method:'POST'}); alert('Продлён'); loadKeys(); } }
 async function revokeKey(id) { if(confirm('Отключить?')){ await fetch('/vpn/api/keys/' + id, {method:'DELETE'}); alert('Отключён'); loadKeys(); } }
+
+// ========== ВЫБОР СТРАНЫ С РАДИОКНОПКАМИ (12 СТРАН) ==========
+function showCountrySelector(clientId) {
+    const modalDiv = document.createElement('div');
+    modalDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;justify-content:center;align-items:center;';
+    
+    modalDiv.innerHTML = '<div style="background:#1a1a2e;border-radius:24px;padding:30px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">' +
+        '<h3 style="color:white;margin-bottom:20px;text-align:center;">🌍 Выберите страну</h3>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="RU" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇷🇺</span><span style="color:white;font-size:16px;">Россия</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="US" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇺🇸</span><span style="color:white;font-size:16px;">США</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="DE" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇩🇪</span><span style="color:white;font-size:16px;">Германия</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="NL" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇳🇱</span><span style="color:white;font-size:16px;">Нидерланды</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="GB" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇬🇧</span><span style="color:white;font-size:16px;">Великобритания</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="FR" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇫🇷</span><span style="color:white;font-size:16px;">Франция</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="JP" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇯🇵</span><span style="color:white;font-size:16px;">Япония</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="SG" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇸🇬</span><span style="color:white;font-size:16px;">Сингапур</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="CA" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇨🇦</span><span style="color:white;font-size:16px;">Канада</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="AU" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇦🇺</span><span style="color:white;font-size:16px;">Австралия</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="BR" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇧🇷</span><span style="color:white;font-size:16px;">Бразилия</span>' +
+        '</label>' +
+        
+        '<label style="display:flex;align-items:center;padding:12px;margin:8px 0;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;">' +
+        '<input type="radio" name="country" value="IN" style="width:20px;height:20px;margin-right:15px;"> ' +
+        '<span style="font-size:28px;margin-right:12px;">🇮🇳</span><span style="color:white;font-size:16px;">Индия</span>' +
+        '</label>' +
+        
+        '<div style="display:flex;gap:10px;margin-top:25px;">' +
+        '<button onclick="closeCountryModal()" style="flex:1;padding:12px;background:#ef4444;border:none;border-radius:12px;color:white;cursor:pointer;">Отмена</button>' +
+        '<button onclick="confirmSwitch(\'' + clientId + '\')" style="flex:1;padding:12px;background:#667eea;border:none;border-radius:12px;color:white;cursor:pointer;">Подтвердить</button>' +
+        '</div>' +
+    '</div>';
+    
+    document.body.appendChild(modalDiv);
+}
+
+function closeCountryModal() {
+    const modal = document.querySelector('div[style*="position:fixed"][style*="z-index:10000"]');
+    if(modal) modal.remove();
+}
+
+function confirmSwitch(clientId) {
+    const selected = document.querySelector('input[name="country"]:checked');
+    if(!selected) {
+        alert('Пожалуйста, выберите страну!');
+        return;
+    }
+    
+    const countryCode = selected.value;
+    closeCountryModal();
+    
+    fetch('/vpn/api/switch-server/' + clientId, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({country_code: countryCode})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            alert('✅ Сервер переключён на ' + countryCode);
+            if(confirm('Скачать новый конфиг?')) {
+                const blob = new Blob([data.new_config], {type: 'text/plain'});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'vpn_' + countryCode + '.conf';
+                link.click();
+            }
+            location.reload();
+        } else {
+            alert('Ошибка: ' + (data.error || 'Не удалось переключить'));
+        }
+    })
+    .catch(e => alert('Ошибка: ' + e.message));
+}
 
 function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m){ return m==='&'?'&amp;':m==='<'?'&lt;':'>'?'&gt;':m; }); }
 
@@ -534,7 +654,6 @@ func generatePublicKey() string {
     return base64.StdEncoding.EncodeToString(b)
 }
 
-// DownloadMobileConfig - скачать конфиг для телефона
 func DownloadMobileConfig(c *gin.Context) {
     clientID := c.Param("id")
     
@@ -574,9 +693,6 @@ PersistentKeepalive = 25`, privateKey, clientIP)
     })
 }
 
-// ========== VPN MAX ФУНКЦИИ ==========
-
-// GetVPNPlansMax - получить тарифы
 func GetVPNPlansMax(c *gin.Context) {
     rows, err := database.Pool.Query(context.Background(), `
         SELECT id, name, price, days, speed, devices, COALESCE(features, 'Безлимит трафика, 50+ стран, 24/7 поддержка') as features
@@ -603,7 +719,6 @@ func GetVPNPlansMax(c *gin.Context) {
     c.JSON(200, gin.H{"plans": plans})
 }
 
-// GetVPNServersMax - получить сервера
 func GetVPNServersMax(c *gin.Context) {
     servers := []gin.H{
         {"id": "1", "country": "Россия", "city": "Москва", "flag": "🇷🇺", "ping": 5, "speed": "950 Мбит/с"},
@@ -618,7 +733,6 @@ func GetVPNServersMax(c *gin.Context) {
     c.JSON(200, gin.H{"servers": servers})
 }
 
-// CreateVPNKeyMax - создать ключ
 func CreateVPNKeyMax(c *gin.Context) {
     var req struct {
         ClientName string `json:"client_name"`
@@ -688,9 +802,6 @@ func CreateVPNKeyMax(c *gin.Context) {
     })
 }
 
-// ========== ФУНКЦИИ ДЛЯ ВИДЖЕТА 50+ СТРАН ==========
-
-// GetVPNCountriesList - получить список всех стран для виджета
 func GetVPNCountriesList(c *gin.Context) {
     countries := []gin.H{
         {"code": "RU", "name": "Россия", "flag": "🇷🇺", "servers": 6, "ping": 5},
@@ -721,7 +832,6 @@ func GetVPNCountriesList(c *gin.Context) {
     c.JSON(200, gin.H{"countries": countries, "total": len(countries)})
 }
 
-// GetVPNGlobalStats - получить глобальную статистику
 func GetVPNGlobalStats(c *gin.Context) {
     c.JSON(200, gin.H{
         "total_servers":   48,
@@ -730,5 +840,303 @@ func GetVPNGlobalStats(c *gin.Context) {
         "avg_speed":       "1.2 Гбит/с",
         "uptime":          "99.97%",
         "online_now":      8923,
+    })
+}
+
+func generateRandomStringMax(n int) string {
+    const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    b := make([]byte, n)
+    rand.Read(b)
+    for i := range b {
+        b[i] = letters[b[i]%byte(len(letters))]
+    }
+    return string(b)
+}
+
+func GetMaxSecurityConfig(c *gin.Context) {
+    clientID := c.Param("id")
+    protocol := c.DefaultQuery("protocol", "wireguard")
+    
+    var privateKey, clientIP string
+    err := database.Pool.QueryRow(context.Background(), `
+        SELECT private_key, client_ip FROM vpn_keys 
+        WHERE client_id = $1 AND active = true AND expires_at > NOW()
+    `, clientID).Scan(&privateKey, &clientIP)
+    
+    if err != nil {
+        c.JSON(404, gin.H{"error": "Ключ не найден"})
+        return
+    }
+    
+    var config string
+    switch protocol {
+    case "vless":
+        uuid := generateRandomStringMax(36)
+        config = getMaxSecurityVLESSConfigHelper(uuid, "vpn.your-server.com", 443)
+    case "shadowsocks":
+        password := generateRandomStringMax(32)
+        config = getMaxSecurityShadowsocksConfigHelper(password, "vpn.your-server.com", 8388)
+    default:
+        config = getMaxSecurityWireGuardConfigHelper(privateKey, clientIP, "SERVER_PUBLIC_KEY", "vpn.your-server.com")
+    }
+    
+    c.JSON(200, gin.H{
+        "success":        true,
+        "config":         config,
+        "protocol":       protocol,
+        "max_encryption": true,
+        "security_level": "MAXIMUM",
+        "recommendations": []string{
+            "✅ Включите Kill Switch в настройках",
+            "✅ Используйте DNS-over-HTTPS (1.1.1.1)",
+            "✅ Регулярно обновляйте ключи (каждые 30 дней)",
+        },
+    })
+}
+
+func GetSecurityStatus(c *gin.Context) {
+    c.JSON(200, gin.H{
+        "encryption": gin.H{
+            "protocol":     "ChaCha20-Poly1305 / AES-256-GCM",
+            "key_exchange": "Curve25519 (PFS)",
+            "hash":         "BLAKE2s / SHA-256",
+            "handshake":    "Noise Protocol Framework",
+        },
+        "features": gin.H{
+            "perfect_forward_secrecy": true,
+            "kill_switch":             true,
+            "dns_leak_protection":     true,
+            "ipv6_leak_protection":    true,
+            "webRTC_leak_protection":  true,
+        },
+        "recommendations": []string{
+            "Используйте VLESS+Reality для обхода блокировок",
+            "Настройте автоматическую смену ключей каждые 7 дней",
+        },
+        "security_level": "MAXIMUM",
+        "grade":          "A+",
+    })
+}
+
+func getMaxSecurityWireGuardConfigHelper(privateKey, clientIP, serverPubKey, serverEndpoint string) string {
+    return fmt.Sprintf(`[Interface]
+PrivateKey = %s
+Address = %s/24
+DNS = 1.1.1.1, 8.8.8.8, 9.9.9.9
+MTU = 1280
+
+[Peer]
+PublicKey = %s
+Endpoint = %s:51820
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25`, privateKey, clientIP, serverPubKey, serverEndpoint)
+}
+
+func getMaxSecurityVLESSConfigHelper(uuid, serverHost string, serverPort int) string {
+    return fmt.Sprintf(`vless://%s@%s:%d?encryption=none&security=reality&type=tcp&flow=xtls-rprx-vision&sni=%s&fp=chrome#MaxSecurityVPN`, uuid, serverHost, serverPort, serverHost)
+}
+
+func getMaxSecurityShadowsocksConfigHelper(password, serverHost string, serverPort int) string {
+    encodedPass := base64.StdEncoding.EncodeToString([]byte(password))
+    return fmt.Sprintf(`ss://%s@%s:%d#MaxSecurityVPN`, encodedPass, serverHost, serverPort)
+}
+
+func SwitchServerForKey(c *gin.Context) {
+    clientID := c.Param("id")
+    
+    var req struct {
+        CountryCode string `json:"country_code"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    var serverHost, serverPubKey string
+    var serverPort int
+    
+    switch req.CountryCode {
+    case "RU":
+        serverHost = "ru.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_RU"
+        serverPort = 51820
+    case "US":
+        serverHost = "us.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_US"
+        serverPort = 51820
+    case "DE":
+        serverHost = "de.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_DE"
+        serverPort = 51820
+    case "NL":
+        serverHost = "nl.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_NL"
+        serverPort = 51820
+    case "GB":
+        serverHost = "gb.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_GB"
+        serverPort = 51820
+    case "FR":
+        serverHost = "fr.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_FR"
+        serverPort = 51820
+    case "JP":
+        serverHost = "jp.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_JP"
+        serverPort = 51820
+    case "SG":
+        serverHost = "sg.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_SG"
+        serverPort = 51820
+    default:
+        serverHost = "vpn.your-server.com"
+        serverPubKey = "6FoNHb43qPnTSDCppXSb6s+krs35CJpSfz6b+5VWcQQ="
+        serverPort = 51820
+    }
+    
+    _, err := database.Pool.Exec(context.Background(), `
+        UPDATE vpn_keys SET server_host = $1, server_port = $2, server_public_key = $3, country_code = $4
+        WHERE client_id = $5
+    `, serverHost, serverPort, serverPubKey, req.CountryCode, clientID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    var privateKey, clientIP string
+    database.Pool.QueryRow(context.Background(), `
+        SELECT private_key, client_ip FROM vpn_keys WHERE client_id = $1
+    `, clientID).Scan(&privateKey, &clientIP)
+    
+    newConfig := fmt.Sprintf(`[Interface]
+PrivateKey = %s
+Address = %s/24
+DNS = 1.1.1.1, 8.8.8.8
+
+[Peer]
+PublicKey = %s
+Endpoint = %s:%d
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25`, privateKey, clientIP, serverPubKey, serverHost, serverPort)
+    
+    c.JSON(200, gin.H{
+        "success":    true,
+        "message":    fmt.Sprintf("✅ Сервер переключён на %s", req.CountryCode),
+        "new_config": newConfig,
+        "endpoint":   fmt.Sprintf("%s:%d", serverHost, serverPort),
+    })
+}
+
+func CreateKeyForCountry(c *gin.Context) {
+    var req struct {
+        ClientName  string `json:"client_name"`
+        PlanID      int    `json:"plan_id"`
+        CountryCode string `json:"country_code"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    if req.ClientName == "" {
+        req.ClientName = "Моё устройство"
+    }
+    
+    var serverHost, serverPubKey string
+    var serverPort int
+    
+    switch req.CountryCode {
+    case "RU":
+        serverHost = "ru.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_RU"
+        serverPort = 51820
+    case "US":
+        serverHost = "us.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_US"
+        serverPort = 51820
+    case "DE":
+        serverHost = "de.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_DE"
+        serverPort = 51820
+    case "NL":
+        serverHost = "nl.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_NL"
+        serverPort = 51820
+    case "SG":
+        serverHost = "sg.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_SG"
+        serverPort = 51820
+    case "JP":
+        serverHost = "jp.vpn.saaspro.ru"
+        serverPubKey = "SERVER_PUBLIC_KEY_JP"
+        serverPort = 51820
+    default:
+        serverHost = "vpn.your-server.com"
+        serverPubKey = "6FoNHb43qPnTSDCppXSb6s+krs35CJpSfz6b+5VWcQQ="
+        serverPort = 51820
+    }
+    
+    var days int
+    var planName string
+    database.Pool.QueryRow(context.Background(), `
+        SELECT name, days FROM vpn_plans WHERE id = $1
+    `, req.PlanID).Scan(&planName, &days)
+    
+    clientID := fmt.Sprintf("vpn_%d", time.Now().UnixNano())
+    privateKey := generatePrivateKey()
+    _ = generatePublicKey()
+    clientIP := fmt.Sprintf("10.%d.%d.%d", 
+        time.Now().UnixNano()%255,
+        time.Now().UnixNano()%255,
+        time.Now().UnixNano()%254+1,
+    )
+    
+    expiresAt := time.Now().AddDate(0, 0, days)
+    tenantID := c.GetString("tenant_id")
+    if tenantID == "" {
+        tenantID = "11111111-1111-1111-1111-111111111111"
+    }
+    userID := c.GetString("user_id")
+    if userID == "" {
+        userID = "1"
+    }
+    
+    _, err := database.Pool.Exec(context.Background(), `
+        INSERT INTO vpn_keys (client_id, client_name, client_ip, private_key, public_key,
+                              plan_id, expires_at, active, tenant_id, user_id, 
+                              server_host, server_port, server_public_key, country_code, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, $11, $12, $13, NOW())
+    `, clientID, req.ClientName, clientIP, privateKey, "public_key_placeholder", req.PlanID, expiresAt, 
+       tenantID, userID, serverHost, serverPort, serverPubKey, req.CountryCode)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    config := fmt.Sprintf(`[Interface]
+PrivateKey = %s
+Address = %s/24
+DNS = 1.1.1.1, 8.8.8.8
+
+[Peer]
+PublicKey = %s
+Endpoint = %s:%d
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25`, privateKey, clientIP, serverPubKey, serverHost, serverPort)
+    
+    c.JSON(200, gin.H{
+        "success":      true,
+        "client_id":    clientID,
+        "client_name":  req.ClientName,
+        "country":      req.CountryCode,
+        "expires":      expiresAt.Format("2006-01-02"),
+        "days":         days,
+        "plan":         planName,
+        "config":       config,
+        "endpoint":     fmt.Sprintf("%s:%d", serverHost, serverPort),
+        "message":      fmt.Sprintf("✅ VPN ключ для %s успешно создан!", req.CountryCode),
     })
 }

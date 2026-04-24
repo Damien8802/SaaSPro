@@ -1287,6 +1287,12 @@ vpnGroup.Use(middleware.AuthMiddleware(cfg))
 
     vpnGroup.GET("/api/countries", handlers.GetVPNCountriesList)
     vpnGroup.GET("/api/global-stats", handlers.GetVPNGlobalStats)
+    // Максимальное шифрование
+    vpnGroup.GET("/api/max-security/:id/config", handlers.GetMaxSecurityConfig)
+    vpnGroup.GET("/api/security-status", handlers.GetSecurityStatus)
+    // Переключение между странами
+    vpnGroup.POST("/api/switch-server/:id", handlers.SwitchServerForKey)
+    vpnGroup.POST("/api/create-for-country", handlers.CreateKeyForCountry)
 
 }
     // ========== МИГРАЦИЯ (3 ФАЗЫ) ==========
