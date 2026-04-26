@@ -2,6 +2,7 @@ package middleware
 
 import (
     "context"
+    "log"  
     "fmt"
     "net/http"
     "time"
@@ -111,34 +112,25 @@ func RequireModuleAccess(moduleName string) gin.HandlerFunc {
 
 // StartModuleTrial - начать триальный период для пользователя
 func StartModuleTrial(userID, moduleName string) error {
+    log.Printf("🔍 StartModuleTrial called: userID=%s, moduleName=%s", userID, moduleName)
+    
     _, err := database.Pool.Exec(context.Background(), `
-        INSERT INTO user_trials (user_id, module_name, trial_start, trial_end, used)
-        VALUES ($1, $2, NOW(), NOW() + INTERVAL '14 days', true)
+        INSERT INTO user_trials (user_id, module_name, trial_start, trial_end, notified)
+        VALUES ($1, $2, NOW(), NOW() + INTERVAL '14 days', false)
         ON CONFLICT (user_id, module_name) DO UPDATE SET
+            trial_start = NOW(),
             trial_end = NOW() + INTERVAL '14 days',
-            used = true
+            notified = false
     `, userID, moduleName)
-    return err
-}
-
-// HasModuleAccess - проверяет доступ к модулю
-func HasModuleAccess(tenantID, moduleCode string) bool {
-    if tenantID == "" {
-        return false
+    
+    if err != nil {
+        log.Printf("❌ Exec error: %v", err)
+        return err
     }
-
-    var isActive bool
-    err := database.Pool.QueryRow(context.Background(), `
-        SELECT EXISTS (
-            SELECT 1 FROM user_subscriptions
-            WHERE tenant_id = $1 AND module_name = $2 AND status = 'active'
-            AND (expires_at IS NULL OR expires_at > NOW())
-        )
-    `, tenantID, moduleCode).Scan(&isActive)
-
-    return err == nil && isActive
+    
+    log.Printf("✅ Trial activated successfully for user %s, module %s", userID, moduleName)
+    return nil
 }
-
 // GetAvailableModules - возвращает список доступных модулей
 func GetAvailableModules(tenantID string) []string {
     if tenantID == "" {

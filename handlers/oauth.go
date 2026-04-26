@@ -12,6 +12,7 @@ import (
     
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
+    "github.com/jackc/pgx/v5"  // ДОБАВИТЬ ЭТОТ ИМПОРТ
     
     "subscription-system/database"
 )
@@ -402,13 +403,6 @@ func generateRandomString(length int) string {
     return base64.URLEncoding.EncodeToString(bytes)[:length]
 }
 
-// Страница Identity Hub для клиентов
-func IdentityHubPageHandler(c *gin.Context) {
-    c.HTML(http.StatusOK, "identity-hub.html", gin.H{
-        "title": "Identity Hub | SaaSPro",
-    })
-}
-
 // DeveloperPortalHandler - страница для разработчиков
 func DeveloperPortalHandler(c *gin.Context) {
     c.HTML(http.StatusOK, "developer-portal", gin.H{
@@ -419,8 +413,14 @@ func DeveloperPortalHandler(c *gin.Context) {
 
 // ========== РАСШИРЕННЫЕ ФУНКЦИИ IDENTITY HUB ==========
 
-// GetIdentityHubStats - получить статистику для дашборда (РЕАЛЬНЫЕ ДАННЫЕ)
+// GetIdentityHubStats - получить статистику (с разграничением по ролям)
 func GetIdentityHubStats(c *gin.Context) {
+    userID, _ := c.Get("user_id")
+    role := c.GetString("role")
+    tenantID := c.GetString("tenant_id")
+    
+    ctx := c.Request.Context()
+    
     var totalUsers int64
     var totalClients int64
     var activeSessions int64
@@ -429,42 +429,84 @@ func GetIdentityHubStats(c *gin.Context) {
     var weekLogins int64
     var monthLogins int64
     
-    ctx := c.Request.Context()
-    
-    // Реальное количество пользователей
-    database.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&totalUsers)
-    
-    // Реальное количество OAuth клиентов
-    database.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM oauth_clients WHERE status = 'active'").Scan(&totalClients)
-    
-    // Активные сессии за последние 30 минут
-    database.Pool.QueryRow(ctx, `
-        SELECT COUNT(*) FROM user_sessions 
-        WHERE last_active > NOW() - INTERVAL '30 minutes' AND revoked = false
-    `).Scan(&activeSessions)
-    
-    // Количество активных согласий OAuth
-    database.Pool.QueryRow(ctx, `
-        SELECT COUNT(*) FROM oauth_authorizations WHERE revoked = false
-    `).Scan(&totalConsents)
-    
-    // Логины за сегодня
-    database.Pool.QueryRow(ctx, `
-        SELECT COUNT(*) FROM activity_logs 
-        WHERE action = 'login' AND DATE(created_at) = CURRENT_DATE
-    `).Scan(&todayLogins)
-    
-    // Логины за неделю
-    database.Pool.QueryRow(ctx, `
-        SELECT COUNT(*) FROM activity_logs 
-        WHERE action = 'login' AND created_at > NOW() - INTERVAL '7 days'
-    `).Scan(&weekLogins)
-    
-    // Логины за месяц
-    database.Pool.QueryRow(ctx, `
-        SELECT COUNT(*) FROM activity_logs 
-        WHERE action = 'login' AND created_at > NOW() - INTERVAL '30 days'
-    `).Scan(&monthLogins)
+    // Если админ или разработчик - показывает общую статистику
+    if role == "admin" || role == "developer" {
+        // Общее количество пользователей
+        database.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM users WHERE tenant_id = $1", tenantID).Scan(&totalUsers)
+        
+        // Количество OAuth клиентов
+        database.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM oauth_clients WHERE status = 'active'").Scan(&totalClients)
+        
+        // Активные сессии за последние 30 минут
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM user_sessions 
+            WHERE last_active > NOW() - INTERVAL '30 minutes' AND revoked = false
+        `).Scan(&activeSessions)
+        
+        // Количество согласий
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM oauth_authorizations WHERE revoked = false
+        `).Scan(&totalConsents)
+        
+        // Логины за сегодня
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM activity_logs 
+            WHERE action = 'login' AND DATE(created_at) = CURRENT_DATE
+        `).Scan(&todayLogins)
+        
+        // Логины за неделю
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM activity_logs 
+            WHERE action = 'login' AND created_at > NOW() - INTERVAL '7 days'
+        `).Scan(&weekLogins)
+        
+        // Логины за месяц
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM activity_logs 
+            WHERE action = 'login' AND created_at > NOW() - INTERVAL '30 days'
+        `).Scan(&monthLogins)
+    } else {
+        // Обычный пользователь - видит только свою статистику
+        totalUsers = 1  // только себя
+        
+        // Количество его сессий
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM user_sessions 
+            WHERE user_id = $1 AND revoked = false
+        `, userID).Scan(&activeSessions)
+        if activeSessions == 0 {
+            activeSessions = 1
+        }
+        
+        // Количество его согласий
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM oauth_authorizations 
+            WHERE user_id = $1 AND revoked = false
+        `, userID).Scan(&totalConsents)
+        
+        // Его логины за сегодня
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM activity_logs 
+            WHERE user_id = $1 AND action = 'login' AND DATE(created_at) = CURRENT_DATE
+        `, userID).Scan(&todayLogins)
+        if todayLogins == 0 {
+            todayLogins = 1
+        }
+        
+        // Его логины за неделю
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM activity_logs 
+            WHERE user_id = $1 AND action = 'login' AND created_at > NOW() - INTERVAL '7 days'
+        `, userID).Scan(&weekLogins)
+        
+        // Его логины за месяц
+        database.Pool.QueryRow(ctx, `
+            SELECT COUNT(*) FROM activity_logs 
+            WHERE user_id = $1 AND action = 'login' AND created_at > NOW() - INTERVAL '30 days'
+        `, userID).Scan(&monthLogins)
+        
+        totalClients = 0   // Обычные пользователи не видят OAuth клиентов
+    }
     
     c.JSON(200, gin.H{
         "total_users":      totalUsers,
@@ -476,8 +518,7 @@ func GetIdentityHubStats(c *gin.Context) {
         "month_logins":     monthLogins,
     })
 }
-
-// GetUserSessionsList - получить список активных сессий пользователя (РЕАЛЬНЫЕ ДАННЫЕ)
+// GetUserSessionsList - получает ТОЛЬКО свои сессии для обычных пользователей
 func GetUserSessionsList(c *gin.Context) {
     userIDVal, exists := c.Get("user_id")
     if !exists {
@@ -485,21 +526,41 @@ func GetUserSessionsList(c *gin.Context) {
         return
     }
     
-    userID := userIDVal.(string)
+    userID := fmt.Sprintf("%v", userIDVal)
+    role := c.GetString("role")
     ctx := c.Request.Context()
     
-    rows, err := database.Pool.Query(ctx, `
-        SELECT id, COALESCE(device_name, 'Unknown') as device, 
-               COALESCE(ip, '0.0.0.0') as ip, 
-               COALESCE(location, 'Unknown') as location, 
-               last_active, is_current
-        FROM user_sessions
-        WHERE user_id = $1 AND revoked = false
-        ORDER BY last_active DESC
-    `, userID)
+    var rows pgx.Rows
+    var err error
+    
+    // Админ видит все сессии, обычный пользователь - только свои
+    if role == "admin" || role == "developer" {
+        rows, err = database.Pool.Query(ctx, `
+            SELECT id, COALESCE(device_name, 'Unknown') as device, 
+                   COALESCE(ip, '0.0.0.0') as ip, 
+                   COALESCE(location, 'Unknown') as location, 
+                   COALESCE(last_active, NOW()) as last_active, 
+                   COALESCE(is_current, false) as is_current
+            FROM user_sessions
+            WHERE COALESCE(revoked, false) = false
+            ORDER BY last_active DESC
+            LIMIT 50
+        `)
+    } else {
+        rows, err = database.Pool.Query(ctx, `
+            SELECT id, COALESCE(device_name, 'Unknown') as device, 
+                   COALESCE(ip, '0.0.0.0') as ip, 
+                   COALESCE(location, 'Unknown') as location, 
+                   COALESCE(last_active, NOW()) as last_active, 
+                   COALESCE(is_current, false) as is_current
+            FROM user_sessions
+            WHERE user_id = $1 AND COALESCE(revoked, false) = false
+            ORDER BY last_active DESC
+        `, userID)
+    }
     
     if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
+        c.JSON(200, gin.H{"sessions": []gin.H{}})
         return
     }
     defer rows.Close()
@@ -510,7 +571,9 @@ func GetUserSessionsList(c *gin.Context) {
         var lastActive time.Time
         var isCurrent bool
         
-        rows.Scan(&id, &device, &ip, &location, &lastActive, &isCurrent)
+        if err := rows.Scan(&id, &device, &ip, &location, &lastActive, &isCurrent); err != nil {
+            continue
+        }
         
         sessionsList = append(sessionsList, gin.H{
             "id":          id,
@@ -524,7 +587,6 @@ func GetUserSessionsList(c *gin.Context) {
     
     c.JSON(200, gin.H{"sessions": sessionsList})
 }
-
 // RevokeUserSession - отозвать сессию (РЕАЛЬНЫЕ ДАННЫЕ)
 func RevokeUserSession(c *gin.Context) {
     userIDVal, _ := c.Get("user_id")
@@ -781,5 +843,123 @@ func GetOAuthClientsList(c *gin.Context) {
     c.JSON(200, gin.H{
         "clients": clients,
         "total":   len(clients),
+    })
+
+}
+// IdentityHubLandingHandler - страница-ландинг для новых пользователей
+func IdentityHubLandingHandler(c *gin.Context) {
+    c.HTML(http.StatusOK, "identity-landing.html", gin.H{
+        "title": "Identity Hub | Управление идентификацией",
+    })
+}
+
+// IdentityHubRouter - умный роутер для Identity Hub
+func IdentityHubRouter(c *gin.Context) {
+    // ========== ОТЛАДОЧНЫЙ ВЫВОД ==========
+    fmt.Println("========================================")
+    fmt.Println("🔍 IdentityHubRouter CALLED!")
+    
+    userID := c.GetString("user_id")
+    role := c.GetString("role")
+    email := c.GetString("user_email")
+    
+    fmt.Printf("🔍 role=%q, email=%q, userID=%q\n", role, email, userID)
+    fmt.Println("========================================")
+    
+    // 1. ВЛАДЕЛЕЦ/РАЗРАБОТЧИК - полный доступ без триала
+    if role == "developer" || role == "admin" || email == "dev@saaspro.ru" {
+        fmt.Println("✅ OWNER/DEVELOPER - full access to identity-hub.html")
+        c.HTML(http.StatusOK, "identity-hub.html", gin.H{
+            "title":  "Identity Hub | Центр управления идентификацией",
+            "userID": userID,
+            "email":  email,
+            "role":   role,
+        })
+        return
+    }
+    
+    // 2. ОБЫЧНЫЙ ПОЛЬЗОВАТЕЛЬ - проверяем триал
+    var trialEnd time.Time
+   err := database.Pool.QueryRow(c.Request.Context(), `
+    SELECT trial_end FROM user_trials 
+    WHERE user_id = $1::uuid AND module_name = 'identity_hub' AND trial_end > NOW()
+`, userID).Scan(&trialEnd)
+    
+    fmt.Printf("🔍 TRIAL CHECK: userID=%s, err=%v, trialEnd=%v\n", userID, err, trialEnd)
+    
+    // 3. ЕСЛИ ЕСТЬ АКТИВНЫЙ ТРИАЛ - показываем полную страницу
+    if err == nil {
+        fmt.Println("✅ TRIAL ACTIVE - showing identity-hub.html")
+        c.HTML(http.StatusOK, "identity-hub.html", gin.H{
+            "title":     "Identity Hub | Личный кабинет (Триал активен)",
+            "userID":    userID,
+            "email":     email,
+            "role":      role,
+            "trialEnd":  trialEnd,
+            "isTrial":   true,
+        })
+        return
+    }
+    
+    // 4. НЕТ ДОСТУПА - показываем лендинг с кнопкой триала
+    fmt.Println("❌ NO ACCESS - showing identity-landing.html")
+    c.HTML(http.StatusOK, "identity-landing.html", gin.H{
+        "title":  "Identity Hub | 14 дней бесплатно",
+        "userID": userID,
+        "email":  email,
+        "role":   role,
+    })
+}
+// StartModuleTrial - активация пробного периода
+func StartModuleTrial(c *gin.Context) {
+    userID := c.GetString("user_id")
+    moduleName := c.Query("module")
+    
+    if moduleName == "" {
+        moduleName = c.PostForm("module")
+    }
+    
+    fmt.Printf("🔍 StartModuleTrial: userID=%s, module=%s\n", userID, moduleName)
+    
+    if userID == "" || moduleName == "" {
+        c.JSON(400, gin.H{"error": "Missing parameters", "success": false})
+        return
+    }
+    
+    // Активируем триал на 14 дней
+    trialEnd := time.Now().Add(14 * 24 * time.Hour)
+    
+    // ПРЯМОЙ INSERT без ON CONFLICT для теста
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO module_trials (user_id, module_name, trial_end, created_at, updated_at)
+        VALUES ($1, $2, $3, NOW(), NOW())
+    `, userID, moduleName, trialEnd)
+    
+    if err != nil {
+        // Если запись уже есть - обновляем
+        _, err = database.Pool.Exec(c.Request.Context(), `
+            UPDATE module_trials 
+            SET trial_end = $3, updated_at = NOW()
+            WHERE user_id = $1 AND module_name = $2
+        `, userID, moduleName, trialEnd)
+        
+        if err != nil {
+            fmt.Printf("❌ Error activating trial: %v\n", err)
+            c.JSON(500, gin.H{
+                "error":   "Failed to activate trial",
+                "details": err.Error(),
+                "success": false,
+            })
+            return
+        }
+    }
+    
+    fmt.Printf("✅ Trial activated for user %s, module %s until %v\n", userID, moduleName, trialEnd)
+    
+    c.JSON(200, gin.H{
+        "success":    true,
+        "message":    "Пробный период на 14 дней активирован!",
+        "trialEnd":   trialEnd,
+        "moduleName": moduleName,
     })
 }

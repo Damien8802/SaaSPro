@@ -835,11 +835,19 @@ r.GET("/suppliers", func(c *gin.Context) {
     r.GET("/oauth/authorize", handlers.OAuthAuthorizeHandler)
     r.POST("/oauth/token", handlers.OAuthTokenHandler)
     r.GET("/oauth/userinfo", handlers.OAuthUserInfoHandler)
-  r.GET("/identity-hub", 
-    middleware.AuthMiddleware(cfg), 
-    handlers.IdentityHubRouter)
-     r.GET("/developer-portal", middleware.AuthMiddleware(cfg), handlers.DeveloperPortalHandler)
-  
+// Identity Hub - умный роутер (собственник видит сразу, новые клиенты - landing)
+fmt.Println("✅ Регистрируем маршрут /identity-hub с IdentityHubRouter")
+r.GET("/identity-hub", middleware.AuthMiddleware(cfg), handlers.IdentityHubRouter)
+
+// API для активации триала
+r.POST("/api/trial/start", middleware.AuthMiddleware(cfg), handlers.StartModuleTrial)
+
+// Перенаправление после активации триала
+r.GET("/identity-hub/app", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
+    c.Redirect(http.StatusFound, "/identity-hub")
+})
+
+r.GET("/developer-portal", middleware.AuthMiddleware(cfg), handlers.DeveloperPortalHandler)  
 
     // ========== РАСШИРЕННЫЕ API ДЛЯ IDENTITY HUB ==========
     identityAPI := r.Group("/api/identity")
@@ -1682,29 +1690,6 @@ api.POST("/sessions/limit", handlers.SetMaxSessions)
         c.JSON(http.StatusOK, gin.H{"success": true, "message": "Подписка отменена"})
     })
 
- // ========== ТРИАЛЬНЫЙ ПЕРИОД ==========
-    api.POST("/trial/start", func(c *gin.Context) {
-        moduleName := c.Query("module")
-        userID := c.GetString("user_id")
-        
-        if moduleName == "" {
-            c.JSON(400, gin.H{"error": "module parameter required"})
-            return
-        }
-        
-        err := middleware.StartModuleTrial(userID, moduleName)
-        if err != nil {
-            c.JSON(500, gin.H{"error": err.Error()})
-            return
-        }
-        
-        c.JSON(200, gin.H{
-            "success":     true,
-            "message":     "14-дневный пробный период активирован!",
-            "trial_days":  14,
-        })
-    })
-    }
 
     // ========== ТРИАЛЬНЫЙ ПЕРИОД ДЛЯ РАЗРАБОТЧИКОВ ==========
     api.POST("/developer/trial/start", func(c *gin.Context) {

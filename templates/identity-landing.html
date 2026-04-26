@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Hub | Управление идентификацией и безопасностью</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #5b21b6 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            animation: floatParticle 20s infinite ease-in-out;
+        }
+
+        @keyframes floatParticle {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            50% { transform: translateY(-80px) translateX(40px); opacity: 0.6; }
+        }
+
+        .navbar {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            padding: 16px 40px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .navbar-brand {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c4b5fd, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85) !important;
+            font-weight: 500;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 5;
+            padding: 40px 20px 80px;
+        }
+
+        /* HERO секция */
+        .hero {
+            text-align: center;
+            padding: 80px 20px;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(15px);
+            border-radius: 60px;
+            margin-bottom: 60px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hero h1 {
+            font-size: 72px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c4b5fd, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 24px;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: rgba(255,255,255,0.85);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(139,91,246,0.3);
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            margin-top: 30px;
+            color: #c4b5fd;
+        }
+
+        /* TRIAL карточка */
+        .trial-card {
+            background: linear-gradient(135deg, #1e1b4b, #2e1065);
+            border-radius: 48px;
+            padding: 60px;
+            margin-bottom: 60px;
+            text-align: center;
+            border: 2px solid rgba(139,91,246,0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .trial-card h2 {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c4b5fd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .trial-card p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .btn-trial {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 18px 56px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(16,185,129,0.3);
+        }
+
+        .btn-trial:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(16,185,129,0.5);
+        }
+
+        /* Функции */
+        .section-title {
+            text-align: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 50px;
+            font-size: 18px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 40px 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(139,91,246,0.5);
+        }
+
+        .feature-card i {
+            font-size: 56px;
+            color: #a78bfa;
+            margin-bottom: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .feature-card p {
+            color: rgba(255,255,255,0.7);
+            line-height: 1.6;
+        }
+
+        /* Тарифы */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .pricing-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 40px 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .pricing-card.popular {
+            border: 2px solid #a78bfa;
+            transform: scale(1.02);
+        }
+
+        .popular-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .plan-price {
+            font-size: 52px;
+            font-weight: 800;
+            color: #c4b5fd;
+            margin: 20px 0;
+        }
+
+        .plan-price span {
+            font-size: 16px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 10px 0;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .plan-features li i {
+            color: #10b981;
+            margin-right: 10px;
+        }
+
+        .btn-plan {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            padding: 14px 24px;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-plan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124,58,237,0.4);
+        }
+
+        /* Документация */
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .doc-card {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .doc-card h4 {
+            color: #c4b5fd;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .endpoint {
+            background: rgba(0,0,0,0.5);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-bottom: 12px;
+            color: #4ade80;
+        }
+
+        .footer {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            padding: 50px 20px;
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 40px; }
+            .trial-card h2 { font-size: 32px; }
+            .trial-card { padding: 30px; }
+            .pricing-card.popular { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 SaaSPro</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Главная</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard-improved">Дашборд</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/vpn">VPN</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/crm">CRM</a></li>
+                    <li class="nav-item"><a class="nav-link btn-login" href="/login">Вход</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="container">
+            <!-- HERO секция -->
+            <div class="hero">
+                <h1>🔐 Identity Hub</h1>
+                <p>Централизованное управление идентификацией, SSO, OAuth2 и безопасность на корпоративном уровне</p>
+                <div class="hero-badge">
+                    <i class="fas fa-star me-2"></i> Первый в России IdP сервис
+                </div>
+            </div>
+
+            <!-- TRIAL карточка -->
+            <div class="trial-card">
+                <i class="fas fa-gift mb-4" style="font-size: 64px; color: #10b981;"></i>
+                <h2>14 дней бесплатного доступа</h2>
+                <p>Протестируйте Identity Hub со всеми функциями. Без предоплаты, без скрытых платежей. Отключить можно в любой момент.</p>
+                <button onclick="startTrialAndRedirect()" class="btn-trial">
+                    <i class="fas fa-rocket me-2"></i> Начать 14-дневный пробный период
+                </button>
+            </div>
+
+            <!-- Функции -->
+            <h2 class="section-title">⚡ Что вы получите</h2>
+            <p class="section-subtitle">Полноценная экосистема для управления доступом</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Single Sign-On (SSO)</h3>
+                    <p>Один аккаунт для всех сервисов. Пользователи входят один раз — получают доступ ко всем приложениям экосистемы.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-key"></i>
+                    <h3>OAuth2 / OpenID Connect</h3>
+                    <p>Современные протоколы авторизации. Легко подключайте любые приложения к вашей экосистеме.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>2FA и Безопасность</h3>
+                    <p>Двухфакторная аутентификация, резервные коды, доверенные устройства и защита от взлома.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Аналитика и Логи</h3>
+                    <p>Детальная статистика использования, логи авторизаций, аудит безопасности в реальном времени.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-plug"></i>
+                    <h3>API интеграции</h3>
+                    <p>REST API для управления пользователями, проверки токенов, создания OAuth клиентов.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-headset"></i>
+                    <h3>Приоритетная поддержка</h3>
+                    <p>Техническая поддержка 24/7, помощь в интеграции, персональный менеджер на премиум-тарифах.</p>
+                </div>
+            </div>
+
+            <!-- Тарифы -->
+            <h2 class="section-title">💰 Выберите свой план</h2>
+            <p class="section-subtitle">14 дней бесплатно на любом тарифе</p>
+
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="plan-name" style="font-size: 28px; font-weight: 700; color: white;">Старт</div>
+                    <div class="plan-price">2 990 ₽<span>/мес</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> До 500 пользователей</li>
+                        <li><i class="fas fa-check-circle"></i> До 5 OAuth клиентов</li>
+                        <li><i class="fas fa-check-circle"></i> SSO до 3 приложений</li>
+                        <li><i class="fas fa-check-circle"></i> Базовая поддержка</li>
+                    </ul>
+                    <button onclick="startTrialAndRedirect()" class="btn-plan">Попробовать 14 дней</button>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-badge">🔥 Популярный</div>
+                    <div class="plan-name" style="font-size: 28px; font-weight: 700; color: white;">Бизнес</div>
+                    <div class="plan-price">7 990 ₽<span>/мес</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> До 5 000 пользователей</li>
+                        <li><i class="fas fa-check-circle"></i> До 25 OAuth клиентов</li>
+                        <li><i class="fas fa-check-circle"></i> SSO для всех приложений</li>
+                        <li><i class="fas fa-check-circle"></i> 2FA и MFA</li>
+                        <li><i class="fas fa-check-circle"></i> Приоритетная поддержка 24/7</li>
+                    </ul>
+                    <button onclick="startTrialAndRedirect()" class="btn-plan">Попробовать 14 дней</button>
+                </div>
+                <div class="pricing-card">
+                    <div class="plan-name" style="font-size: 28px; font-weight: 700; color: white;">Корпоративный</div>
+                    <div class="plan-price">19 990 ₽<span>/мес</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Неограниченно пользователей</li>
+                        <li><i class="fas fa-check-circle"></i> Неограниченно OAuth клиентов</li>
+                        <li><i class="fas fa-check-circle"></i> White-label решение</li>
+                        <li><i class="fas fa-check-circle"></i> SLA 99.9%</li>
+                        <li><i class="fas fa-check-circle"></i> On-premise развертывание</li>
+                    </ul>
+                    <a href="/contact" class="btn-plan">Связаться с нами</a>
+                </div>
+            </div>
+
+            <!-- Документация -->
+            <h2 class="section-title">📚 Быстрая интеграция</h2>
+            <p class="section-subtitle">Готовые эндпоинты для ваших приложений</p>
+
+            <div class="docs-grid">
+                <div class="doc-card">
+                    <h4>🔑 OpenID Connect эндпоинты</h4>
+                    <div class="endpoint">GET /.well-known/openid-configuration</div>
+                    <div class="endpoint">GET /oauth/authorize</div>
+                    <div class="endpoint">POST /oauth/token</div>
+                    <div class="endpoint">GET /oauth/userinfo</div>
+                </div>
+                <div class="doc-card">
+                    <h4>💡 Пример авторизации</h4>
+                    <div class="endpoint">
+                        /oauth/authorize?response_type=code<br>
+                        &client_id=YOUR_CLIENT_ID<br>
+                        &redirect_uri=https://app.com/callback<br>
+                        &scope=openid%20profile%20email
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="container">
+            <p>© 2025 SaaSPro Identity Hub. Первый российский IdP сервис.</p>
+            <p class="mt-2">
+                <a href="/docs" class="text-white-50 text-decoration-none me-3">Документация</a>
+                <a href="/support" class="text-white-50 text-decoration-none me-3">Поддержка</a>
+                <a href="/privacy" class="text-white-50 text-decoration-none">Политика конфиденциальности</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for(let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 250 + 100;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = 15 + Math.random() * 15 + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+  async function startTrialAndRedirect() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    try {
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Активация...';
+        button.disabled = true;
+        
+      const token = localStorage.getItem('token');
+if (!token) {
+    alert('Ошибка: вы не авторизованы');
+    window.location.href = '/login';
+    return;
+}
+
+const res = await fetch('/api/trial/start?module=identity_hub', {
+    method: 'POST',
+    headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+});
+
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            button.innerHTML = '<i class="fas fa-check me-2"></i> Активировано! Перезагрузка...';
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert(data.error || 'Ошибка активации. Попробуйте позже.');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    } catch(e) {
+        console.error('Error:', e);
+        alert('Ошибка соединения с сервером');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+}
+
+async function startTrial() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    
+    const res = await fetch('/api/trial/start?module=identity_hub', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        }
+    });
+    const data = await res.json();
+    if (data.success) {
+        window.location.href = '/identity-hub';
+    } else {
+        alert(data.error || 'Ошибка активации');
+    }
+}
+    </script>
+</body>
+</html>

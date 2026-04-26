@@ -321,6 +321,7 @@
             font-size: 13px;
             font-weight: 500;
             transition: all 0.3s;
+            cursor: pointer;
         }
         
         .btn-glass:hover {
@@ -483,6 +484,7 @@
             border-radius: 50px;
             font-weight: 600;
             transition: all 0.3s;
+            text-align: center;
         }
         
         .btn-plan:hover {
@@ -534,30 +536,29 @@
             margin-top: 60px;
         }
         
-      /* Стало - овальная кнопка с текстом */
-.back-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
-    border-radius: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    transition: all 0.3s;
-    z-index: 1000;
-    border: none;
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
-    padding: 12px 24px;
-}
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 12px 24px;
+        }
         
         .back-button:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
             box-shadow: 0 8px 30px rgba(124,58,237,0.5);
         }
         
@@ -588,6 +589,100 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         
+        .feature-card-preview {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            height: 100%;
+        }
+        
+        .feature-card-preview:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(139,91,246,0.5);
+        }
+        
+        .pricing-card-preview {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            position: relative;
+            height: 100%;
+        }
+        
+        .pricing-card-preview.popular {
+            border: 2px solid #a78bfa;
+            transform: scale(1.02);
+        }
+        
+        .plan-features-list {
+            list-style: none;
+            padding: 0;
+            margin: 25px 0;
+            text-align: left;
+        }
+        
+        .plan-features-list li {
+            padding: 8px 0;
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+        
+        .btn-trial-primary, .btn-plan-preview {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-trial-primary:hover, .btn-plan-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16,185,129,0.4);
+        }
+        
+        .btn-trial-secondary {
+            background: transparent;
+            border: 2px solid #a78bfa;
+            padding: 12px 28px;
+            border-radius: 50px;
+            color: #c4b5fd;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-trial-secondary:hover {
+            background: rgba(139,91,246,0.2);
+            transform: translateY(-2px);
+        }
+        
+        .trial-offer {
+            background: linear-gradient(135deg, #1e1b4b, #2e1065);
+            border-radius: 32px;
+            padding: 40px;
+            margin-bottom: 40px;
+            text-align: center;
+            border: 2px solid rgba(139,91,246,0.5);
+        }
+        
         @media (max-width: 768px) {
             .navbar { padding: 12px 20px; }
             .hero-section h1 { font-size: 36px; }
@@ -599,6 +694,8 @@
             .pricing-grid { grid-template-columns: 1fr; }
             .docs-grid { grid-template-columns: 1fr; }
             .dev-button { font-size: 14px; padding: 10px 20px; }
+            .trial-offer { padding: 25px; }
+            .trial-offer h2 { font-size: 28px; }
         }
         
         @media (max-width: 480px) {
@@ -624,7 +721,8 @@
                     <li class="nav-item"><a class="nav-link" href="/crm">CRM</a></li>
                     <li class="nav-item" id="devNavButton" style="display: none;">
                         <a class="nav-link" href="/developer-portal" style="background: rgba(139,91,246,0.3); border-radius: 30px;">
-                                              <li class="nav-item"><a class="nav-link btn-login" href="/login">Вход</a></li>
+                    </li>
+                    <li class="nav-item"><a class="nav-link btn-login" href="/login">Вход</a></li>
                     <li class="nav-item"><a class="nav-link btn-register" href="/register">Регистрация</a></li>
                 </ul>
             </div>
@@ -633,218 +731,352 @@
     
     <div class="main-container">
         <div class="container">
-            <div class="hero-section">
-                <h1>🔐 Identity Hub</h1>
-                <p>Централизованное управление идентификацией, SSO, OAuth2 и безопасность на максимальном уровне</p>
-                <div class="hero-badge">
-                    <i class="fas fa-shield-alt me-2"></i> Первый в России IdP сервис
-                </div>
-            </div>
             
-                  <!-- Блок для разработчиков -->
-            <div id="devInfoBlock" style="display: none;" class="dev-block">
-             <div class="row align-items-center">
-    <div class="col-md-8">
-        <h4 style="color: white; margin-bottom: 10px;">
-            <i class="fas fa-code"></i> 🚀 Станьте разработчиком!
-        </h4>
-        <p style="margin-bottom: 5px; color: rgba(255,255,255,0.85);">
-            Создавайте OAuth-приложения, интегрируйте их с Identity Hub и получайте доступ к API.
-        </p>
-        <p style="margin-bottom: 0; font-size: 14px; color: rgba(255,255,255,0.7);">
-            <i class="fas fa-gift me-1"></i> Первые 14 дней — бесплатно!
-        </p>
-    </div>
-    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-        <a href="/developer-portal" class="dev-button" style="padding: 10px 24px; font-size: 16px;">
-            🔧 Перейти в Developer Portal
-        </a>
-    </div>
-</div>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-number" id="totalUsers">0</div>
-                    <div class="stat-label">Всего пользователей</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🔌</div>
-                    <div class="stat-number" id="totalClients">0</div>
-                    <div class="stat-label">OAuth клиентов</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">💻</div>
-                    <div class="stat-number" id="activeSessions">0</div>
-                    <div class="stat-label">Активных сессий</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📝</div>
-                    <div class="stat-number" id="totalConsents">0</div>
-                    <div class="stat-label">Согласий выдано</div>
-                </div>
-            </div>
-            
-            <div class="activity-stats">
-                <div class="activity-card">
-                    <div class="activity-number today" id="todayLogins">0</div>
-                    <div class="activity-label">Входов сегодня</div>
-                </div>
-                <div class="activity-card">
-                    <div class="activity-number week" id="weekLogins">0</div>
-                    <div class="activity-label">За неделю</div>
-                </div>
-                <div class="activity-card">
-                    <div class="activity-number month" id="monthLogins">0</div>
-                    <div class="activity-label">За месяц</div>
-                </div>
-            </div>
-            
-            <div class="glass-card">
-                <div class="card-header-glass">
-                    <h3><i class="fas fa-laptop"></i> Активные сессии</h3>
-                </div>
-                <div id="sessionsList" style="min-height: 100px;">
-                    <div class="text-center py-4 text-white-50">Загрузка...</div>
-                </div>
-            </div>
-            
-            <div class="glass-card">
-                <div class="card-header-glass">
-                    <h3><i class="fas fa-th-large"></i> Подключенные приложения</h3>
-                </div>
-                <div id="appsList" style="min-height: 100px;">
-                    <div class="text-center py-4 text-white-50">Загрузка...</div>
-                </div>
-            </div>
-            
-            <div class="glass-card">
-                <div class="card-header-glass">
-                    <h3><i class="fas fa-history"></i> История активности</h3>
-                </div>
-                <div id="activityList" style="min-height: 100px;">
-                    <div class="text-center py-4 text-white-50">Загрузка...</div>
-                </div>
-            </div>
-            
-            <div class="features-section">
-                <h2 class="section-title">⚡ Что умеет Identity Hub</h2>
-                <p class="section-subtitle">Полноценный IdP сервис для вашего бизнеса</p>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">🔑</div>
-                        <h3>Single Sign-On (SSO)</h3>
-                        <p>Один аккаунт для всех ваших сервисов. Пользователи входят один раз — доступны все приложения</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔒</div>
-                        <h3>OAuth2 / OpenID Connect</h3>
-                        <p>Поддержка всех современных протоколов авторизации. Легко подключайте любые приложения</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h3>2FA и MFA</h3>
-                        <p>Двухфакторная аутентификация, резервные коды, доверенные устройства</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">👥</div>
-                        <h3>Управление пользователями</h3>
-                        <p>Создание, блокировка, роли, группы. Полный контроль над доступом</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h3>Аналитика и логи</h3>
-                        <p>Детальные логи авторизаций, статистика использования, аудит безопасности</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔌</div>
-                        <h3>API интеграции</h3>
-                        <p>REST API для управления пользователями, проверки токенов, создания клиентов</p>
+            <!-- ДЕМО БЛОК (для новых пользователей без доступа) -->
+            <div id="demoModeBlock" style="display: none;">
+                <div class="hero-section">
+                    <h1>🔐 Identity Hub</h1>
+                    <p>Централизованное управление идентификацией, SSO, OAuth2 и безопасность на максимальном уровне</p>
+                    <div class="hero-badge">
+                        <i class="fas fa-star me-2"></i> Первый в России IdP сервис
                     </div>
                 </div>
-            </div>
-            
-            <div class="pricing-section">
-                <h2 class="section-title">💰 Тарифы Identity Hub</h2>
-                <p class="section-subtitle">Выберите план под ваш бизнес. Первые 14 дней — бесплатно!</p>
-                <div class="pricing-grid">
-                    <div class="pricing-card">
-                        <div class="plan-name">Старт</div>
-                        <div class="plan-price">2 990 ₽<small>/мес</small></div>
-                        <div class="plan-period">Для малого бизнеса</div>
-                        <ul class="plan-features">
-                            <li>До 500 пользователей</li>
-                            <li>До 5 OAuth клиентов</li>
-                            <li>SSO до 3 приложений</li>
-                            <li>Базовая поддержка</li>
-                            <li>Email уведомления</li>
-                            <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
-                        </ul>
-                        <a href="/payment?plan=identity_start&price=2990" class="btn-plan">Начать 14-дневный пробный период</a>
+
+                <div class="trial-offer">
+                    <div class="mb-4">
+                        <i class="fas fa-gift" style="font-size: 64px; color: #10b981;"></i>
                     </div>
-                    <div class="pricing-card popular">
-                        <div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>
-                        <div class="plan-name">Бизнес</div>
-                        <div class="plan-price">7 990 ₽<small>/мес</small></div>
-                        <div class="plan-period">Для растущего бизнеса</div>
-                        <ul class="plan-features">
-                            <li>До 5 000 пользователей</li>
-                            <li>До 25 OAuth клиентов</li>
-                            <li>SSO для всех приложений</li>
-                            <li>2FA и MFA</li>
-                            <li>Приоритетная поддержка 24/7</li>
-                            <li>Расширенная аналитика</li>
-                            <li>API управление пользователями</li>
-                            <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
-                        </ul>
-                        <a href="/payment?plan=identity_business&price=7990" class="btn-plan">Начать 14-дневный пробный период</a>
+                    <h2 style="font-size: 36px; font-weight: 800; margin-bottom: 16px; background: linear-gradient(135deg, #fff, #c4b5fd); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                        14 дней бесплатного доступа!
+                    </h2>
+                    <p style="font-size: 18px; color: rgba(255,255,255,0.8); max-width: 600px; margin: 0 auto 30px;">
+                        Протестируйте Identity Hub со всеми функциями: SSO, OAuth2, управление пользователями, 2FA и безопасность.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                       <button onclick="startTrialAndRedirect()" class="btn-trial-primary">
+                            <i class="fas fa-rocket me-2"></i> Начать 14-дневный пробный период
+                        </button>
+                        <a href="/pricing" class="btn-trial-secondary">
+                            <i class="fas fa-crown me-2"></i> Смотреть тарифы
+                        </a>
                     </div>
-                    <div class="pricing-card">
-                        <div class="plan-name">Корпоративный</div>
-                        <div class="plan-price">19 990 ₽<small>/мес</small></div>
-                        <div class="plan-period">Для крупного бизнеса</div>
-                        <ul class="plan-features">
-                            <li>Неограниченно пользователей</li>
-                            <li>Неограниченно OAuth клиентов</li>
-                            <li>White-label решение</li>
-                            <li>SLA 99.9%</li>
-                            <li>Персональный менеджер</li>
-                            <li>Аудит безопасности</li>
-                            <li>On-premise развертывание</li>
-                            <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
-                        </ul>
-                        <a href="/contact" class="btn-plan">Связаться с нами</a>
-                    </div>
+                    <p class="mt-4" style="font-size: 14px; color: rgba(255,255,255,0.5);">
+                        <i class="fas fa-credit-card me-1"></i> Без предоплаты • Отключить можно в любой момент
+                    </p>
                 </div>
-            </div>
-            
-            <div class="docs-section">
-                <h2 class="section-title">📚 Документация</h2>
-                <p class="section-subtitle">Быстрая интеграция с вашими приложениями</p>
-                <div class="docs-grid">
-                    <div class="doc-card">
-                        <h4>🔑 OpenID Connect эндпоинты</h4>
-                        <div class="endpoint">GET /.well-known/openid-configuration</div>
-                        <div class="endpoint">GET /oauth/authorize</div>
-                        <div class="endpoint">POST /oauth/token</div>
-                        <div class="endpoint">GET /oauth/userinfo</div>
-                        <div class="endpoint">GET /oauth/jwks</div>
-                    </div>
-                    <div class="doc-card">
-                        <h4>💡 Пример авторизации</h4>
-                        <div class="endpoint">
-                            /oauth/authorize?response_type=code<br>
-                            &client_id=YOUR_CLIENT_ID<br>
-                            &redirect_uri=https://app.com/callback<br>
-                            &scope=openid%20profile%20email
+
+                <div class="features-preview">
+                    <h3 class="text-center mb-4" style="color: white; font-size: 28px;">Что вы получите</h3>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="feature-card-preview">
+                                <i class="fas fa-users" style="font-size: 48px; color: #a78bfa; margin-bottom: 20px;"></i>
+                                <h4>SSO для всех сервисов</h4>
+                                <p>Один вход для всех ваших приложений. Пользователи авторизуются один раз и получают доступ ко всем сервисам.</p>
+                            </div>
                         </div>
-                        <h4 class="mt-3" style="color:#c4b5fd;">🔑 Получение токена</h4>
-                        <div class="endpoint">
-                            POST /oauth/token<br>
-                            grant_type=authorization_code<br>
-                            &code=AUTH_CODE<br>
-                            &client_id=YOUR_CLIENT_ID
+                        <div class="col-md-4">
+                            <div class="feature-card-preview">
+                                <i class="fas fa-key" style="font-size: 48px; color: #a78bfa; margin-bottom: 20px;"></i>
+                                <h4>OAuth2 / OpenID Connect</h4>
+                                <p>Современные протоколы авторизации. Легко подключайте любые приложения к вашей экосистеме.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="feature-card-preview">
+                                <i class="fas fa-shield-alt" style="font-size: 48px; color: #a78bfa; margin-bottom: 20px;"></i>
+                                <h4>2FA и Безопасность</h4>
+                                <p>Двухфакторная аутентификация, резервные коды, доверенные устройства и защита от взлома.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="feature-card-preview">
+                                <i class="fas fa-chart-line" style="font-size: 48px; color: #a78bfa; margin-bottom: 20px;"></i>
+                                <h4>Аналитика и Логи</h4>
+                                <p>Детальная статистика использования, логи авторизаций, аудит безопасности в реальном времени.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="feature-card-preview">
+                                <i class="fas fa-plug" style="font-size: 48px; color: #a78bfa; margin-bottom: 20px;"></i>
+                                <h4>API интеграции</h4>
+                                <p>REST API для управления пользователями, проверки токенов, создания OAuth клиентов.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="feature-card-preview">
+                                <i class="fas fa-headset" style="font-size: 48px; color: #a78bfa; margin-bottom: 20px;"></i>
+                                <h4>Приоритетная поддержка</h4>
+                                <p>Техническая поддержка 24/7, помощь в интеграции, персональный менеджер на премиум-тарифах.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pricing-preview mt-5">
+                    <h3 class="text-center mb-4" style="color: white; font-size: 28px;">Выберите свой план</h3>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="pricing-card-preview">
+                                <div class="plan-name">Старт</div>
+                                <div class="plan-price">2 990 ₽<span>/мес</span></div>
+                                <ul class="plan-features-list">
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> До 500 пользователей</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> До 5 OAuth клиентов</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> SSO до 3 приложений</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> Базовая поддержка</li>
+                                </ul>
+                                <button onclick="startTrial()" class="btn-plan-preview">Попробовать 14 дней</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pricing-card-preview popular">
+                                <div class="popular-badge">🔥 Популярный</div>
+                                <div class="plan-name">Бизнес</div>
+                                <div class="plan-price">7 990 ₽<span>/мес</span></div>
+                                <ul class="plan-features-list">
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> До 5 000 пользователей</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> До 25 OAuth клиентов</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> SSO для всех приложений</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> 2FA и MFA</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> Приоритетная поддержка 24/7</li>
+                                </ul>
+                                <button onclick="startTrial()" class="btn-plan-preview">Попробовать 14 дней</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pricing-card-preview">
+                                <div class="plan-name">Корпоративный</div>
+                                <div class="plan-price">19 990 ₽<span>/мес</span></div>
+                                <ul class="plan-features-list">
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> Неограниченно пользователей</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> Неограниченно OAuth клиентов</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> White-label решение</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> SLA 99.9%</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i> On-premise развертывание</li>
+                                </ul>
+                                <button onclick="startTrial()" class="btn-plan-preview">Связаться с нами</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ОСНОВНОЙ БЛОК (для пользователей с доступом - админы видят всё, клиенты только свои данные) -->
+            <div id="authorizedModeBlock" style="display: none;">
+                <div class="hero-section">
+                    <h1>🔐 Identity Hub</h1>
+                    <p>Централизованное управление идентификацией, SSO, OAuth2 и безопасность на максимальном уровне</p>
+                    <div class="hero-badge">
+                        <i class="fas fa-shield-alt me-2"></i> Первый в России IdP сервис
+                    </div>
+                </div>
+                
+                <!-- Блок для разработчиков (виден только админам/разработчикам) -->
+                <div id="devInfoBlock" style="display: none;" class="dev-block">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 style="color: white; margin-bottom: 10px;">
+                                <i class="fas fa-code"></i> 🚀 Станьте разработчиком!
+                            </h4>
+                            <p style="margin-bottom: 5px; color: rgba(255,255,255,0.85);">
+                                Создавайте OAuth-приложения, интегрируйте их с Identity Hub и получайте доступ к API.
+                            </p>
+                            <p style="margin-bottom: 0; font-size: 14px; color: rgba(255,255,255,0.7);">
+                                <i class="fas fa-gift me-1"></i> Первые 14 дней — бесплатно!
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <a href="/developer-portal" class="dev-button" style="padding: 10px 24px; font-size: 16px;">
+                                🔧 Перейти в Developer Portal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-number" id="totalUsers">0</div>
+                        <div class="stat-label">Всего пользователей</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔌</div>
+                        <div class="stat-number" id="totalClients">0</div>
+                        <div class="stat-label">OAuth клиентов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💻</div>
+                        <div class="stat-number" id="activeSessions">0</div>
+                        <div class="stat-label">Активных сессий</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-number" id="totalConsents">0</div>
+                        <div class="stat-label">Согласий выдано</div>
+                    </div>
+                </div>
+                
+                <div class="activity-stats">
+                    <div class="activity-card">
+                        <div class="activity-number today" id="todayLogins">0</div>
+                        <div class="activity-label">Входов сегодня</div>
+                    </div>
+                    <div class="activity-card">
+                        <div class="activity-number week" id="weekLogins">0</div>
+                        <div class="activity-label">За неделю</div>
+                    </div>
+                    <div class="activity-card">
+                        <div class="activity-number month" id="monthLogins">0</div>
+                        <div class="activity-label">За месяц</div>
+                    </div>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <h3><i class="fas fa-laptop"></i> Активные сессии</h3>
+                    </div>
+                    <div id="sessionsList" style="min-height: 100px;">
+                        <div class="text-center py-4 text-white-50">Загрузка...</div>
+                    </div>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <h3><i class="fas fa-th-large"></i> Подключенные приложения</h3>
+                    </div>
+                    <div id="appsList" style="min-height: 100px;">
+                        <div class="text-center py-4 text-white-50">Загрузка...</div>
+                    </div>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="card-header-glass">
+                        <h3><i class="fas fa-history"></i> История активности</h3>
+                    </div>
+                    <div id="activityList" style="min-height: 100px;">
+                        <div class="text-center py-4 text-white-50">Загрузка...</div>
+                    </div>
+                </div>
+                
+                <div class="features-section">
+                    <h2 class="section-title">⚡ Что умеет Identity Hub</h2>
+                    <p class="section-subtitle">Полноценный IdP сервис для вашего бизнеса</p>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">🔑</div>
+                            <h3>Single Sign-On (SSO)</h3>
+                            <p>Один аккаунт для всех ваших сервисов. Пользователи входят один раз — доступны все приложения</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔒</div>
+                            <h3>OAuth2 / OpenID Connect</h3>
+                            <p>Поддержка всех современных протоколов авторизации. Легко подключайте любые приложения</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📱</div>
+                            <h3>2FA и MFA</h3>
+                            <p>Двухфакторная аутентификация, резервные коды, доверенные устройства</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">👥</div>
+                            <h3>Управление пользователями</h3>
+                            <p>Создание, блокировка, роли, группы. Полный контроль над доступом</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📊</div>
+                            <h3>Аналитика и логи</h3>
+                            <p>Детальные логи авторизаций, статистика использования, аудит безопасности</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔌</div>
+                            <h3>API интеграции</h3>
+                            <p>REST API для управления пользователями, проверки токенов, создания клиентов</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pricing-section">
+                    <h2 class="section-title">💰 Тарифы Identity Hub</h2>
+                    <p class="section-subtitle">Выберите план под ваш бизнес. Первые 14 дней — бесплатно!</p>
+                    <div class="pricing-grid">
+                        <div class="pricing-card">
+                            <div class="plan-name">Старт</div>
+                            <div class="plan-price">2 990 ₽<small>/мес</small></div>
+                            <div class="plan-period">Для малого бизнеса</div>
+                            <ul class="plan-features">
+                                <li>До 500 пользователей</li>
+                                <li>До 5 OAuth клиентов</li>
+                                <li>SSO до 3 приложений</li>
+                                <li>Базовая поддержка</li>
+                                <li>Email уведомления</li>
+                                <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
+                            </ul>
+                            <a href="/payment?plan=identity_start&price=2990" class="btn-plan">Начать 14-дневный пробный период</a>
+                        </div>
+                        <div class="pricing-card popular">
+                            <div class="popular-badge">🔥 ПОПУЛЯРНЫЙ</div>
+                            <div class="plan-name">Бизнес</div>
+                            <div class="plan-price">7 990 ₽<small>/мес</small></div>
+                            <div class="plan-period">Для растущего бизнеса</div>
+                            <ul class="plan-features">
+                                <li>До 5 000 пользователей</li>
+                                <li>До 25 OAuth клиентов</li>
+                                <li>SSO для всех приложений</li>
+                                <li>2FA и MFA</li>
+                                <li>Приоритетная поддержка 24/7</li>
+                                <li>Расширенная аналитика</li>
+                                <li>API управление пользователями</li>
+                                <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
+                            </ul>
+                            <a href="/payment?plan=identity_business&price=7990" class="btn-plan">Начать 14-дневный пробный период</a>
+                        </div>
+                        <div class="pricing-card">
+                            <div class="plan-name">Корпоративный</div>
+                            <div class="plan-price">19 990 ₽<small>/мес</small></div>
+                            <div class="plan-period">Для крупного бизнеса</div>
+                            <ul class="plan-features">
+                                <li>Неограниченно пользователей</li>
+                                <li>Неограниченно OAuth клиентов</li>
+                                <li>White-label решение</li>
+                                <li>SLA 99.9%</li>
+                                <li>Персональный менеджер</li>
+                                <li>Аудит безопасности</li>
+                                <li>On-premise развертывание</li>
+                                <li class="text-success"><i class="fas fa-gift"></i> 14 дней бесплатно</li>
+                            </ul>
+                            <a href="/contact" class="btn-plan">Связаться с нами</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="docs-section">
+                    <h2 class="section-title">📚 Документация</h2>
+                    <p class="section-subtitle">Быстрая интеграция с вашими приложениями</p>
+                    <div class="docs-grid">
+                        <div class="doc-card">
+                            <h4>🔑 OpenID Connect эндпоинты</h4>
+                            <div class="endpoint">GET /.well-known/openid-configuration</div>
+                            <div class="endpoint">GET /oauth/authorize</div>
+                            <div class="endpoint">POST /oauth/token</div>
+                            <div class="endpoint">GET /oauth/userinfo</div>
+                            <div class="endpoint">GET /oauth/jwks</div>
+                        </div>
+                        <div class="doc-card">
+                            <h4>💡 Пример авторизации</h4>
+                            <div class="endpoint">
+                                /oauth/authorize?response_type=code<br>
+                                &client_id=YOUR_CLIENT_ID<br>
+                                &redirect_uri=https://app.com/callback<br>
+                                &scope=openid%20profile%20email
+                            </div>
+                            <h4 class="mt-3" style="color:#c4b5fd;">🔑 Получение токена</h4>
+                            <div class="endpoint">
+                                POST /oauth/token<br>
+                                grant_type=authorization_code<br>
+                                &code=AUTH_CODE<br>
+                                &client_id=YOUR_CLIENT_ID
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -863,9 +1095,9 @@
         </div>
     </div>
     
-   <div class="back-button" onclick="history.back()">
-    <i class="fas fa-arrow-left"></i> Назад
-</div>
+    <div class="back-button" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i> Назад
+    </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -887,20 +1119,21 @@
         createParticles();
         
         // Показываем кнопки для разработчиков
-        async function showDevButtons() {
-            try {
-                const res = await fetch('/api/user/role');
-                const data = await res.json();
-                if (data.role === 'developer' || data.role === 'admin') {
-                    const devButton = document.getElementById('devButtonBlock');
-                    const devNavButton = document.getElementById('devNavButton');
-                    const devInfoBlock = document.getElementById('devInfoBlock');
-                    if (devButton) devButton.style.display = 'block';
-                    if (devNavButton) devNavButton.style.display = 'block';
-                    if (devInfoBlock) devInfoBlock.style.display = 'block';
-                }
-            } catch(e) {}
+       async function showDevButtons() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/user/role', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        if (data.role === 'developer' || data.role === 'admin') {
+            const devInfoBlock = document.getElementById('devInfoBlock');
+            if (devInfoBlock) devInfoBlock.style.display = 'block';
         }
+    } catch(e) {}
+}
         
         async function checkAuth() {
             try {
@@ -915,11 +1148,6 @@
                             <li class="nav-item"><a class="nav-link" href="/vpn">VPN</a></li>
                             <li class="nav-item"><a class="nav-link active" href="/identity-hub">Identity Hub</a></li>
                             <li class="nav-item"><a class="nav-link" href="/crm">CRM</a></li>
-                            <li class="nav-item" id="devNavButtonTemp" style="display: none;">
-                                <a class="nav-link" href="/developer-portal" style="background: rgba(139,91,246,0.3); border-radius: 30px;">
-                                    <i class="fas fa-code me-1"></i> 🔧 Dev Portal
-                                </a>
-                            </li>
                             <li class="nav-item"><a class="nav-link" href="#">
                                 <i class="fas fa-user-circle me-1"></i> ${data.name || data.email}
                             </a></li>
@@ -927,14 +1155,6 @@
                                 <i class="fas fa-sign-out-alt me-1"></i> Выйти
                             </a></li>
                         `;
-                        
-                        // Показываем кнопку для разработчика
-                        const roleRes = await fetch('/api/user/role');
-                        const roleData = await roleRes.json();
-                        if (roleData.role === 'developer' || roleData.role === 'admin') {
-                            const devBtnTemp = document.getElementById('devNavButtonTemp');
-                            if (devBtnTemp) devBtnTemp.style.display = 'block';
-                        }
                     }
                 }
             } catch(e) {
@@ -942,139 +1162,244 @@
             }
         }
         
-        async function loadIdentityStats() {
-            try {
-                const res = await fetch('/api/identity/stats');
-                const data = await res.json();
-                document.getElementById('totalUsers').innerText = data.total_users || 0;
-                document.getElementById('totalClients').innerText = data.total_clients || 0;
-                document.getElementById('activeSessions').innerText = data.active_sessions || 0;
-                document.getElementById('totalConsents').innerText = data.total_consents || 0;
-                document.getElementById('todayLogins').innerText = data.today_logins || 0;
-                document.getElementById('weekLogins').innerText = data.week_logins || 0;
-                document.getElementById('monthLogins').innerText = data.month_logins || 0;
-            } catch(e) { console.error(e); }
-        }
+       async function loadIdentityStats() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/identity/stats', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        document.getElementById('totalUsers').innerText = data.total_users || 0;
+        document.getElementById('totalClients').innerText = data.total_clients || 0;
+        document.getElementById('activeSessions').innerText = data.active_sessions || 0;
+        document.getElementById('totalConsents').innerText = data.total_consents || 0;
+        document.getElementById('todayLogins').innerText = data.today_logins || 0;
+        document.getElementById('weekLogins').innerText = data.week_logins || 0;
+        document.getElementById('monthLogins').innerText = data.month_logins || 0;
+    } catch(e) { console.error(e); }
+}
         
-        async function loadSessions() {
-            try {
-                const res = await fetch('/api/identity/sessions');
-                const data = await res.json();
-                const container = document.getElementById('sessionsList');
-                if(container && data.sessions && data.sessions.length > 0) {
-                    container.innerHTML = data.sessions.map(s => `
-                        <div class="session-item">
-                            <div class="session-info">
-                                <div class="device-icon">
-                                    <i class="fas fa-${s.device.includes('iPhone') ? 'mobile-alt' : (s.device.includes('Mac') ? 'apple' : 'laptop')}"></i>
-                                </div>
-                                <div class="device-details">
-                                    <div class="device-name">${s.device}</div>
-                                    <div class="device-meta">IP: ${s.ip} • ${s.location}</div>
-                                    <div class="device-meta">Последняя активность: ${s.last_active}</div>
-                                </div>
-                                ${s.is_current ? '<span class="badge-current">Текущая сессия</span>' : ''}
-                            </div>
-                            ${!s.is_current ? `<button class="btn-glass" onclick="revokeSession('${s.id}')">Отозвать</button>` : ''}
+       async function loadSessions() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/identity/sessions', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        const container = document.getElementById('sessionsList');
+        if(container && data.sessions && data.sessions.length > 0) {
+            container.innerHTML = data.sessions.map(s => `
+                <div class="session-item">
+                    <div class="session-info">
+                        <div class="device-icon">
+                            <i class="fas fa-${s.device.includes('iPhone') ? 'mobile-alt' : (s.device.includes('Mac') ? 'apple' : 'laptop')}"></i>
                         </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<div class="text-center py-4 text-white-50">Нет активных сессий</div>';
-                }
-            } catch(e) { console.error(e); }
-        }
-        
-        async function revokeSession(sessionId) {
-            if(!confirm('Отозвать эту сессию?')) return;
-            try {
-                const res = await fetch('/api/identity/sessions/' + sessionId, {method: 'DELETE'});
-                const data = await res.json();
-                if(data.success) {
-                    alert('Сессия отозвана');
-                    loadSessions();
-                }
-            } catch(e) { alert('Ошибка'); }
-        }
-        
-        async function loadApps() {
-            try {
-                const res = await fetch('/api/identity/apps');
-                const data = await res.json();
-                const container = document.getElementById('appsList');
-                if(container && data.apps && data.apps.length > 0) {
-                    container.innerHTML = data.apps.map(a => `
-                        <div class="app-item">
-                            <div class="app-info">
-                                <div class="device-icon">
-                                    <i class="fas fa-${a.icon === 'bi-cloud' ? 'cloud' : (a.icon === 'bi-graph-up' ? 'chart-line' : 'shield-alt')}"></i>
-                                </div>
-                                <div class="device-details">
-                                    <div class="device-name">${a.name}</div>
-                                    <div class="device-meta">Права: ${a.scopes}</div>
-                                    <div class="device-meta">Последнее использование: ${a.last_used}</div>
-                                </div>
-                            </div>
-                            <button class="btn-glass" onclick="revokeApp('${a.id}')">Отозвать доступ</button>
+                        <div class="device-details">
+                            <div class="device-name">${s.device}</div>
+                            <div class="device-meta">IP: ${s.ip} • ${s.location}</div>
+                            <div class="device-meta">Последняя активность: ${s.last_active}</div>
                         </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<div class="text-center py-4 text-white-50">Нет подключенных приложений</div>';
-                }
-            } catch(e) { console.error(e); }
+                        ${s.is_current ? '<span class="badge-current">Текущая сессия</span>' : ''}
+                    </div>
+                    ${!s.is_current ? `<button class="btn-glass" onclick="revokeSession('${s.id}')">Отозвать</button>` : ''}
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<div class="text-center py-4 text-white-50">Нет активных сессий</div>';
         }
-        
-        async function revokeApp(appId) {
-            if(!confirm('Отозвать доступ приложения?')) return;
-            try {
-                const res = await fetch('/api/identity/apps/' + appId, {method: 'DELETE'});
-                const data = await res.json();
-                if(data.success) {
-                    alert('Доступ отозван');
-                    loadApps();
-                }
-            } catch(e) { alert('Ошибка'); }
+    } catch(e) { console.error(e); }
+}
+
+      async function revokeSession(sessionId) {
+    if(!confirm('Отозвать эту сессию?')) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/identity/sessions/' + sessionId, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        if(data.success) {
+            alert('Сессия отозвана');
+            loadSessions();
         }
+    } catch(e) { alert('Ошибка'); }
+}
         
-        async function loadActivity() {
-            try {
-                const res = await fetch('/api/identity/activity');
-                const data = await res.json();
-                const container = document.getElementById('activityList');
-                if(container && data.logs && data.logs.length > 0) {
-                    container.innerHTML = data.logs.map(l => `
-                        <div class="activity-item">
-                            <div class="activity-info">
-                                <div class="device-icon">
-                                    <i class="fas fa-${l.action === 'login' ? 'sign-in-alt' : 'shield-alt'}"></i>
-                                </div>
-                                <div class="device-details">
-                                    <div class="device-name">${l.action === 'login' ? 'Вход в систему' : (l.action === 'oauth_authorize' ? 'Авторизация приложения' : (l.action === 'token_refresh' ? 'Обновление токена' : 'Обновление профиля'))}</div>
-                                    <div class="device-meta">${l.details} • IP: ${l.ip}</div>
-                                    <div class="device-meta"><span class="badge-current" style="background:rgba(16,185,129,0.2);">${l.status === 'success' ? 'Успешно' : l.status}</span></div>
-                                </div>
-                            </div>
-                            <div class="text-white-50 small">${l.timestamp}</div>
+       async function loadApps() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/identity/apps', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        const container = document.getElementById('appsList');
+        if(container && data.apps && data.apps.length > 0) {
+            container.innerHTML = data.apps.map(a => `
+                <div class="app-item">
+                    <div class="app-info">
+                        <div class="device-icon">
+                            <i class="fas fa-${a.icon === 'bi-cloud' ? 'cloud' : (a.icon === 'bi-graph-up' ? 'chart-line' : 'shield-alt')}"></i>
                         </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<div class="text-center py-4 text-white-50">Нет активности</div>';
-                }
-            } catch(e) { console.error(e); }
+                        <div class="device-details">
+                            <div class="device-name">${a.name}</div>
+                            <div class="device-meta">Права: ${a.scopes}</div>
+                            <div class="device-meta">Последнее использование: ${a.last_used}</div>
+                        </div>
+                    </div>
+                    <button class="btn-glass" onclick="revokeApp('${a.id}')">Отозвать доступ</button>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<div class="text-center py-4 text-white-50">Нет подключенных приложений</div>';
+        }
+    } catch(e) { console.error(e); }
+}
+
+       async function revokeApp(appId) {
+    if(!confirm('Отозвать доступ приложения?')) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/identity/apps/' + appId, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        if(data.success) {
+            alert('Доступ отозван');
+            loadApps();
+        }
+    } catch(e) { alert('Ошибка'); }
+}
+
+       async function loadActivity() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/identity/activity', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        const container = document.getElementById('activityList');
+        if(container && data.logs && data.logs.length > 0) {
+            container.innerHTML = data.logs.map(l => `
+                <div class="activity-item">
+                    <div class="activity-info">
+                        <div class="device-icon">
+                            <i class="fas fa-${l.action === 'login' ? 'sign-in-alt' : 'shield-alt'}"></i>
+                        </div>
+                        <div class="device-details">
+                            <div class="device-name">${l.action === 'login' ? 'Вход в систему' : (l.action === 'oauth_authorize' ? 'Авторизация приложения' : (l.action === 'token_refresh' ? 'Обновление токена' : 'Обновление профиля'))}</div>
+                            <div class="device-meta">${l.details} • IP: ${l.ip}</div>
+                            <div class="device-meta"><span class="badge-current" style="background:rgba(16,185,129,0.2);">${l.status === 'success' ? 'Успешно' : l.status}</span></div>
+                        </div>
+                    </div>
+                    <div class="text-white-50 small">${l.timestamp}</div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<div class="text-center py-4 text-white-50">Нет активности</div>';
+        }
+    } catch(e) { console.error(e); }
+}
+async function checkAccessAndShowMode() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            // Нет токена - показываем лендинг
+            document.getElementById('demoModeBlock').style.display = 'block';
+            document.getElementById('authorizedModeBlock').style.display = 'none';
+            return;
         }
         
-        checkAuth();
-        loadIdentityStats();
-        loadSessions();
-        loadApps();
-        loadActivity();
-        showDevButtons();
+        const res = await fetch('/api/identity/stats', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
         
-        setInterval(() => {
+        if (res.status === 401) {
+            // Не авторизован - лендинг
+            document.getElementById('demoModeBlock').style.display = 'block';
+            document.getElementById('authorizedModeBlock').style.display = 'none';
+        } else if (res.ok) {
+            // Есть доступ - показываем данные
+            document.getElementById('demoModeBlock').style.display = 'none';
+            document.getElementById('authorizedModeBlock').style.display = 'block';
             loadIdentityStats();
             loadSessions();
             loadApps();
             loadActivity();
-        }, 30000);
-    </script>
+            showDevButtons();
+        } else {
+            // Нет доступа - лендинг
+            document.getElementById('demoModeBlock').style.display = 'block';
+            document.getElementById('authorizedModeBlock').style.display = 'none';
+        }
+    } catch(e) {
+        // Ошибка - показываем лендинг
+        document.getElementById('demoModeBlock').style.display = 'block';
+        document.getElementById('authorizedModeBlock').style.display = 'none';
+    }
+}
+async function startTrial() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    
+    const res = await fetch('/api/trial/start?module=identity_hub', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        }
+    });
+    const data = await res.json();
+    if (data.success) {
+        window.location.reload();
+    } else {
+        alert(data.error || 'Ошибка активации');
+    }
+}
+function showToastMessage(message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast show" role="alert" style="background: ${type === 'success' ? '#10b981' : '#ef4444'}; color: white; border-radius: 12px;">
+            <div class="toast-body d-flex align-items-center gap-2">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+checkAuth();
+checkAccessAndShowMode();
+
+setInterval(() => {
+    if (document.getElementById('authorizedModeBlock').style.display === 'block') {
+        loadIdentityStats();
+        loadSessions();
+        loadApps();
+        loadActivity();
+    }
+}, 30000);
+</script>
 </body>
 </html>
