@@ -560,3 +560,10 @@ func PricingPageHandler(c *gin.Context) {
         "IsDeveloper":     isDeveloper,
     })
 }
+
+func IdentityLoginPageHandler(c *gin.Context) {
+    c.HTML(http.StatusOK, "identity-login.html", gin.H{
+        "title": "Identity Hub | Вход и регистрация",
+    })
+}
+

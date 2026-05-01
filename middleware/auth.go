@@ -12,6 +12,7 @@ import (
 
 func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
     return func(c *gin.Context) {
+
         path := c.Request.URL.Path
         method := c.Request.Method
 

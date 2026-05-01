@@ -13,6 +13,7 @@ type User struct {
     ID               uuid.UUID `json:"id"`
     Email            string    `json:"email"`
     PasswordHash     string    `json:"-"`
+    Login            string    `json:"login"`
     Name             string    `json:"name"`
     Role             string    `json:"role"`
     EmailVerified    bool      `json:"email_verified"`

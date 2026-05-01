@@ -6,15 +6,18 @@ import (
     "encoding/base64"
     "encoding/json"
     "fmt"
+    "log"  
     "net/http"
     "strings"
     "time"
     
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
-    "github.com/jackc/pgx/v5"  // ДОБАВИТЬ ЭТОТ ИМПОРТ
+    "github.com/jackc/pgx/v5"
+    "golang.org/x/crypto/bcrypt" 
     
     "subscription-system/database"
+    "subscription-system/utils"   
 )
 // OAuth2 клиент
 type OAuthClient struct {
@@ -57,36 +60,53 @@ type JWK struct {
 
 // Страница управления OAuth клиентами (админка)
 func OAuthClientsPageHandler(c *gin.Context) {
+    log.Println("🔍 OAuthClientsPageHandler START")
+    
     rows, err := database.Pool.Query(c.Request.Context(), `
-        SELECT id, client_id, client_name, client_uri, redirect_uris, grants, scopes, confidential, active, created_at
+        SELECT id, client_id, name, redirect_uris, scopes, created_at, status
         FROM oauth_clients
-        WHERE active = true
+        WHERE status = 'active' OR status IS NULL
         ORDER BY created_at DESC
     `)
     if err != nil {
-        c.HTML(http.StatusInternalServerError, "error.html", gin.H{"error": "Database error"})
+        log.Printf("❌ Query error: %v", err)
+        c.HTML(http.StatusInternalServerError, "error.html", gin.H{"error": "Database error: " + err.Error()})
         return
     }
     defer rows.Close()
-    
-    var clients []OAuthClient
+    log.Println("✅ Query successful")
+
+    var clients []map[string]interface{}
     for rows.Next() {
-        var client OAuthClient
-        err := rows.Scan(&client.ID, &client.ClientID, &client.ClientName, &client.ClientURI,
-            &client.RedirectURIs, &client.Grants, &client.Scopes, &client.Confidential,
-            &client.Active, &client.CreatedAt)
+        var id, clientID, name, scopes, status string
+        var redirectURIs interface{}
+        var createdAt time.Time
+        
+        err := rows.Scan(&id, &clientID, &name, &redirectURIs, &scopes, &createdAt, &status)
         if err != nil {
+            log.Printf("⚠️ Scan error: %v", err)
             continue
         }
-        clients = append(clients, client)
+        
+        clients = append(clients, gin.H{
+            "id":           id,
+            "client_id":    clientID,
+            "client_name":  name,
+            "redirect_uris": redirectURIs,
+            "scopes":       scopes,
+            "active":       status != "inactive",
+            "created_at":   createdAt,
+        })
     }
     
+    log.Printf("📊 Found %d clients", len(clients))
+
     c.HTML(http.StatusOK, "oauth-clients.html", gin.H{
         "clients": clients,
         "title":   "Управление OAuth клиентами",
     })
+    log.Println("✅ OAuthClientsPageHandler END")
 }
-
 // Создать OAuth клиент
 func CreateOAuthClient(c *gin.Context) {
     var req struct {
@@ -410,7 +430,6 @@ func DeveloperPortalHandler(c *gin.Context) {
     })
 }
 
-
 // ========== РАСШИРЕННЫЕ ФУНКЦИИ IDENTITY HUB ==========
 
 // GetIdentityHubStats - получить статистику (с разграничением по ролям)
@@ -467,7 +486,7 @@ func GetIdentityHubStats(c *gin.Context) {
         `).Scan(&monthLogins)
     } else {
         // Обычный пользователь - видит только свою статистику
-        totalUsers = 1  // только себя
+        totalUsers = 1
         
         // Количество его сессий
         database.Pool.QueryRow(ctx, `
@@ -505,7 +524,7 @@ func GetIdentityHubStats(c *gin.Context) {
             WHERE user_id = $1 AND action = 'login' AND created_at > NOW() - INTERVAL '30 days'
         `, userID).Scan(&monthLogins)
         
-        totalClients = 0   // Обычные пользователи не видят OAuth клиентов
+        totalClients = 0
     }
     
     c.JSON(200, gin.H{
@@ -518,6 +537,7 @@ func GetIdentityHubStats(c *gin.Context) {
         "month_logins":     monthLogins,
     })
 }
+
 // GetUserSessionsList - получает ТОЛЬКО свои сессии для обычных пользователей
 func GetUserSessionsList(c *gin.Context) {
     userIDVal, exists := c.Get("user_id")
@@ -587,6 +607,7 @@ func GetUserSessionsList(c *gin.Context) {
     
     c.JSON(200, gin.H{"sessions": sessionsList})
 }
+
 // RevokeUserSession - отозвать сессию (РЕАЛЬНЫЕ ДАННЫЕ)
 func RevokeUserSession(c *gin.Context) {
     userIDVal, _ := c.Get("user_id")
@@ -766,6 +787,7 @@ func GetActivityLog(c *gin.Context) {
     
     c.JSON(200, gin.H{"logs": logsList})
 }
+
 // Вспомогательная функция для красивых названий действий
 func getActionName(action string) string {
     names := map[string]string{
@@ -844,8 +866,8 @@ func GetOAuthClientsList(c *gin.Context) {
         "clients": clients,
         "total":   len(clients),
     })
-
 }
+
 // IdentityHubLandingHandler - страница-ландинг для новых пользователей
 func IdentityHubLandingHandler(c *gin.Context) {
     c.HTML(http.StatusOK, "identity-landing.html", gin.H{
@@ -866,6 +888,15 @@ func IdentityHubRouter(c *gin.Context) {
     fmt.Printf("🔍 role=%q, email=%q, userID=%q\n", role, email, userID)
     fmt.Println("========================================")
     
+    // ПРОВЕРКА: ЕСЛИ ПОЛЬЗОВАТЕЛЬ НЕ АВТОРИЗОВАН
+    if userID == "" || userID == "00000000-0000-0000-0000-000000000000" {
+        fmt.Println("❌ USER NOT AUTHENTICATED - showing identity-landing.html")
+        c.HTML(http.StatusOK, "identity-landing.html", gin.H{
+            "title": "Identity Hub | 14 дней бесплатно",
+        })
+        return
+    }
+    
     // 1. ВЛАДЕЛЕЦ/РАЗРАБОТЧИК - полный доступ без триала
     if role == "developer" || role == "admin" || email == "dev@saaspro.ru" {
         fmt.Println("✅ OWNER/DEVELOPER - full access to identity-hub.html")
@@ -880,10 +911,10 @@ func IdentityHubRouter(c *gin.Context) {
     
     // 2. ОБЫЧНЫЙ ПОЛЬЗОВАТЕЛЬ - проверяем триал
     var trialEnd time.Time
-   err := database.Pool.QueryRow(c.Request.Context(), `
-    SELECT trial_end FROM user_trials 
-    WHERE user_id = $1::uuid AND module_name = 'identity_hub' AND trial_end > NOW()
-`, userID).Scan(&trialEnd)
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT trial_end FROM user_trials 
+        WHERE user_id = $1::uuid AND module_name = 'identity_hub' AND trial_end > NOW()
+    `, userID).Scan(&trialEnd)
     
     fmt.Printf("🔍 TRIAL CHECK: userID=%s, err=%v, trialEnd=%v\n", userID, err, trialEnd)
     
@@ -910,6 +941,7 @@ func IdentityHubRouter(c *gin.Context) {
         "role":   role,
     })
 }
+
 // StartModuleTrial - активация пробного периода
 func StartModuleTrial(c *gin.Context) {
     userID := c.GetString("user_id")
@@ -962,4 +994,499 @@ func StartModuleTrial(c *gin.Context) {
         "trialEnd":   trialEnd,
         "moduleName": moduleName,
     })
+
+}
+// ExportActivityLog - экспорт логов активности в CSV
+func ExportActivityLog(c *gin.Context) {
+    userID := c.GetString("user_id")
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT created_at, action, 
+               COALESCE(details->>'description', details->>'method', action) as details,
+               COALESCE(ip, '0.0.0.0') as ip,
+               COALESCE(status, 'success') as status
+        FROM activity_logs
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 1000
+    `, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    // Заголовки CSV
+    csv := "Дата и время,Действие,Детали,IP адрес,Статус\n"
+    
+    for rows.Next() {
+        var createdAt time.Time
+        var action, details, ip, status string
+        rows.Scan(&createdAt, &action, &details, &ip, &status)
+        
+        // Красивые названия действий
+        actionName := map[string]string{
+            "login":           "Вход в систему",
+            "logout":          "Выход из системы",
+            "oauth_authorize": "Авторизация приложения",
+            "token_refresh":   "Обновление токена",
+            "profile_update":  "Обновление профиля",
+            "revoke_session":  "Отзыв сессии",
+            "revoke_app":      "Отзыв доступа приложения",
+            "2fa_enable":      "Включение 2FA",
+            "2fa_disable":     "Отключение 2FA",
+        }[action]
+        if actionName == "" {
+            actionName = action
+        }
+        
+        // Экранируем кавычки и запятые в деталях
+        details = strings.ReplaceAll(details, "\"", "\"\"")
+        if strings.Contains(details, ",") || strings.Contains(details, "\n") {
+            details = "\"" + details + "\""
+        }
+        
+        csv += fmt.Sprintf("%s,%s,%s,%s,%s\n",
+            createdAt.Format("2006-01-02 15:04:05"),
+            actionName,
+            details,
+            ip,
+            status)
+    }
+    
+    // Отправляем CSV файл
+    c.Header("Content-Type", "text/csv; charset=utf-8")
+    c.Header("Content-Disposition", "attachment; filename=activity_log_"+time.Now().Format("2006-01-02")+".csv")
+    c.String(200, csv)
+}
+
+// ==================== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (CRUD) ====================
+
+// GetAllUsers - получить список всех пользователей (только для админов)
+func GetAllUsers(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, name, email, role, COALESCE(login, '') as login, 
+               COALESCE(phone, '') as phone, email_verified, created_at, 
+               COALESCE(blocked, false) as blocked
+        FROM users 
+        WHERE tenant_id = $1 AND deleted_at IS NULL
+        ORDER BY created_at DESC
+    `, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var users []gin.H
+    for rows.Next() {
+        var id, name, email, role, login, phone string
+        var emailVerified, blocked bool
+        var createdAt time.Time
+        
+        rows.Scan(&id, &name, &email, &role, &login, &phone, &emailVerified, &createdAt, &blocked)
+        
+        users = append(users, gin.H{
+            "id":             id,
+            "name":           name,
+            "email":          email,
+            "role":           role,
+            "login":          login,
+            "phone":          phone,
+            "email_verified": emailVerified,
+            "blocked":        blocked,
+            "created_at":     createdAt,
+        })
+    }
+    
+    c.JSON(200, gin.H{"users": users, "total": len(users)})
+}
+
+// CreateUser - создать нового пользователя
+func CreateUser(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    
+    var req struct {
+        Name     string `json:"name" binding:"required"`
+        Email    string `json:"email" binding:"required,email"`
+        Password string `json:"password" binding:"required,min=6"`
+        Role     string `json:"role"`
+        Login    string `json:"login"`
+        Phone    string `json:"phone"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Проверяем существование email
+    var exists bool
+    database.Pool.QueryRow(c.Request.Context(), "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", req.Email).Scan(&exists)
+    if exists {
+        c.JSON(400, gin.H{"error": "Email already exists"})
+        return
+    }
+    
+    // Хешируем пароль
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+    if err != nil {
+        c.JSON(500, gin.H{"error": "Failed to hash password"})
+        return
+    }
+    
+    if req.Role == "" {
+        req.Role = "user"
+    }
+    
+    var userID string
+    err = database.Pool.QueryRow(c.Request.Context(), `
+        INSERT INTO users (name, email, password_hash, role, login, phone, tenant_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING id
+    `, req.Name, req.Email, string(hashedPassword), req.Role, req.Login, req.Phone, tenantID).Scan(&userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Логируем действие
+    LogActivity(c.GetString("user_id"), "create_user", "users", userID, gin.H{"email": req.Email}, c.ClientIP(), c.Request.UserAgent())
+    
+    c.JSON(200, gin.H{"success": true, "user_id": userID, "message": "User created successfully"})
+}
+
+// UpdateUser - обновить данные пользователя
+func UpdateUser(c *gin.Context) {
+    userID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    var req struct {
+        Name  string `json:"name"`
+        Role  string `json:"role"`
+        Phone string `json:"phone"`
+        Login string `json:"login"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE users 
+        SET name = COALESCE($1, name),
+            role = COALESCE($2, role),
+            phone = COALESCE($3, phone),
+            login = COALESCE($4, login),
+            updated_at = NOW()
+        WHERE id = $5 AND tenant_id = $6
+    `, req.Name, req.Role, req.Phone, req.Login, userID, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    LogActivity(c.GetString("user_id"), "update_user", "users", userID, gin.H{"updates": req}, c.ClientIP(), c.Request.UserAgent())
+    
+    c.JSON(200, gin.H{"success": true, "message": "User updated"})
+}
+
+// DeleteUser - мягкое удаление пользователя
+func DeleteUser(c *gin.Context) {
+    userID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE users SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2
+    `, userID, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Также отзываем все сессии
+    database.Pool.Exec(c.Request.Context(), `
+        UPDATE user_sessions SET revoked = true WHERE user_id = $1
+    `, userID)
+    
+    LogActivity(c.GetString("user_id"), "delete_user", "users", userID, gin.H{}, c.ClientIP(), c.Request.UserAgent())
+    
+    c.JSON(200, gin.H{"success": true, "message": "User deleted"})
+}
+
+// BlockUser - заблокировать пользователя
+func BlockUser(c *gin.Context) {
+    userID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE users SET blocked = true, blocked_at = NOW() WHERE id = $1 AND tenant_id = $2
+    `, userID, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Отзываем все сессии
+    database.Pool.Exec(c.Request.Context(), `
+        UPDATE user_sessions SET revoked = true WHERE user_id = $1
+    `, userID)
+    
+    LogActivity(c.GetString("user_id"), "block_user", "users", userID, gin.H{}, c.ClientIP(), c.Request.UserAgent())
+    
+    c.JSON(200, gin.H{"success": true, "message": "User blocked"})
+}
+
+// UnblockUser - разблокировать пользователя
+func UnblockUser(c *gin.Context) {
+    userID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE users SET blocked = false, blocked_at = NULL WHERE id = $1 AND tenant_id = $2
+    `, userID, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    LogActivity(c.GetString("user_id"), "unblock_user", "users", userID, gin.H{}, c.ClientIP(), c.Request.UserAgent())
+    
+    c.JSON(200, gin.H{"success": true, "message": "User unblocked"})
+}
+
+// ChangeUserRole - изменить роль пользователя
+func ChangeUserRole(c *gin.Context) {
+    userID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    var req struct {
+        Role string `json:"role" binding:"required"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3
+    `, req.Role, userID, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    LogActivity(c.GetString("user_id"), "change_role", "users", userID, gin.H{"new_role": req.Role}, c.ClientIP(), c.Request.UserAgent())
+    
+    c.JSON(200, gin.H{"success": true, "message": "Role changed"})
+}
+
+// ==================== API ИНТЕГРАЦИИ (REST API для внешних сервисов) ====================
+
+// VerifyToken - проверка токена (для внешних API)
+func VerifyTokenHandler(c *gin.Context) {
+    authHeader := c.GetHeader("Authorization")
+    if authHeader == "" {
+        c.JSON(401, gin.H{"valid": false, "error": "No token provided"})
+        return
+    }
+    
+    tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+    claims, err := utils.ValidateToken(tokenString)
+    if err != nil {
+        c.JSON(401, gin.H{"valid": false, "error": "Invalid token"})
+        return
+    }
+    
+    c.JSON(200, gin.H{
+        "valid":   true,
+        "user_id": claims.UserID,
+        "email":   claims.Email,
+        "role":    claims.Role,
+    })
+}
+
+// GetUserInfoByToken - получить информацию о пользователе по токену
+func GetUserInfoByToken(c *gin.Context) {
+    userID := c.GetString("user_id")
+    
+    var user struct {
+        ID    string `json:"id"`
+        Name  string `json:"name"`
+        Email string `json:"email"`
+        Role  string `json:"role"`
+    }
+    
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT id, name, email, role FROM users WHERE id = $1 AND deleted_at IS NULL
+    `, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Role)
+    
+    if err != nil {
+        c.JSON(404, gin.H{"error": "User not found"})
+        return
+    }
+    
+    c.JSON(200, user)
+}
+
+// ==================== ГРУППЫ И РОЛИ (RBAC) ====================
+
+// GetRoles - список ролей
+func GetRoles(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, name, description, permissions, created_at
+        FROM roles
+        WHERE tenant_id = $1 OR tenant_id IS NULL
+        ORDER BY name
+    `, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var roles []gin.H
+    for rows.Next() {
+        var id, name, description string
+        var permissions json.RawMessage
+        var createdAt time.Time
+        
+        rows.Scan(&id, &name, &description, &permissions, &createdAt)
+        
+        roles = append(roles, gin.H{
+            "id":          id,
+            "name":        name,
+            "description": description,
+            "permissions": permissions,
+            "created_at":  createdAt,
+        })
+    }
+    
+    c.JSON(200, gin.H{"roles": roles})
+}
+
+// CreateRole - создать роль
+func CreateRole(c *gin.Context) {
+    tenantID := c.GetString("tenant_id")
+    
+    var req struct {
+        Name        string          `json:"name" binding:"required"`
+        Description string          `json:"description"`
+        Permissions json.RawMessage `json:"permissions"`
+    }
+    
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    if req.Permissions == nil {
+        req.Permissions = json.RawMessage("[]")
+    }
+    
+    var roleID string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        INSERT INTO roles (name, description, permissions, tenant_id, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
+        RETURNING id
+    `, req.Name, req.Description, req.Permissions, tenantID).Scan(&roleID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    
+    c.JSON(200, gin.H{"success": true, "role_id": roleID})
+}
+
+// AssignRole - назначить роль пользователю
+func AssignRole(c *gin.Context) {
+    userID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+
+    var req struct {
+        RoleID string `json:"role_id" binding:"required"`
+    }
+
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Проверяем, что роль принадлежит тому же тенанту
+    var roleTenantID *string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT tenant_id FROM roles WHERE id = $1
+    `, req.RoleID).Scan(&roleTenantID)
+    
+    if err != nil {
+        c.JSON(404, gin.H{"error": "Role not found"})
+        return
+    }
+    
+    // Проверяем доступ к роли
+    if roleTenantID != nil && *roleTenantID != tenantID {
+        c.JSON(403, gin.H{"error": "Access denied to this role"})
+        return
+    }
+
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO user_roles (user_id, role_id, assigned_at)
+        VALUES ($1, $2, NOW())
+        ON CONFLICT (user_id, role_id) DO NOTHING
+    `, userID, req.RoleID)
+
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(200, gin.H{"success": true})
+}
+
+// GetUserRoles - получить роли пользователя
+func GetUserRoles(c *gin.Context) {
+    userID := c.Param("id")
+    tenantID := c.GetString("tenant_id")
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT r.id, r.name, r.description
+        FROM roles r
+        JOIN user_roles ur ON ur.role_id = r.id
+        WHERE ur.user_id = $1 AND (r.tenant_id = $2 OR r.tenant_id IS NULL)
+    `, userID, tenantID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+    
+    var roles []gin.H
+    for rows.Next() {
+        var id, name, description string
+        rows.Scan(&id, &name, &description)
+        roles = append(roles, gin.H{
+            "id":          id,
+            "name":        name,
+            "description": description,
+        })
+    }
+    
+    c.JSON(200, gin.H{"roles": roles})
 }

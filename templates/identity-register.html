@@ -1,0 +1,112 @@
+{{define "identity-register"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация | Identity Hub</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #4c1d95, #7c3aed);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 48px;
+            width: 400px;
+        }
+        h1 { color: white; text-align: center; margin-bottom: 30px; }
+        input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+        }
+        input::placeholder { color: rgba(255,255,255,0.5); }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        a { color: #c4b5fd; text-decoration: none; }
+        .link { text-align: center; margin-top: 20px; color: rgba(255,255,255,0.7); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Регистрация</h1>
+        <form id="registerForm">
+            <input type="text" id="name" placeholder="Имя и фамилия" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Пароль" required>
+            <input type="password" id="confirmPassword" placeholder="Подтверждение пароля" required>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+        <div class="link">
+            Уже есть аккаунт? <a href="/identity-login">Войти</a>
+        </div>
+    </div>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            
+            if (!name || !email || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+            if (password !== confirm) {
+                alert('Пароли не совпадают');
+                return;
+            }
+            if (password.length < 6) {
+                alert('Пароль должен быть не менее 6 символов');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await response.json();
+                if (data.access_token) {
+                    localStorage.setItem('token', data.access_token);
+                    if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+                    window.location.href = '/identity-hub';
+                } else {
+                    alert(data.error || 'Ошибка регистрации');
+                }
+            } catch(err) {
+                alert('Ошибка подключения к серверу');
+            }
+        });
+        
+        if (localStorage.getItem('token')) {
+            window.location.href = '/identity-hub';
+        }
+    </script>
+</body>
+</html>
+{{end}}

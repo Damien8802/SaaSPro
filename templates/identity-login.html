@@ -1,0 +1,354 @@
+{{define "identity-login.html"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Identity Hub | Вход и регистрация</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh}
+        .navbar{background:rgba(0,0,0,0.3);backdrop-filter:blur(20px);padding:16px 40px;border-bottom:1px solid rgba(255,255,255,0.1)}
+        .navbar-brand{font-size:28px;font-weight:800;background:linear-gradient(135deg,#fff,#c4b5fd,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .nav-link{color:rgba(255,255,255,0.85)!important;font-weight:500;margin:0 5px;transition:all .3s}
+        .nav-link:hover{color:#fff!important;transform:translateY(-2px)}
+        .main-container{padding:40px 20px 80px}
+        .back-button{position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:40px;padding:10px 20px;color:#fff;cursor:pointer;z-index:1000}
+        
+        .auth-card{max-width:500px;margin:0 auto;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(139,91,246,0.4);border-radius:32px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);overflow:hidden}
+        .auth-header{padding:35px 35px 0 35px;text-align:center}
+        .logo-icon{font-size:56px;margin-bottom:10px}
+        .auth-title{font-size:32px;font-weight:800;background:linear-gradient(135deg,#fff,#c4b5fd,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:5px}
+        .auth-subtitle{
+            font-size:24px;
+            font-weight:700;
+            background:linear-gradient(135deg,#FFD700,#FFA500,#FF8C00);
+            -webkit-background-clip:text;
+            background-clip:text;
+            color:transparent;
+            margin-top:5px;
+            letter-spacing:2px
+        }
+        
+        .auth-methods{display:flex;gap:12px;justify-content:center;margin:30px 35px 20px 35px;flex-wrap:wrap}
+        .method-btn{background:rgba(139,91,246,0.15);border:1px solid rgba(139,91,246,0.3);border-radius:50px;padding:12px 24px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;transition:all .3s}
+        .method-btn.active{background:linear-gradient(135deg,#7c3aed,#6d28d9);border-color:transparent;box-shadow:0 4px 15px rgba(124,58,237,0.3)}
+        .method-btn:hover{transform:translateY(-2px);background:rgba(139,91,246,0.3)}
+        .auth-form{padding:0 35px 20px 35px}
+        .form-input{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:14px 18px;color:#fff;font-size:14px;margin-bottom:15px}
+        .form-input:focus{outline:none;border-color:#7c3aed;background:rgba(255,255,255,0.12)}
+        .form-input::placeholder{color:rgba(255,255,255,0.4)}
+        .auth-btn{width:100%;padding:14px;border:none;border-radius:50px;color:#fff;font-weight:600;font-size:16px;margin-top:10px;cursor:pointer}
+        .auth-btn-login{background:linear-gradient(135deg,#7c3aed,#6d28d9)}
+        .auth-btn-register{background:linear-gradient(135deg,#10b981,#059669)}
+        .auth-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(124,58,237,0.4)}
+        .auth-footer{text-align:center;padding:25px 35px 35px;border-top:1px solid rgba(255,255,255,0.08)}
+        .auth-footer a{background:linear-gradient(135deg,#a78bfa,#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600;text-decoration:none}
+        .auth-footer a:hover{text-decoration:underline}
+        .input-group-relative{position:relative;margin-bottom:15px}
+        .password-toggle-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(255,255,255,0.5)}
+        .forgot-link{text-align:right;margin-top:-10px;margin-bottom:15px}
+        .forgot-link a{color:rgba(255,255,255,0.5);font-size:12px;text-decoration:none}
+        .password-strength{margin-top:-10px;margin-bottom:15px;font-size:12px}
+        .strength-bar{height:4px;border-radius:2px;margin-top:5px}
+        .qr-container{text-align:center;padding:20px}
+        .qr-code{display:inline-block;background:#fff;padding:15px;border-radius:20px;margin-bottom:15px}
+        @media(max-width:576px){.auth-methods,.auth-form{margin-left:20px;margin-right:20px}.auth-header{padding:25px 25px 0 25px}}
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">SaaSPro</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Главная</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard-improved">Дашборд</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/vpn">VPN</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/crm">CRM</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="main-container">
+        <div class="container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="logo-icon">🔐</div>
+                    <div class="auth-title">Identity Hub</div>
+                    <div class="auth-subtitle" id="pageSubtitle">ВХОД</div>
+                </div>
+                
+                <!-- ПАНЕЛЬ ВХОДА -->
+                <div id="loginPanel">
+                    <div class="auth-methods">
+                        <button class="method-btn active" onclick="switchLoginMethod('email')"><i class="fas fa-envelope"></i> Почта</button>
+                        <button class="method-btn" onclick="switchLoginMethod('phone')"><i class="fas fa-phone"></i> Телефон</button>
+                        <button class="method-btn" onclick="switchLoginMethod('qr')"><i class="fas fa-qrcode"></i> QR</button>
+                        <button class="method-btn" onclick="switchLoginMethod('id')"><i class="fas fa-id-card"></i> ID</button>
+                    </div>
+                    
+                    <div id="loginEmailForm" class="auth-form">
+                        <input type="email" id="loginEmail" class="form-input" placeholder="Email">
+                        <div class="input-group-relative">
+                            <input type="password" id="loginPassword" class="form-input" placeholder="Пароль" style="margin-bottom:0">
+                            <span class="password-toggle-icon" onclick="togglePassword('loginPassword')">👁️</span>
+                        </div>
+                        <div class="forgot-link"><a href="/forgot-password">Забыли пароль?</a></div>
+                        <button class="auth-btn auth-btn-login" onclick="loginByEmail()">Войти</button>
+                    </div>
+                    
+                    <div id="loginPhoneForm" class="auth-form" style="display:none">
+                        <input type="tel" id="loginPhone" class="form-input" placeholder="+7 (XXX) XXX-XX-XX">
+                        <button class="auth-btn auth-btn-login" onclick="sendLoginCode()">Отправить код</button>
+                        <div id="loginCodeGroup" style="display:none; margin-top:15px">
+                            <input type="text" id="loginCode" class="form-input" placeholder="Код из SMS">
+                            <button class="auth-btn auth-btn-login" style="margin-top:10px" onclick="verifyLoginCode()">Подтвердить</button>
+                        </div>
+                    </div>
+                    
+                    <div id="loginQRForm" class="auth-form" style="display:none; text-align:center">
+                        <div class="qr-container"><div id="loginQRCode" class="qr-code"></div><p style="color:rgba(255,255,255,0.6); margin-top:15px">Отсканируйте QR код</p></div>
+                    </div>
+                    
+                    <div id="loginIDForm" class="auth-form" style="display:none">
+                        <input type="text" id="loginID" class="form-input" placeholder="Ваш ID (логин)">
+                        <div class="input-group-relative">
+                            <input type="password" id="loginIDPassword" class="form-input" placeholder="Пароль">
+                            <span class="password-toggle-icon" onclick="togglePassword('loginIDPassword')">👁️</span>
+                        </div>
+                        <button class="auth-btn auth-btn-login" onclick="loginByID()">Войти по ID</button>
+                    </div>
+                    
+                    <div class="auth-footer">
+                        <span style="color:rgba(255,255,255,0.6);">Нет аккаунта?</span>
+                        <a href="#" onclick="showRegisterForm()">Зарегистрируйтесь</a>
+                    </div>
+                </div>
+                
+                <!-- ПАНЕЛЬ РЕГИСТРАЦИИ -->
+                <div id="registerPanel" style="display:none">
+                    <div class="auth-methods">
+                        <button class="method-btn active" onclick="switchRegisterMethod('email')"><i class="fas fa-envelope"></i> Почта</button>
+                        <button class="method-btn" onclick="switchRegisterMethod('phone')"><i class="fas fa-phone"></i> Телефон</button>
+                        <button class="method-btn" onclick="switchRegisterMethod('id')"><i class="fas fa-id-card"></i> ID</button>
+                    </div>
+                    
+                    <div id="registerEmailForm" class="auth-form">
+                        <input type="text" id="regName" class="form-input" placeholder="Имя и фамилия">
+                        <input type="email" id="regEmail" class="form-input" placeholder="Email">
+                        <div class="input-group-relative">
+                            <input type="password" id="regPassword" class="form-input" placeholder="Пароль" style="margin-bottom:0">
+                            <span class="password-toggle-icon" onclick="togglePassword('regPassword')">👁️</span>
+                        </div>
+                        <div class="password-strength"><div class="strength-bar" id="strengthBar"></div><span id="strengthText" style="color:rgba(255,255,255,0.6);"></span></div>
+                        <div class="input-group-relative">
+                            <input type="password" id="regConfirmPassword" class="form-input" placeholder="Подтверждение пароля">
+                            <span class="password-toggle-icon" onclick="togglePassword('regConfirmPassword')">👁️</span>
+                        </div>
+                        <button class="auth-btn auth-btn-register" onclick="registerByEmail()">Зарегистрироваться</button>
+                    </div>
+                    
+                    <div id="registerPhoneForm" class="auth-form" style="display:none">
+                        <input type="text" id="regPhoneName" class="form-input" placeholder="Имя и фамилия">
+                        <input type="tel" id="regPhone" class="form-input" placeholder="+7 (XXX) XXX-XX-XX">
+                        <button class="auth-btn auth-btn-register" onclick="sendRegisterCode()">Отправить код</button>
+                        <div id="registerCodeGroup" style="display:none; margin-top:15px">
+                            <input type="text" id="registerCode" class="form-input" placeholder="Код из SMS">
+                            <button class="auth-btn auth-btn-register" style="margin-top:10px" onclick="verifyRegisterCode()">Завершить регистрацию</button>
+                        </div>
+                    </div>
+                    
+                    <div id="registerIDForm" class="auth-form" style="display:none">
+                        <input type="text" id="regIDName" class="form-input" placeholder="Имя и фамилия">
+                        <input type="text" id="regID" class="form-input" placeholder="Придумайте ID (логин)">
+                        <div class="input-group-relative">
+                            <input type="password" id="regIDPassword" class="form-input" placeholder="Пароль">
+                            <span class="password-toggle-icon" onclick="togglePassword('regIDPassword')">👁️</span>
+                        </div>
+                        <button class="auth-btn auth-btn-register" onclick="registerByID()">Зарегистрироваться по ID</button>
+                    </div>
+                    
+                    <div class="auth-footer">
+                        <a href="#" onclick="showLoginForm()" style="color:#c4b5fd; text-decoration:none;">← Вернуться ко входу</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="back-button" onclick="history.back()"><i class="fas fa-arrow-left"></i> Назад</div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let savedLoginPhone = '', savedRegisterPhone = '';
+        
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field.type === 'password') { field.type = 'text'; }
+            else { field.type = 'password'; }
+        }
+        
+        function showRegisterForm() {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('registerPanel').style.display = 'block';
+            document.getElementById('pageSubtitle').innerText = 'РЕГИСТРАЦИЯ';
+        }
+        
+        function showLoginForm() {
+            document.getElementById('loginPanel').style.display = 'block';
+            document.getElementById('registerPanel').style.display = 'none';
+            document.getElementById('pageSubtitle').innerText = 'ВХОД';
+        }
+        
+        function switchLoginMethod(method) {
+            document.querySelectorAll('#loginPanel .method-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('loginEmailForm').style.display = 'none';
+            document.getElementById('loginPhoneForm').style.display = 'none';
+            document.getElementById('loginQRForm').style.display = 'none';
+            document.getElementById('loginIDForm').style.display = 'none';
+            if (method === 'email') {
+                document.querySelector('#loginPanel .method-btn:nth-child(1)').classList.add('active');
+                document.getElementById('loginEmailForm').style.display = 'block';
+            } else if (method === 'phone') {
+                document.querySelector('#loginPanel .method-btn:nth-child(2)').classList.add('active');
+                document.getElementById('loginPhoneForm').style.display = 'block';
+            } else if (method === 'qr') {
+                document.querySelector('#loginPanel .method-btn:nth-child(3)').classList.add('active');
+                document.getElementById('loginQRForm').style.display = 'block';
+                if (!document.getElementById('loginQRCode').hasChildNodes()) {
+                    new QRCode(document.getElementById('loginQRCode'), { text: window.location.origin + '/qr-login?redirect=/identity-hub', width: 160, height: 160 });
+                }
+            } else if (method === 'id') {
+                document.querySelector('#loginPanel .method-btn:nth-child(4)').classList.add('active');
+                document.getElementById('loginIDForm').style.display = 'block';
+            }
+        }
+        
+        function switchRegisterMethod(method) {
+            document.querySelectorAll('#registerPanel .method-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('registerEmailForm').style.display = 'none';
+            document.getElementById('registerPhoneForm').style.display = 'none';
+            document.getElementById('registerIDForm').style.display = 'none';
+            if (method === 'email') {
+                document.querySelector('#registerPanel .method-btn:nth-child(1)').classList.add('active');
+                document.getElementById('registerEmailForm').style.display = 'block';
+            } else if (method === 'phone') {
+                document.querySelector('#registerPanel .method-btn:nth-child(2)').classList.add('active');
+                document.getElementById('registerPhoneForm').style.display = 'block';
+            } else if (method === 'id') {
+                document.querySelector('#registerPanel .method-btn:nth-child(3)').classList.add('active');
+                document.getElementById('registerIDForm').style.display = 'block';
+            }
+        }
+        
+        document.getElementById('regPassword')?.addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            let strength = 0;
+            if (password.length >= 6) strength++;
+            if (password.length >= 10) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            const colors = ['#ef4444', '#f59e0b', '#eab308', '#10b981', '#10b981'];
+            const texts = ['Очень слабый', 'Слабый', 'Средний', 'Хороший', 'Отличный'];
+            strengthBar.style.width = (strength * 20) + '%';
+            strengthBar.style.background = colors[strength - 1] || '#ef4444';
+            strengthText.textContent = texts[strength - 1] || '';
+        });
+        
+        async function loginByEmail() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+            const data = await res.json();
+            if (res.ok && data.access_token) { localStorage.setItem('token', data.access_token); window.location.href = '/identity-hub'; }
+            else alert(data.error || 'Ошибка входа');
+        }
+        
+        async function loginByID() {
+            const login = document.getElementById('loginID').value;
+            const password = document.getElementById('loginIDPassword').value;
+            const res = await fetch('/api/auth/login-by-id', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ login, password }) });
+            const data = await res.json();
+            if (res.ok && data.access_token) { localStorage.setItem('token', data.access_token); window.location.href = '/identity-hub'; }
+            else alert(data.error || 'Ошибка входа по ID');
+        }
+        
+        async function sendLoginCode() {
+            const phone = document.getElementById('loginPhone').value;
+            if (!phone) { alert('Введите номер телефона'); return; }
+            savedLoginPhone = phone;
+            const res = await fetch('/api/auth/send-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+            if (res.ok) { document.getElementById('loginCodeGroup').style.display = 'block'; alert('Код отправлен!'); }
+            else alert('Ошибка отправки кода');
+        }
+        
+        async function verifyLoginCode() {
+            const code = document.getElementById('loginCode').value;
+            const res = await fetch('/api/auth/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: savedLoginPhone, code }) });
+            const data = await res.json();
+            if (res.ok && data.access_token) { localStorage.setItem('token', data.access_token); window.location.href = '/identity-hub'; }
+            else alert(data.error || 'Неверный код');
+        }
+        
+        async function registerByEmail() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirmPassword').value;
+            if (!name || !email || !password) { alert('Заполните все поля'); return; }
+            if (password !== confirm) { alert('Пароли не совпадают'); return; }
+            if (password.length < 6) { alert('Пароль не менее 6 символов'); return; }
+            const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
+            const data = await res.json();
+            if (res.ok && data.access_token) { localStorage.setItem('token', data.access_token); window.location.href = '/identity-hub'; }
+            else alert(data.error || 'Ошибка регистрации');
+        }
+        
+        async function registerByID() {
+            const name = document.getElementById('regIDName').value;
+            const login = document.getElementById('regID').value;
+            const password = document.getElementById('regIDPassword').value;
+            if (!name || !login || !password) { alert('Заполните все поля'); return; }
+            const res = await fetch('/api/auth/register-by-id', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, login, password }) });
+            const data = await res.json();
+            if (res.ok && data.access_token) { localStorage.setItem('token', data.access_token); window.location.href = '/identity-hub'; }
+            else alert(data.error || 'Ошибка регистрации по ID');
+        }
+        
+        async function sendRegisterCode() {
+            const name = document.getElementById('regPhoneName').value;
+            const phone = document.getElementById('regPhone').value;
+            if (!name || !phone) { alert('Заполните имя и телефон'); return; }
+            savedRegisterPhone = phone;
+            const res = await fetch('/api/auth/send-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+            if (res.ok) { document.getElementById('registerCodeGroup').style.display = 'block'; alert('Код отправлен!'); }
+            else alert('Ошибка отправки кода');
+        }
+        
+        async function verifyRegisterCode() {
+            const code = document.getElementById('registerCode').value;
+            const res = await fetch('/api/auth/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: savedRegisterPhone, code }) });
+            const data = await res.json();
+            if (res.ok && data.access_token) { localStorage.setItem('token', data.access_token); window.location.href = '/identity-hub'; }
+            else alert(data.error || 'Неверный код');
+        }
+        
+        if (localStorage.getItem('token')) { window.location.href = '/identity-hub'; }
+        
+        // Запуск по умолчанию
+        switchLoginMethod('email');
+        switchRegisterMethod('email');
+    </script>
+</body>
+</html>
+{{end}}

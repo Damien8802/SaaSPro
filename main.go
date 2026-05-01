@@ -382,6 +382,12 @@ public := r.Group("/")
     public.GET("/pricing", handlers.PricingPageHandler)
     public.GET("/partner", handlers.PartnerHandler)
     public.GET("/fusion-api", handlers.FusionAPIPortalHandler)
+    public.GET("/identity-landing", handlers.IdentityHubLandingHandler)
+  // Identity Hub отдельные страницы
+    public.GET("/identity-login", handlers.IdentityLoginPageHandler)
+
+
+
 
     // ========== БЛОГ ==========
     r.GET("/blog", func(c *gin.Context) {
@@ -851,6 +857,7 @@ r.GET("/suppliers", func(c *gin.Context) {
         identityAPI.GET("/apps", handlers.GetConnectedApps)
         identityAPI.DELETE("/apps/:id", handlers.RevokeAppAccess)
         identityAPI.GET("/activity", handlers.GetActivityLog)
+        identityAPI.GET("/activity/export", handlers.ExportActivityLog)
     }
 
     // Админские API для OAuth клиентов
@@ -1414,6 +1421,9 @@ vpnAlias.Use(middleware.AuthMiddleware(cfg))
         authAPI.POST("/trusted-devices/add", handlers.AddTrustedDevice)
         authAPI.POST("/trusted-devices/revoke", handlers.RevokeTrustedDevice)
         authAPI.GET("/trusted-devices/list", handlers.GetTrustedDevices)
+authAPI.POST("/login-by-id", handlers.LoginByIDHandler)
+authAPI.POST("/register-by-id", handlers.RegisterByIDHandler)
+
     }
 
     // Реферальная программа
@@ -1820,7 +1830,11 @@ api.POST("/sessions/limit", handlers.SetMaxSessions)
 
     // Публичное API с защитой через API ключи
     v1 := r.Group("/api/v1")
-    v1.Use(middleware.APIKeyAuthMiddleware())
+   v1.Use(middleware.AuthMiddleware(cfg))
+
+   // ========== API ИНТЕГРАЦИИ ДЛЯ ВНЕШНИХ СЕРВИСОВ ==========
+    v1.POST("/auth/verify", handlers.VerifyTokenHandler)
+    v1.GET("/user/info", handlers.GetUserInfoByToken)
     {
         v1.GET("/health", handlers.HealthHandler)
         v1.POST("/ai/ask", handlers.AIAskHandler)
@@ -1861,6 +1875,20 @@ api.POST("/sessions/limit", handlers.SetMaxSessions)
  // Админские API для выплат
     adminAPI.GET("/payouts", handlers.AdminGetPayouts)
     adminAPI.POST("/payouts/update", handlers.AdminUpdatePayoutStatus)
+
+    // ========== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (CRUD) ==========
+    adminAPI.GET("/users/all", handlers.GetAllUsers)
+    adminAPI.POST("/users/create", handlers.CreateUser)
+    adminAPI.PUT("/users/:id", handlers.UpdateUser)
+    adminAPI.DELETE("/users/:id", handlers.DeleteUser)
+    adminAPI.POST("/users/:id/block", handlers.BlockUser)
+    adminAPI.POST("/users/:id/unblock", handlers.UnblockUser)
+    adminAPI.PUT("/users/:id/role", handlers.ChangeUserRole)
+    // ========== УПРАВЛЕНИЕ РОЛЯМИ ==========
+    adminAPI.GET("/roles", handlers.GetRoles)
+    adminAPI.POST("/roles", handlers.CreateRole)
+    adminAPI.POST("/users/:id/assign-role", handlers.AssignRole)
+    adminAPI.GET("/users/:id/roles", handlers.GetUserRoles)
     }
 
     // Админская страница для управления компаниями (отдельно)

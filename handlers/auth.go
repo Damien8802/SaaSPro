@@ -447,3 +447,103 @@ func ResendVerificationHandler(c *gin.Context) {
     })
 }
 
+
+// LoginByIDHandler - login by ID
+func LoginByIDHandler(c *gin.Context) {
+    var req struct {
+        Login    string `json:"login" binding:"required"`
+        Password string `json:"password" binding:"required"`
+    }
+    
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    var user models.User
+    err := database.Pool.QueryRow(c.Request.Context(),
+        `SELECT id, name, email, password_hash, role, COALESCE(login, '') as login 
+         FROM users WHERE login = $1 OR email = $1`,
+        req.Login).Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.Role, &user.Login)
+    
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid login or password"})
+        return
+    }
+    
+    if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid login or password"})
+        return
+    }
+    
+    accessToken, refreshToken, err := utils.GenerateTokens(user.ID.String(), user.Name, user.Email, user.Role)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "access_token":  accessToken,
+        "refresh_token": refreshToken,
+        "user": gin.H{
+            "id":    user.ID,
+            "login": user.Login,
+            "email": user.Email,
+            "name":  user.Name,
+        },
+    })
+}
+// RegisterByIDHandler - register by ID
+func RegisterByIDHandler(c *gin.Context) {
+    var req struct {
+        Name     string `json:"name" binding:"required"`
+        ID       string `json:"id" binding:"required"`
+        Password string `json:"password" binding:"required,min=6"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    var exists bool
+    database.Pool.QueryRow(c.Request.Context(),
+        "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 OR email = $1)", req.ID).Scan(&exists)
+
+    if exists {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ID already registered"})
+        return
+    }
+
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+        return
+    }
+
+    userID := uuid.New()
+    email := req.ID + "@id.saaspro.ru"
+
+    _, err = database.Pool.Exec(c.Request.Context(),
+        `INSERT INTO users (id, name, email, password_hash, role, tenant_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, 'user', '11111111-1111-1111-1111-111111111111', NOW(), NOW())`,
+        userID, req.Name, email, string(hashedPassword))
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+        return
+    }
+
+    accessToken, refreshToken, err := utils.GenerateTokens(userID.String(), req.Name, email, "user")
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "access_token":  accessToken,
+        "refresh_token": refreshToken,
+        "user": gin.H{"id": userID, "email": email, "name": req.Name, "role": "user"},
+        "message": "Registration by ID successful",
+    })
+}
