@@ -613,34 +613,45 @@
             }
         }
         
-        async function startDeveloperTrial() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Пожалуйста, войдите в аккаунт');
-                window.location.href = '/login?redirect=/identity-hub';
-                return;
-            }
-            
-            try {
-                const res = await fetch('/api/developer/trial/start', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    }
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert('Пробный период разработчика на 14 дней активирован!');
-                    window.location.reload();
-                } else {
-                    alert(data.error || 'Ошибка активации');
-                }
-            } catch(e) {
-                alert('Ошибка подключения к серверу');
-            }
-        }
+       async function startDeveloperTrial() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('Пожалуйста, войдите в аккаунт');
+        window.location.href = '/login?redirect=/identity-hub';
+        return;
+    }
+    
+    try {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Активация...';
+        button.disabled = true;
         
+        const res = await fetch('/api/developer/trial/start', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            alert('Пробный период разработчика на 14 дней активирован!');
+            // ПЕРЕНАПРАВЛЯЕМ НА DEVELOPER PORTAL
+            window.location.href = '/developer-portal';
+        } else {
+            alert(data.error || 'Ошибка активации');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    } catch(e) {
+        alert('Ошибка подключения к серверу');
+        const button = event.target;
+        button.innerHTML = '🚀 Стать разработчиком';
+        button.disabled = false;
+    }
+}
         async function showDevButtons() {
             try {
                 const token = localStorage.getItem('token');

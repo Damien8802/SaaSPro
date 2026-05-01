@@ -844,7 +844,8 @@ r.GET("/suppliers", func(c *gin.Context) {
   r.GET("/identity-hub", 
     middleware.AuthMiddleware(cfg), 
     handlers.IdentityHubRouter)
-     r.GET("/developer-portal", middleware.AuthMiddleware(cfg), handlers.DeveloperPortalHandler)
+    // Developer Portal - доступен всем, но контент зависит от роли
+r.GET("/developer-portal", middleware.AuthMiddleware(cfg), handlers.DeveloperPortalHandler)
   
 
     // ========== РАСШИРЕННЫЕ API ДЛЯ IDENTITY HUB ==========
@@ -1566,6 +1567,76 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         }
         c.Next()
     })
+
+// ========== WEBHOOKS ДЛЯ РАЗРАБОТЧИКОВ ==========
+api.GET("/webhooks", func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, url, events, secret, created_at FROM webhooks WHERE user_id = $1
+    `, userID)
+    if err != nil {
+        c.JSON(200, []gin.H{})
+        return
+    }
+    defer rows.Close()
+    
+    var webhooks []gin.H
+    for rows.Next() {
+        var id, url, secret string
+        var events interface{}
+        var createdAt time.Time
+        
+        rows.Scan(&id, &url, &events, &secret, &createdAt)
+        webhooks = append(webhooks, gin.H{
+            "id":         id,
+            "url":        url,
+            "events":     events,
+            "secret":     secret,
+            "created_at": createdAt,
+        })
+    }
+    c.JSON(200, webhooks)
+})
+
+api.POST("/webhooks", func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    var req struct {
+        URL    string   `json:"url"`
+        Events []string `json:"events"`
+        Secret string   `json:"secret"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO webhooks (user_id, url, events, secret, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
+    `, userID, req.URL, req.Events, req.Secret)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+api.DELETE("/webhooks/:id", func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    id := c.Param("id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        DELETE FROM webhooks WHERE id = $1 AND user_id = $2
+    `, id, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
     api.Use(middleware.AuthMiddleware(cfg))
     {
         api.GET("/notifications/settings", handlers.GetNotificationSettings)
@@ -1730,6 +1801,15 @@ api.POST("/sessions/limit", handlers.SetMaxSessions)
             c.JSON(500, gin.H{"error": err.Error()})
             return
         }
+
+   // ПОВЫШАЕМ РОЛЬ ДО DEVELOPER
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        UPDATE users SET role = 'developer' WHERE id = $1 AND role = 'user'
+    `, userID)
+    
+    if err != nil {
+        fmt.Printf("⚠️ Ошибка повышения роли: %v\n", err)
+    }
         
         c.JSON(200, gin.H{
             "success":     true,
@@ -1737,6 +1817,110 @@ api.POST("/sessions/limit", handlers.SetMaxSessions)
             "trial_days":  14,
         })
     })
+
+// ========== DEVELOPER PORTAL СТАТИСТИКА ==========
+api.GET("/developer/stats", func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    
+    var totalRequests, totalUsers, totalApps int64
+    
+    // Количество запросов к API
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COUNT(*) FROM api_usage WHERE user_id = $1
+    `, userID).Scan(&totalRequests)
+    
+    // Количество пользователей
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COUNT(DISTINCT user_id) FROM oauth_authorizations 
+        WHERE client_id IN (SELECT id FROM oauth_clients WHERE id IN (
+            SELECT client_id FROM oauth_authorizations WHERE user_id = $1
+        ))
+    `, userID).Scan(&totalUsers)
+    
+    // Количество приложений разработчика
+    database.Pool.QueryRow(c.Request.Context(), `
+        SELECT COUNT(*) FROM oauth_clients 
+        WHERE client_id IN (SELECT client_id FROM oauth_authorizations WHERE user_id = $1)
+    `, userID).Scan(&totalApps)
+    
+    c.JSON(200, gin.H{
+        "total_requests": totalRequests,
+        "total_users":     totalUsers,
+        "total_apps":      totalApps,
+        "labels":         []string{"Янв", "Фев", "Мар", "Апр", "Май", "Июн"},
+        "values":         []int64{65, 59, 80, 81, 56, 55},
+    })
+})
+
+// ========== WEBHOOKS ==========
+api.GET("/api/webhooks", func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, url, events, secret, created_at FROM webhooks WHERE user_id = $1
+    `, userID)
+    if err != nil {
+        c.JSON(200, []gin.H{})
+        return
+    }
+    defer rows.Close()
+    
+    var webhooks []gin.H
+    for rows.Next() {
+        var id, url, secret string
+        var events interface{}
+        var createdAt time.Time
+        
+        rows.Scan(&id, &url, &events, &secret, &createdAt)
+        webhooks = append(webhooks, gin.H{
+            "id":         id,
+            "url":        url,
+            "events":     events,
+            "secret":     secret,
+            "created_at": createdAt,
+        })
+    }
+    c.JSON(200, webhooks)
+})
+
+api.POST("/api/webhooks", func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    var req struct {
+        URL    string   `json:"url"`
+        Events []string `json:"events"`
+        Secret string   `json:"secret"`
+    }
+    if err := c.BindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO webhooks (user_id, url, events, secret, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
+    `, userID, req.URL, req.Events, req.Secret)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
+
+api.DELETE("/api/webhooks/:id", func(c *gin.Context) {
+    userID := c.GetString("user_id")
+    id := c.Param("id")
+    
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        DELETE FROM webhooks WHERE id = $1 AND user_id = $2
+    `, id, userID)
+    
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"success": true})
+})
 
     // ========== API KEYS MANAGEMENT ==========
     apiKeysGroup := r.Group("/api/keys")

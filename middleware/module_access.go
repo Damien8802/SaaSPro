@@ -223,23 +223,43 @@ func RequireDeveloperAccess() gin.HandlerFunc {
     }
 }
 
+
 // StartDeveloperTrial - начать триальный период для разработчика
 func StartDeveloperTrial(userID string) error {
-    _, err := database.Pool.Exec(context.Background(), `
-        INSERT INTO developer_subscriptions (user_id, plan, trial_start, trial_end, max_apps, max_users, status)
-        VALUES ($1, 'trial', NOW(), NOW() + INTERVAL '14 days', 1, 100, 'active')
-        ON CONFLICT (user_id) DO UPDATE SET
-            plan = 'trial',
-            trial_start = NOW(),
-            trial_end = NOW() + INTERVAL '14 days',
-            max_apps = 1,
-            max_users = 100,
-            status = 'active',
-            updated_at = NOW()
+    // Проверяем, нет ли уже активного триала
+    var existingEnd time.Time
+    err := database.Pool.QueryRow(context.Background(), `
+        SELECT trial_end FROM developer_trials 
+        WHERE user_id = $1 AND trial_end > NOW()
+    `, userID).Scan(&existingEnd)
+    
+    if err == nil {
+        // Триал уже активен, но всё равно повышаем роль на всякий случай
+        _, _ = database.Pool.Exec(context.Background(), `
+            UPDATE users SET role = 'developer' WHERE id = $1 AND role = 'user'
+        `, userID)
+        return nil
+    }
+    
+    // Создаём триал на 14 дней
+    trialEnd := time.Now().Add(14 * 24 * time.Hour)
+    _, err = database.Pool.Exec(context.Background(), `
+        INSERT INTO developer_trials (user_id, trial_end, created_at)
+        VALUES ($1, $2, NOW())
+        ON CONFLICT (user_id) DO UPDATE SET trial_end = $2
+    `, userID, trialEnd)
+    
+    if err != nil {
+        return err
+    }
+    
+    // ПОВЫШАЕМ РОЛЬ ДО DEVELOPER (ВОТ ЭТО ВАЖНО!)
+    _, err = database.Pool.Exec(context.Background(), `
+        UPDATE users SET role = 'developer' WHERE id = $1 AND role = 'user'
     `, userID)
+    
     return err
 }
-
 // GetDeveloperSubscription - получить информацию о подписке разработчика
 func GetDeveloperSubscription(userID string) (map[string]interface{}, error) {
     var plan string

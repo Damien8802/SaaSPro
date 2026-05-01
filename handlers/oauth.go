@@ -986,6 +986,20 @@ func StartModuleTrial(c *gin.Context) {
         }
     }
     
+    // ========== ДОБАВИТЬ ЭТОТ БЛОК ==========
+    // Если активируем триал разработчика (module = 'developer') - повышаем роль
+    if moduleName == "identity_hub" {
+        _, err = database.Pool.Exec(c.Request.Context(), `
+            UPDATE users SET role = 'developer' WHERE id = $1 AND role = 'user'
+        `, userID)
+        if err != nil {
+            fmt.Printf("⚠️ Ошибка повышения роли: %v\n", err)
+        } else {
+            fmt.Printf("✅ Роль пользователя %s повышена до developer\n", userID)
+        }
+    }
+    // ========== КОНЕЦ БЛОКА ==========
+    
     fmt.Printf("✅ Trial activated for user %s, module %s until %v\n", userID, moduleName, trialEnd)
     
     c.JSON(200, gin.H{
@@ -994,8 +1008,8 @@ func StartModuleTrial(c *gin.Context) {
         "trialEnd":   trialEnd,
         "moduleName": moduleName,
     })
-
 }
+
 // ExportActivityLog - экспорт логов активности в CSV
 func ExportActivityLog(c *gin.Context) {
     userID := c.GetString("user_id")
@@ -1489,4 +1503,71 @@ func GetUserRoles(c *gin.Context) {
     }
     
     c.JSON(200, gin.H{"roles": roles})
+}
+
+// StartDeveloperTrial - активация триала разработчика и повышение роли
+func StartDeveloperTrial(c *gin.Context) {
+    userID := c.GetString("user_id")
+    
+    fmt.Printf("🔍 StartDeveloperTrial: userID=%s\n", userID)
+    
+    if userID == "" {
+        c.JSON(401, gin.H{"error": "Unauthorized", "success": false})
+        return
+    }
+    
+    // Проверяем, есть ли уже активный триал
+    var existingTrial time.Time
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT trial_end FROM developer_trials 
+        WHERE user_id = $1 AND trial_end > NOW()
+    `, userID).Scan(&existingTrial)
+    
+    if err == nil {
+        c.JSON(200, gin.H{
+            "success": true,
+            "message": "У вас уже активен пробный период разработчика!",
+            "trialEnd": existingTrial,
+        })
+        return
+    }
+    
+    // Активируем триал на 14 дней
+    trialEnd := time.Now().Add(14 * 24 * time.Hour)
+    
+    // Сохраняем триал разработчика
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO developer_trials (user_id, trial_end, created_at, updated_at)
+        VALUES ($1, $2, NOW(), NOW())
+        ON CONFLICT (user_id) DO UPDATE SET trial_end = $2, updated_at = NOW()
+    `, userID, trialEnd)
+    
+    if err != nil {
+        fmt.Printf("❌ Error activating developer trial: %v\n", err)
+        c.JSON(500, gin.H{
+            "error":   "Failed to activate trial",
+            "details": err.Error(),
+            "success": false,
+        })
+        return
+    }
+    
+    // ПОВЫШАЕМ РОЛЬ ДО DEVELOPER
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        UPDATE users SET role = 'developer' WHERE id = $1 AND role = 'user'
+    `, userID)
+    
+    if err != nil {
+        fmt.Printf("⚠️ Ошибка повышения роли: %v\n", err)
+    } else {
+        fmt.Printf("✅ Роль пользователя %s повышена до developer\n", userID)
+    }
+    
+    fmt.Printf("✅ Developer trial activated for user %s until %v\n", userID, trialEnd)
+    
+    c.JSON(200, gin.H{
+        "success":    true,
+        "message":    "Пробный период разработчика на 14 дней активирован!",
+        "trialEnd":   trialEnd,
+    })
 }
