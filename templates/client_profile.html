@@ -29,20 +29,70 @@
             padding: 40px;
             text-align: center;
         }
+        
+        /* Стили для аватарки */
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto 20px;
+        }
         .profile-avatar {
             width: 100px;
             height: 100px;
-            background: rgba(255,255,255,0.1);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
-            margin: 0 auto 15px;
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
             border: 3px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-        .profile-name { font-size: 28px; font-weight: 800; color: white; }
-        .profile-email { color: rgba(255,255,255,0.8); margin-top: 5px; }
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-avatar:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        .camera-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #4f46e5;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .camera-btn:hover {
+            background: #7c3aed;
+            transform: scale(1.1);
+        }
+        
+        .profile-name { font-size: 28px; font-weight: 800; color: white; margin-top: 10px; }
+        .profile-org { 
+            color: rgba(255,255,255,0.7); 
+            font-size: 14px; 
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .profile-email { color: rgba(255,255,255,0.8); margin-top: 5px; font-size: 14px; }
         .profile-role {
             display: inline-block;
             background: rgba(255,255,255,0.2);
@@ -177,7 +227,7 @@
             border: 1px solid rgba(79,70,229,0.4);
         }
         .modal-content h3 { color: white; margin-bottom: 24px; }
-        .modal-content input {
+        .modal-content input, .modal-content textarea {
             width: 100%;
             padding: 12px;
             margin-bottom: 20px;
@@ -199,34 +249,35 @@
             .info-row { flex-direction: column; gap: 5px; }
             .info-label { width: 100%; }
         }
-            /* Белый календарь */
-        input[type="date"] {
-            color-scheme: dark;
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator:hover {
-            filter: invert(0.8);
-        }
-</style>
+        input[type="date"] { color-scheme: dark; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+    </style>
 </head>
 <body>
 <div class="container">
     <div class="profile-card">
-      <div class="profile-header">
-    <div class="profile-avatar" id="avatar">👤</div>
-    <h1 class="profile-name" id="userName">Загрузка...</h1>
-    <div class="profile-email" id="userEmail">-</div>
-    <div><span class="profile-role" id="userRole">Клиент</span></div>
-    <!-- Кнопка Дашборд -->
-    <div style="margin-top: 20px;">
-        <a href="/dashboard-improved" style="display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 28px; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16,185,129,0.4);">
-            <i class="fas fa-chart-line"></i> 📊 Дашборд
-        </a>
-    </div>
-</div>
+        <div class="profile-header">
+            <!-- Аватарка с кнопкой камеры -->
+            <div class="avatar-container">
+                <div class="profile-avatar" id="avatarDisplay" onclick="document.getElementById('avatarInput').click()">
+                    <span id="avatarInitial">👤</span>
+                </div>
+                <button class="camera-btn" onclick="document.getElementById('avatarInput').click()">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
+            <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+            
+            <h1 class="profile-name" id="userName">Загрузка...</h1>
+            <div class="profile-org" id="userOrganization"></div>
+            <div class="profile-email" id="userEmail">-</div>
+            <div><span class="profile-role" id="userRole">Клиент</span></div>
+            <div style="margin-top: 20px;">
+                <a href="/dashboard-improved" style="display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 28px; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16,185,129,0.4);">
+                    <i class="fas fa-chart-line"></i> 📊 Дашборд
+                </a>
+            </div>
+        </div>
         
         <div class="tabs">
             <button class="tab-btn active" onclick="showTab('overview')"><i class="fas fa-user"></i> Обзор</button>
@@ -264,6 +315,8 @@
                 <div class="info-row"><div class="info-label">Email</div><div class="info-value" id="infoEmail">-</div></div>
                 <div class="info-row"><div class="info-label">Имя</div><div class="info-value" id="infoName">-</div></div>
                 <div class="info-row"><div class="info-label">Телефон</div><div class="info-value" id="infoPhone">-</div></div>
+                <div class="info-row"><div class="info-label">Организация</div><div class="info-value" id="infoOrganization">-</div></div>
+                <div class="info-row"><div class="info-label">ИНН</div><div class="info-value" id="infoInn">-</div></div>
                 <div class="info-row"><div class="info-label">Дата регистрации</div><div class="info-value" id="infoRegDate">-</div></div>
                 <div class="info-row"><div class="info-label">Роль</div><div class="info-value" id="infoRole">-</div></div>
                 <div class="info-row"><div class="info-label">Статус</div><div class="info-value"><span class="badge badge-active" id="infoStatus">Активен</span></div></div>
@@ -341,9 +394,9 @@
         <div id="securityTab" class="tab-content">
             <div class="dashboard-card">
                 <h3><i class="fas fa-key"></i> Смена пароля</h3>
-                <div class="info-row"><div class="info-label">Текущий пароль</div><div class="info-value"><input type="password" id="currentPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px;"></div></div>
-                <div class="info-row"><div class="info-label">Новый пароль</div><div class="info-value"><input type="password" id="newPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px;"></div></div>
-                <div class="info-row"><div class="info-label">Подтверждение</div><div class="info-value"><input type="password" id="confirmPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px;"></div></div>
+                <div class="info-row"><div class="info-label">Текущий пароль</div><div class="info-value"><input type="password" id="currentPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px; width:100%;"></div></div>
+                <div class="info-row"><div class="info-label">Новый пароль</div><div class="info-value"><input type="password" id="newPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px; width:100%;"></div></div>
+                <div class="info-row"><div class="info-label">Подтверждение</div><div class="info-value"><input type="password" id="confirmPassword" placeholder="******" style="background:rgba(255,255,255,0.08); border:1px solid rgba(79,70,229,0.3); border-radius:12px; color:white; padding:10px; width:100%;"></div></div>
                 <div style="margin-top: 20px;"><button class="btn-action btn-save" onclick="changePassword()"><i class="fas fa-save"></i> Сменить пароль</button></div>
             </div>
             <div class="dashboard-card" style="margin-top: 20px;">
@@ -363,6 +416,10 @@
         <input type="text" id="editName" placeholder="Ваше имя">
         <label>Телефон</label>
         <input type="text" id="editPhone" placeholder="+7-xxx-xxx-xx-xx">
+        <label>Организация</label>
+        <input type="text" id="editOrganization" placeholder="Название организации">
+        <label>ИНН</label>
+        <input type="text" id="editInn" placeholder="ИНН организации">
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeEditProfileModal()">Отмена</button>
             <button class="btn-save" onclick="saveProfile()">Сохранить</button>
@@ -372,17 +429,92 @@
 
 <script>
     let currentUser = null;
+    let currentAvatarUrl = '';
+    
+    // Функции для аватарки
+    async function uploadAvatar(file) {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        try {
+            const response = await fetch('/api/avatar/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                currentAvatarUrl = data.avatar_url;
+                updateAvatarDisplay(currentAvatarUrl);
+                alert('✅ Аватар загружен!');
+            } else {
+                alert(data.error || 'Ошибка загрузки');
+            }
+        } catch(err) {
+            console.error(err);
+            alert('Ошибка загрузки');
+        }
+    }
+    
+    function updateAvatarDisplay(url) {
+        const avatarDiv = document.getElementById('avatarDisplay');
+        const initialSpan = document.getElementById('avatarInitial');
+        
+        if (url && url !== '') {
+            avatarDiv.innerHTML = `<img src="${url}?t=${Date.now()}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        } else {
+            const name = currentUser?.name || '👤';
+            avatarDiv.innerHTML = `<span id="avatarInitial" style="font-size: 40px;">${name.charAt(0).toUpperCase()}</span>`;
+        }
+    }
+    
+    async function loadAvatar() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const response = await fetch(`/api/avatar/${payload.user_id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.avatar_url) {
+                currentAvatarUrl = data.avatar_url;
+                updateAvatarDisplay(currentAvatarUrl);
+            }
+        } catch(e) {}
+    }
+    
+    // Обработчик выбора файла
+    document.getElementById('avatarInput').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            uploadAvatar(this.files[0]);
+        }
+    });
     
     // Загрузка данных пользователя
     async function loadUserData() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
         try {
-            const res = await fetch('/api/client/data');
-            if (res.ok) {
-                currentUser = await res.json();
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userId = payload.user_id;
+            
+            const response = await fetch(`/api/user/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                currentUser = await response.json();
                 updateUI();
             } else {
-                // Fallback на /api/current-user
-                const res2 = await fetch('/api/current-user');
+                // Fallback
+                const res2 = await fetch('/api/current-user', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (res2.ok) {
                     const user = await res2.json();
                     currentUser = { name: user.name || 'Клиент', email: user.email || '—', user_id: user.user_id };
@@ -391,26 +523,53 @@
             }
         } catch(e) { console.error(e); }
         
-        // Загружаем заявки пользователя
         loadUserOrders();
         loadUserIdeas();
+        loadAvatar();
     }
     
     function updateUI() {
+        // Имя
         document.getElementById('userName').innerText = currentUser?.name || 'Клиент';
-        document.getElementById('userEmail').innerText = currentUser?.email || '—';
-        document.getElementById('avatar').innerHTML = (currentUser?.name?.charAt(0) || '👤').toUpperCase();
-        
-        document.getElementById('infoEmail').innerText = currentUser?.email || '—';
         document.getElementById('infoName').innerText = currentUser?.name || '—';
-        document.getElementById('infoPhone').innerText = currentUser?.phone || '—';
-        document.getElementById('infoRegDate').innerText = currentUser?.created_at?.slice(0,10) || '—';
-        document.getElementById('infoRole').innerText = currentUser?.role || 'Клиент';
         
+        // Email
+        document.getElementById('userEmail').innerText = currentUser?.email || '—';
+        document.getElementById('infoEmail').innerText = currentUser?.email || '—';
+        
+        // Организация
+        const orgHtml = currentUser?.is_organization && currentUser?.organization_name 
+            ? `<i class="fas fa-building"></i> ${currentUser.organization_name}`
+            : '';
+        document.getElementById('userOrganization').innerHTML = orgHtml;
+        document.getElementById('infoOrganization').innerText = currentUser?.organization_name || 'Не указана';
+        document.getElementById('infoInn').innerText = currentUser?.organization_inn || '—';
+        
+        // Телефон
+        document.getElementById('infoPhone').innerText = currentUser?.phone || '—';
+        
+        // Роль
+        const roleMap = { 'owner': '👑 Владелец', 'admin': '🛠️ Администратор', 'developer': '💻 Разработчик', 'client': '👤 Клиент' };
+        const roleText = roleMap[currentUser?.role] || '👤 Клиент';
+        document.getElementById('userRole').innerText = roleText;
+        document.getElementById('infoRole').innerText = roleText;
+        
+        // Дата регистрации
+        document.getElementById('infoRegDate').innerText = currentUser?.created_at?.slice(0,10) || '—';
+        
+        // Статистика
         document.getElementById('statProjects').innerHTML = currentUser?.projects_count || 0;
         document.getElementById('statOrders').innerHTML = currentUser?.orders_count || 0;
         document.getElementById('statIdeas').innerHTML = currentUser?.ideas_count || 0;
         document.getElementById('statDays').innerHTML = currentUser?.days_with_us || 0;
+        
+        // Обновляем аватар
+        if (currentUser?.name) {
+            const avatarDiv = document.getElementById('avatarDisplay');
+            if (!currentAvatarUrl) {
+                avatarDiv.innerHTML = `<span id="avatarInitial" style="font-size: 40px;">${currentUser.name.charAt(0).toUpperCase()}</span>`;
+            }
+        }
     }
     
     async function loadUserOrders() {
@@ -418,15 +577,9 @@
             const token = localStorage.getItem('token');
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
             const res = await fetch('/api/orders/list', { headers });
-            if (!res.ok) {
-                console.error('Failed to load orders:', res.status);
-                const container = document.getElementById('userOrdersList');
-                if (container) container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">❌ Ошибка загрузки заявок</div>';
-                return;
-            }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             const orders = await res.json();
             const userEmail = currentUser?.email;
-            // Проверяем, что orders существует и является массивом
             const userOrders = (orders && Array.isArray(orders)) ? orders.filter(o => o.contact?.includes(userEmail) || o.name === currentUser?.name) : [];
             const container = document.getElementById('userOrdersList');
             const recentContainer = document.getElementById('recentOrders');
@@ -465,11 +618,12 @@
                 recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет заявок</div>';
             }
         } catch(e) { 
-            console.error('loadUserOrders error:', e);
+            console.error(e);
             const container = document.getElementById('userOrdersList');
             if (container) container.innerHTML = '<div class="dashboard-card" style="text-align:center; padding:40px;">❌ Ошибка загрузки</div>';
         }
     }
+    
     async function loadUserIdeas() {
         try {
             const res = await fetch('/api/feature-requests');
@@ -502,7 +656,6 @@
                         <small>${i.priority === 'high' ? '🔴 Высокий' : '🟡 Средний'} | ${i.date}</small>
                     </div>
                 `).join('');
-                if (userIdeas.length === 0) recentContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет идей</div>';
             }
         } catch(e) { console.error(e); }
     }
@@ -556,6 +709,8 @@
     function openEditProfileModal() {
         document.getElementById('editName').value = currentUser?.name || '';
         document.getElementById('editPhone').value = currentUser?.phone || '';
+        document.getElementById('editOrganization').value = currentUser?.organization_name || '';
+        document.getElementById('editInn').value = currentUser?.organization_inn || '';
         document.getElementById('editProfileModal').style.display = 'flex';
     }
     
@@ -564,11 +719,13 @@
     async function saveProfile() {
         const name = document.getElementById('editName').value;
         const phone = document.getElementById('editPhone').value;
+        const organization = document.getElementById('editOrganization').value;
+        const inn = document.getElementById('editInn').value;
         
         const res = await fetch('/api/user/profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, phone })
+            body: JSON.stringify({ name, phone, organization_name: organization, organization_inn: inn })
         });
         
         if (res.ok) {
@@ -603,9 +760,7 @@
         if (tabName === 'features') loadUserIdeas();
     }
     
-    loadUserData();
-
-    // ========== АКТЫ СВЕРКИ ==========
+    // Акты сверки
     async function generateReconciliationAct() {
         const token = localStorage.getItem('token');
         const counterpartyName = document.getElementById('recCounterpartyName')?.value;
@@ -696,61 +851,7 @@
         }
     }
     
-    async function editReconciliationAct(actId) {
-        const token = localStorage.getItem('token');
-        try {
-            const response = await fetch(`/api/reconciliation/act/${actId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const act = await response.json();
-            
-            const newName = prompt("Новое название контрагента:", act.counterparty_name);
-            if (!newName) return;
-            const newINN = prompt("Новый ИНН:", act.counterparty_inn);
-            const newStart = prompt("Новая дата начала (ГГГГ-ММ-ДД):", act.period_start.split('.').reverse().join('-'));
-            const newEnd = prompt("Новая дата окончания (ГГГГ-ММ-ДД):", act.period_end.split('.').reverse().join('-'));
-            
-            const updateResponse = await fetch(`/api/reconciliation/update/${actId}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    counterparty_name: newName,
-                    counterparty_inn: newINN,
-                    period_start: newStart,
-                    period_end: newEnd
-                })
-            });
-            
-            if (updateResponse.ok) {
-                alert('✅ Акт обновлён');
-                loadMyReconciliationActs();
-            } else {
-                alert('❌ Ошибка обновления');
-            }
-        } catch(e) { alert('Ошибка: ' + e.message); }
-    }
-    
-    async function deleteReconciliationAct(actId) {
-        if (!confirm('⚠️ Удалить этот акт сверки? Действие необратимо!')) return;
-        
-        const token = localStorage.getItem('token');
-        try {
-            const response = await fetch(`/api/reconciliation/delete/${actId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (response.ok) {
-                alert('✅ Акт удалён');
-                loadMyReconciliationActs();
-            } else {
-                alert('❌ Ошибка удаления');
-            }
-        } catch(e) { alert('Ошибка: ' + e.message); }
-    }
+    loadUserData();
 </script>
 </body>
 </html>
-
-
-

@@ -13,16 +13,20 @@ import (
 func DashboardImprovedHandler(c *gin.Context) {
     userID := c.GetString("user_id")
     userName := c.GetString("user_name")
+    userEmail := c.GetString("user_email")
+    role := c.GetString("role")
     isDeveloper := false
     
-    log.Printf("DEBUG: userID=%s, userName=%s", userID, userName)
+    log.Printf("DEBUG: userID=%s, userName=%s, userEmail=%s, role=%s", userID, userName, userEmail, role)
     
     // Если SKIP_AUTH=true, используем тестового разработчика
     if userID == "" {
         userID = "aa5f14e6-30e1-476c-ac42-8c11ced838a4"
-        userName = "Разработчик"
+        userName = "Максим"
+        userEmail = "dev@businesstack.ru"
         isDeveloper = true
-        log.Printf("DEBUG: SKIP_AUTH режим, установлен разработчик")
+        role = "owner"
+        log.Printf("DEBUG: SKIP_AUTH режим, установлен владелец")
     } else {
         // Проверяем в БД, является ли пользователь разработчиком
         if userID != "" {
@@ -32,18 +36,34 @@ func DashboardImprovedHandler(c *gin.Context) {
                 log.Printf("Ошибка проверки is_developer: %v", err)
             }
         }
+        // Получаем email если его нет
+        if userEmail == "" {
+            database.Pool.QueryRow(c.Request.Context(),
+                "SELECT email FROM users WHERE id = $1", userID).Scan(&userEmail)
+        }
     }
     
     if userName == "" {
         userName = "Пользователь"
     }
     
+    if userEmail == "" {
+        userEmail = "dev@businesstack.ru"
+    }
+    
+    if role == "" {
+        role = "user"
+    }
+    
     c.HTML(http.StatusOK, "dashboard-improved.html", gin.H{
-        "Title":       "Улучшенный дашборд - SaaSPro",
-        "Version":     "3.0",
-        "Time":        time.Now().Format("2006-01-02 15:04:05"),
-        "UserName":    userName,
-        "IsDeveloper": isDeveloper,
+        "Title":           "Улучшенный дашборд - SaaSPro",
+        "Version":         "3.0",
+        "Time":            time.Now().Format("2006-01-02 15:04:05"),
+        "UserName":        userName,
+        "UserEmail":       userEmail,
+        "IsDeveloper":     isDeveloper,
+        "IsAdmin":         (role == "admin" || role == "owner" || isDeveloper),
+        "IsРазработчик":   isDeveloper,
         "Stats": gin.H{
             "ClientsCount": 0,
             "DealsCount":   0,
@@ -54,33 +74,113 @@ func DashboardImprovedHandler(c *gin.Context) {
 }
 
 func RealtimeDashboardHandler(c *gin.Context) {
+    userID := c.GetString("user_id")
+    userName := c.GetString("user_name")
+    isDeveloper := false
+
+    if userID != "" {
+        err := database.Pool.QueryRow(c.Request.Context(),
+            "SELECT is_developer FROM users WHERE id = $1", userID).Scan(&isDeveloper)
+        if err != nil {
+            log.Printf("Ошибка проверки is_developer: %v", err)
+        }
+    }
+
+    if userName == "" {
+        userName = "Пользователь"
+    }
+
     c.HTML(http.StatusOK, "realtime-dashboard.html", gin.H{
-        "Title":   "Дашборд реального времени - SaaSPro",
-        "Version": "3.0",
-        "Time":    time.Now().Format("2006-01-02 15:04:05"),
+        "Title":           "Дашборд реального времени - SaaSPro",
+        "Version":         "3.0",
+        "Time":            time.Now().Format("2006-01-02 15:04:05"),
+        "IsAuthenticated": userID != "",
+        "UserName":        userName,
+        "IsDeveloper":     isDeveloper,
+        "IsРазработчик":   isDeveloper,
     })
 }
 
 func RevenueDashboardHandler(c *gin.Context) {
+    userID := c.GetString("user_id")
+    userName := c.GetString("user_name")
+    isDeveloper := false
+
+    if userID != "" {
+        err := database.Pool.QueryRow(c.Request.Context(),
+            "SELECT is_developer FROM users WHERE id = $1", userID).Scan(&isDeveloper)
+        if err != nil {
+            log.Printf("Ошибка проверки is_developer: %v", err)
+        }
+    }
+
+    if userName == "" {
+        userName = "Пользователь"
+    }
+
     c.HTML(http.StatusOK, "revenue-dashboard.html", gin.H{
-        "Title":   "Дашборд выручки - SaaSPro",
-        "Version": "3.0",
-        "Time":    time.Now().Format("2006-01-02 15:04:05"),
+        "Title":           "Дашборд выручки - SaaSPro",
+        "Version":         "3.0",
+        "Time":            time.Now().Format("2006-01-02 15:04:05"),
+        "IsAuthenticated": userID != "",
+        "UserName":        userName,
+        "IsDeveloper":     isDeveloper,
+        "IsРазработчик":   isDeveloper,
     })
 }
 
 func PartnerDashboardHandler(c *gin.Context) {
+    userID := c.GetString("user_id")
+    userName := c.GetString("user_name")
+    isDeveloper := false
+
+    if userID != "" {
+        err := database.Pool.QueryRow(c.Request.Context(),
+            "SELECT is_developer FROM users WHERE id = $1", userID).Scan(&isDeveloper)
+        if err != nil {
+            log.Printf("Ошибка проверки is_developer: %v", err)
+        }
+    }
+
+    if userName == "" {
+        userName = "Пользователь"
+    }
+
     c.HTML(http.StatusOK, "partner-dashboard.html", gin.H{
-        "Title":   "Партнерский дашборд - SaaSPro",
-        "Version": "3.0",
-        "Time":    time.Now().Format("2006-01-02 15:04:05"),
+        "Title":           "Партнерский дашборд - SaaSPro",
+        "Version":         "3.0",
+        "Time":            time.Now().Format("2006-01-02 15:04:05"),
+        "IsAuthenticated": userID != "",
+        "UserName":        userName,
+        "IsDeveloper":     isDeveloper,
+        "IsРазработчик":   isDeveloper,
     })
 }
 
 func UnifiedDashboardHandler(c *gin.Context) {
+    userID := c.GetString("user_id")
+    userName := c.GetString("user_name")
+    isDeveloper := false
+
+    if userID != "" {
+        err := database.Pool.QueryRow(c.Request.Context(),
+            "SELECT is_developer FROM users WHERE id = $1", userID).Scan(&isDeveloper)
+        if err != nil {
+            log.Printf("Ошибка проверки is_developer: %v", err)
+        }
+    }
+
+    if userName == "" {
+        userName = "Пользователь"
+    }
+
     c.HTML(http.StatusOK, "unified-dashboard.html", gin.H{
-        "Title":   "Унифицированный дашборд - SaaSPro",
-        "Version": "3.0",
-        "Time":    time.Now().Format("2006-01-02 15:04:05"),
+        "Title":           "Унифицированный дашборд - SaaSPro",
+        "Version":         "3.0",
+        "Time":            time.Now().Format("2006-01-02 15:04:05"),
+        "IsAuthenticated": userID != "",
+        "UserName":        userName,
+        "IsDeveloper":     isDeveloper,
+        "IsРазработчик":   isDeveloper,
     })
 }

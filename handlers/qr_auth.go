@@ -465,3 +465,106 @@ func getUserID(c *gin.Context) uuid.UUID {
 func sendWebPush(endpoint, title, body string, data map[string]interface{}) {
     log.Printf("📱 Отправка push уведомления на %s: %s - %s", endpoint, title, body)
 }
+
+// QRResetStatusWebSocket - WebSocket для отслеживания статуса QR кода при восстановлении пароля
+func QRResetStatusWebSocket(c *gin.Context) {
+    sessionToken := c.Query("token")
+    
+    if sessionToken == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "token required"})
+        return
+    }
+    
+    conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+    if err != nil {
+        return
+    }
+    defer conn.Close()
+    
+    // Проверяем сессию
+    var status string
+    var userID uuid.UUID
+    err = database.Pool.QueryRow(c.Request.Context(), `
+        SELECT status, COALESCE(user_id, '00000000-0000-0000-0000-000000000000') as user_id 
+        FROM qr_reset_sessions 
+        WHERE session_token = $1 AND expires_at > NOW()
+    `, sessionToken).Scan(&status, &userID)
+    
+    if err != nil {
+        conn.WriteJSON(gin.H{"status": "expired", "message": "QR code expired"})
+        return
+    }
+    
+    // Отправляем начальный статус
+    conn.WriteJSON(gin.H{
+        "status": status,
+        "user_id": userID.String(),
+        "message": getResetStatusMessage(status),
+    })
+    
+    ticker := time.NewTicker(1 * time.Second)
+    defer ticker.Stop()
+    
+    lastStatus := status
+    
+    for {
+        select {
+        case <-ticker.C:
+            var newStatus string
+            var newUserID uuid.UUID
+            err := database.Pool.QueryRow(c.Request.Context(), `
+                SELECT status, COALESCE(user_id, '00000000-0000-0000-0000-000000000000') as user_id 
+                FROM qr_reset_sessions 
+                WHERE session_token = $1
+            `, sessionToken).Scan(&newStatus, &newUserID)
+            
+            if err != nil {
+                conn.WriteJSON(gin.H{"status": "expired", "message": "Session expired"})
+                return
+            }
+            
+            if newStatus != lastStatus {
+                lastStatus = newStatus
+                
+                response := gin.H{
+                    "status":  newStatus,
+                    "user_id": newUserID.String(),
+                    "message": getResetStatusMessage(newStatus),
+                }
+                
+                if newStatus == "approved" {
+                    // Генерируем токен для сброса пароля
+                    resetToken := uuid.New().String()
+                    _, err = database.Pool.Exec(c.Request.Context(), `
+                        INSERT INTO password_resets (user_id, reset_token, expires_at, method, verified)
+                        VALUES ($1, $2, NOW() + INTERVAL '10 minutes', 'qr', true)
+                    `, newUserID, resetToken)
+                    
+                    if err == nil {
+                        response["reset_token"] = resetToken
+                        response["redirect"] = "/reset-password?token=" + resetToken
+                    }
+                }
+                
+                conn.WriteJSON(response)
+                
+                if newStatus == "approved" || newStatus == "expired" {
+                    return
+                }
+            }
+        }
+    }
+}
+
+func getResetStatusMessage(status string) string {
+    switch status {
+    case "pending":
+        return "Ожидание сканирования QR кода"
+    case "scanned":
+        return "QR код отсканирован! Подтвердите сброс в приложении"
+    case "approved":
+        return "Сброс пароля подтвержден! Перенаправление..."
+    default:
+        return status
+    }
+}

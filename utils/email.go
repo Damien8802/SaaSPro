@@ -108,3 +108,38 @@ func (s *EmailService) SendVerificationLink(to, name, link string) error {
     
     return s.SendEmail(to, subject, body)
 }
+
+// SendPasswordResetEmail отправляет письмо для восстановления пароля
+func (s *EmailService) SendPasswordResetEmail(to, name, resetLink string) error {
+    subject := "🔐 Восстановление пароля - SaaSPro"
+    
+    body := fmt.Sprintf(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 40px;">
+            <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">SaaSPro</h1>
+                    <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">Восстановление пароля</p>
+                </div>
+                <div style="padding: 30px;">
+                    <p>Здравствуйте, <strong>%s</strong>!</p>
+                    <p>Вы запросили восстановление пароля на платформе SaaSPro.</p>
+                    <p>Для установки нового пароля нажмите на кнопку ниже:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Сбросить пароль</a>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">Ссылка действительна в течение <strong>24 часов</strong>. Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.</p>
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #999; text-align: center;">© 2025 SaaSPro. Все права защищены.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `, name, resetLink)
+    
+    return s.SendEmail(to, subject, body)
+}

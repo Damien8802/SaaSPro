@@ -706,6 +706,7 @@ r.GET("/api/ai/recommendations", func(c *gin.Context) {
     r.POST("/api/qr/approve", handlers.ApproveQRLogin)
 
 r.GET("/qr/approve-page", handlers.QRApprovePageHandler)
+r.GET("/api/qr/reset-status", handlers.QRResetStatusWebSocket)
 
 
     r.GET("/logout", handlers.LogoutHandler)
@@ -1398,13 +1399,22 @@ vpnAlias.Use(middleware.AuthMiddleware(cfg))
     {
         authPages.GET("/login", handlers.LoginPageHandler)
         authPages.GET("/register", handlers.RegisterPageHandler)
-        authPages.GET("/forgot-password", handlers.ForgotPasswordHandler)
+        authPages.GET("/forgot-password", handlers.ForgotPasswordPageHandler)
     }
 
     // API авторизации
     authAPI := r.Group("/api/auth")
     authAPI.Use(func(c *gin.Context) {
         ip := c.ClientIP()
+        path := c.Request.URL.Path
+        
+        // Исключаем QR генерацию и WebSocket из rate limiter
+        if strings.Contains(path, "generate-reset") || 
+           strings.Contains(path, "qr/reset-status") {
+            c.Next()
+            return
+        }
+        
         if authLimiter.Limit(ip) {
             c.JSON(http.StatusTooManyRequests, gin.H{
                 "error": "Слишком много попыток входа. Попробуйте через минуту.",
@@ -1422,9 +1432,17 @@ vpnAlias.Use(middleware.AuthMiddleware(cfg))
         authAPI.POST("/trusted-devices/add", handlers.AddTrustedDevice)
         authAPI.POST("/trusted-devices/revoke", handlers.RevokeTrustedDevice)
         authAPI.GET("/trusted-devices/list", handlers.GetTrustedDevices)
-authAPI.POST("/login-by-id", handlers.LoginByIDHandler)
-authAPI.POST("/register-by-id", handlers.RegisterByIDHandler)
+        authAPI.POST("/login-by-id", handlers.LoginByIDHandler)
+        authAPI.POST("/register-by-id", handlers.RegisterByIDHandler)
 
+        // ========== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ==========
+        authAPI.POST("/forgot-password", handlers.ForgotPasswordHandler)
+        authAPI.POST("/send-reset-code", handlers.SendResetCodeHandler)
+        authAPI.POST("/verify-reset-code", handlers.VerifyResetCodeHandler)
+        authAPI.POST("/reset-password", handlers.ResetPasswordHandler)
+        authAPI.POST("/qr/generate-reset", handlers.GenerateResetQRHandler)
+        authAPI.GET("/qr/reset-status", handlers.CheckResetQRStatusHandler)
+        authAPI.POST("/qr/confirm-reset", handlers.ConfirmResetQRHandler)
     }
 
     // Реферальная программа
@@ -1506,17 +1524,17 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
     }
 }
 
-    // Дашборды
-    dashboards := r.Group("/")
-    dashboards.Use(middleware.AuthMiddleware(cfg))
-    {
-        dashboards.GET("/dashboard-improved", handlers.DashboardImprovedHandler)
-        dashboards.GET("/realtime-dashboard", handlers.RealtimeDashboardHandler)
-        dashboards.GET("/revenue-dashboard", handlers.RevenueDashboardHandler)
-        dashboards.GET("/partner-dashboard", handlers.PartnerDashboardHandler)
-        dashboards.GET("/unified-dashboard", handlers.UnifiedDashboardHandler)
-        dashboards.GET("/dashboard-stats", handlers.DashboardStatsHandler)
-    }
+  // Дашборды
+dashboards := r.Group("/")
+dashboards.Use(middleware.AuthMiddleware(cfg))
+{
+    dashboards.GET("/dashboard-improved", handlers.DashboardImprovedHandler)
+    dashboards.GET("/realtime-dashboard", handlers.RealtimeDashboardHandler)
+    dashboards.GET("/revenue-dashboard", handlers.RevenueDashboardHandler)
+    dashboards.GET("/partner-dashboard", handlers.PartnerDashboardHandler)
+    dashboards.GET("/unified-dashboard", handlers.UnifiedDashboardHandler)
+    dashboards.GET("/dashboard-stats", handlers.DashboardStatsHandler)
+}
 
     // Платежи (публичные страницы, без авторизации)
     r.GET("/payment", handlers.PaymentHandler)
@@ -1555,9 +1573,21 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         deliveryAPI.GET("/track/:trackingNumber", handlers.TrackAPIHandler)
     }
 
-    // Основное API
+
+       // Основное API
     api := r.Group("/api")
     api.Use(func(c *gin.Context) {
+        path := c.Request.URL.Path
+        
+        // Исключаем QR генерацию и WebSocket из rate limiter
+        // (WebSocket создает одно соединение, а не много запросов)
+        if strings.Contains(path, "generate-reset") || 
+           strings.Contains(path, "qr/reset-status") ||
+           strings.Contains(path, "qr/status") {
+            c.Next()
+            return
+        }
+        
         ip := c.ClientIP()
         if rateLimiter.Limit(ip) {
             c.JSON(http.StatusTooManyRequests, gin.H{
@@ -1568,7 +1598,6 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
         }
         c.Next()
     })
-
 // ========== WEBHOOKS ДЛЯ РАЗРАБОТЧИКОВ ==========
 api.GET("/webhooks", func(c *gin.Context) {
     userID := c.GetString("user_id")

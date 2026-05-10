@@ -17,6 +17,7 @@ import (
     "subscription-system/models"
     "subscription-system/utils"
 )
+
 // InitAuthHandler инициализирует обработчики авторизации
 func InitAuthHandler(cfg *config.Config) {
     log.Println("✅ Auth handler initialized")
@@ -142,7 +143,7 @@ func LoginHandler(c *gin.Context) {
     var tenantID string
     var isDeveloper bool
     var developerLevel int
-    
+
     // Загружаем ВСЕ данные пользователя из БД
     err := database.Pool.QueryRow(c.Request.Context(),
         `SELECT id, email, password_hash, name, role, 
@@ -151,7 +152,7 @@ func LoginHandler(c *gin.Context) {
                 COALESCE(developer_level, 0) as developer_level
          FROM users WHERE email = $1`,
         req.Email).Scan(
-        &user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Role, 
+        &user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Role,
         &tenantID, &isDeveloper, &developerLevel)
 
     if err != nil {
@@ -174,13 +175,13 @@ func LoginHandler(c *gin.Context) {
         user.Role = actualRole
         log.Printf("[LOGIN] 🔄 Обновлена роль для %s: %s", req.Email, user.Role)
     }
-    
+
     // Если разработчик и роль не owner - даем права admin
     if isDeveloper && user.Role != "owner" {
         user.Role = "admin"
         log.Printf("[LOGIN] 🔧 Разработчик %s получил роль admin", req.Email)
     }
-    
+
     // Для конкретного email - принудительно устанавливаем owner
     if req.Email == "dev@businesstack.ru" {
         user.Role = "owner"
@@ -297,7 +298,6 @@ func RefreshHandler(c *gin.Context) {
     })
 }
 
-
 // ResendVerificationHandler отправляет код подтверждения повторно
 func ResendVerificationHandler(c *gin.Context) {
     var req struct {
@@ -345,41 +345,40 @@ func ResendVerificationHandler(c *gin.Context) {
     })
 }
 
-
 // LoginByIDHandler - login by ID
 func LoginByIDHandler(c *gin.Context) {
     var req struct {
         Login    string `json:"login" binding:"required"`
         Password string `json:"password" binding:"required"`
     }
-    
+
     if err := c.ShouldBindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
-    
+
     var user models.User
     err := database.Pool.QueryRow(c.Request.Context(),
         `SELECT id, name, email, password_hash, role, COALESCE(login, '') as login 
          FROM users WHERE login = $1 OR email = $1`,
         req.Login).Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.Role, &user.Login)
-    
+
     if err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid login or password"})
         return
     }
-    
+
     if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid login or password"})
         return
     }
-    
+
     accessToken, refreshToken, err := utils.GenerateTokens(user.ID.String(), user.Name, user.Email, user.Role)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
         return
     }
-    
+
     c.JSON(http.StatusOK, gin.H{
         "access_token":  accessToken,
         "refresh_token": refreshToken,
@@ -391,6 +390,7 @@ func LoginByIDHandler(c *gin.Context) {
         },
     })
 }
+
 // RegisterByIDHandler - register by ID
 func RegisterByIDHandler(c *gin.Context) {
     var req struct {
@@ -441,8 +441,8 @@ func RegisterByIDHandler(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{
         "access_token":  accessToken,
         "refresh_token": refreshToken,
-        "user": gin.H{"id": userID, "email": email, "name": req.Name, "role": "user"},
-        "message": "Registration by ID successful",
+        "user":          gin.H{"id": userID, "email": email, "name": req.Name, "role": "user"},
+        "message":       "Registration by ID successful",
     })
 }
 
@@ -555,3 +555,365 @@ func VerifyEmailHandler(c *gin.Context) {
         </html>
     `)
 }
+
+// ==================== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ====================
+
+// ForgotPasswordHandler - отправка ссылки для сброса пароля на email
+func ForgotPasswordHandler(c *gin.Context) {
+    var req struct {
+        Email string `json:"email" binding:"required,email"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Проверяем существует ли пользователь
+    var user models.User
+    err := database.Pool.QueryRow(c.Request.Context(),
+        `SELECT id, name FROM users WHERE email = $1`,
+        req.Email).Scan(&user.ID, &user.Name)
+
+    if err != nil {
+        // Для безопасности не говорим, что email не найден
+        c.JSON(http.StatusOK, gin.H{
+            "success": true,
+            "message": "Если пользователь существует, ссылка для сброса отправлена",
+        })
+        return
+    }
+
+    // Генерируем токен сброса
+    resetToken := uuid.New().String()
+
+    // Сохраняем в БД
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO password_resets (user_id, reset_token, expires_at, method)
+        VALUES ($1, $2, NOW() + INTERVAL '24 hours', 'email')
+        ON CONFLICT (user_id) DO UPDATE SET 
+            reset_token = $2, expires_at = NOW() + INTERVAL '24 hours'
+    `, user.ID, resetToken)
+
+    if err != nil {
+        log.Printf("❌ Ошибка сохранения токена сброса: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка сервера"})
+        return
+    }
+
+    // Формируем ссылку для сброса
+    resetLink := fmt.Sprintf("https://businesstack.ru/reset-password?token=%s", resetToken)
+
+    // Отправляем email
+    emailService := utils.NewEmailService(config.Load())
+    go func() {
+        if err := emailService.SendPasswordResetEmail(req.Email, user.Name, resetLink); err != nil {
+            log.Printf("❌ Ошибка отправки email для сброса: %v", err)
+        } else {
+            log.Printf("✅ Email для сброса пароля отправлен на %s", req.Email)
+        }
+    }()
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Ссылка для сброса пароля отправлена на email",
+    })
+}
+
+// SendResetCodeHandler - отправка кода для сброса пароля на телефон
+func SendResetCodeHandler(c *gin.Context) {
+    var req struct {
+        Phone string `json:"phone" binding:"required"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Проверяем существует ли пользователь
+    var user models.User
+    err := database.Pool.QueryRow(c.Request.Context(),
+        `SELECT id, name FROM users WHERE phone = $1`,
+        req.Phone).Scan(&user.ID, &user.Name)
+
+    if err != nil {
+        c.JSON(http.StatusOK, gin.H{
+            "success": true,
+            "message": "Если пользователь существует, код отправлен",
+        })
+        return
+    }
+
+    // Генерируем 6-значный код
+    code := fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
+    if code[0] == '0' {
+        code = "1" + code[1:]
+    }
+    resetToken := uuid.New().String()
+
+    // Сохраняем в БД
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO password_resets (user_id, reset_token, code, expires_at, method)
+        VALUES ($1, $2, $3, NOW() + INTERVAL '15 minutes', 'phone')
+        ON CONFLICT (user_id) DO UPDATE SET 
+            reset_token = $2, code = $3, expires_at = NOW() + INTERVAL '15 minutes', method = 'phone'
+    `, user.ID, resetToken, code)
+
+    if err != nil {
+        log.Printf("❌ Ошибка сохранения кода сброса: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка сервера"})
+        return
+    }
+
+    // Здесь должна быть отправка SMS
+    log.Printf("📱 Код для сброса пароля для %s: %s", req.Phone, code)
+
+    c.JSON(http.StatusOK, gin.H{
+        "success":     true,
+        "reset_token": resetToken,
+        "message":     "Код подтверждения отправлен на телефон",
+    })
+}
+
+// VerifyResetCodeHandler - проверка кода для сброса пароля
+func VerifyResetCodeHandler(c *gin.Context) {
+    var req struct {
+        ResetToken string `json:"reset_token" binding:"required"`
+        Code       string `json:"code" binding:"required"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    var storedCode string
+    var expiresAt time.Time
+    var userID string
+
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT user_id, code, expires_at FROM password_resets 
+        WHERE reset_token = $1 AND method = 'phone' AND used = false
+    `, req.ResetToken).Scan(&userID, &storedCode, &expiresAt)
+
+    if err != nil || time.Now().After(expiresAt) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный или просроченный код"})
+        return
+    }
+
+    if storedCode != req.Code {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный код"})
+        return
+    }
+
+    // Помечаем как подтвержденный
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        UPDATE password_resets SET verified = true WHERE reset_token = $1
+    `, req.ResetToken)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка сервера"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Код подтвержден",
+    })
+}
+
+// ResetPasswordHandler - сброс пароля (после проверки)
+func ResetPasswordHandler(c *gin.Context) {
+    var req struct {
+        ResetToken  string `json:"reset_token" binding:"required"`
+        NewPassword string `json:"new_password" binding:"required,min=6"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    var userID string
+    var verified bool
+    var expiresAt time.Time
+
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT user_id, verified, expires_at FROM password_resets 
+        WHERE reset_token = $1 AND used = false
+    `, req.ResetToken).Scan(&userID, &verified, &expiresAt)
+
+    if err != nil || time.Now().After(expiresAt) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный или просроченный токен"})
+        return
+    }
+
+    if !verified {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Требуется подтверждение кода"})
+        return
+    }
+
+    // Хешируем новый пароль
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обработки пароля"})
+        return
+    }
+
+    // Обновляем пароль
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2
+    `, string(hashedPassword), userID)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обновления пароля"})
+        return
+    }
+
+    // Помечаем токен как использованный
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        UPDATE password_resets SET used = true WHERE reset_token = $1
+    `, req.ResetToken)
+
+    if err != nil {
+        log.Printf("⚠️ Ошибка обновления статуса токена: %v", err)
+    }
+
+    // Удаляем все сессии пользователя (опционально)
+    _, _ = database.Pool.Exec(c.Request.Context(), `
+        DELETE FROM user_tokens WHERE user_id = $1
+    `, userID)
+
+    log.Printf("✅ Пароль успешно сброшен для пользователя %s", userID)
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Пароль успешно изменен",
+    })
+}
+
+// GenerateResetQRHandler - генерация QR кода для сброса пароля
+func GenerateResetQRHandler(c *gin.Context) {
+    qrToken := uuid.New().String()
+
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        INSERT INTO qr_reset_sessions (session_token, expires_at, created_at)
+        VALUES ($1, NOW() + INTERVAL '5 minutes', NOW())
+    `, qrToken)
+
+    if err != nil {
+        log.Printf("❌ Ошибка генерации QR: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации QR"})
+        return
+    }
+
+    // Для мобильного приложения (ссылка, которую перехватывает приложение)
+    deeplink := fmt.Sprintf("saaspro://reset-password?token=%s", qrToken)
+    
+    // Для отображения QR кода в браузере (используем API генератора QR)
+    qrImageUrl := fmt.Sprintf("https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=%s", deeplink)
+
+    c.JSON(http.StatusOK, gin.H{
+        "session_token": qrToken,
+        "qr_data_url":   qrImageUrl,  
+        "deeplink":      deeplink,
+        "expires_in":    300,
+    })
+}
+
+// CheckResetQRStatusHandler - проверка статуса QR кода
+func CheckResetQRStatusHandler(c *gin.Context) {
+    token := c.Query("token")
+    if token == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Token required"})
+        return
+    }
+
+    var status string
+    var userID string
+    var expiresAt time.Time
+
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT status, COALESCE(user_id, '') as user_id, expires_at 
+        FROM qr_reset_sessions 
+        WHERE session_token = $1
+    `, token).Scan(&status, &userID, &expiresAt)
+
+    if err != nil {
+        c.JSON(http.StatusOK, gin.H{"status": "expired"})
+        return
+    }
+
+    if time.Now().After(expiresAt) {
+        c.JSON(http.StatusOK, gin.H{"status": "expired"})
+        return
+    }
+
+    if status == "approved" && userID != "" {
+        // Генерируем новый токен для сброса
+        resetToken := uuid.New().String()
+        _, err = database.Pool.Exec(c.Request.Context(), `
+            INSERT INTO password_resets (user_id, reset_token, expires_at, method, verified)
+            VALUES ($1, $2, NOW() + INTERVAL '10 minutes', 'qr', true)
+        `, userID, resetToken)
+
+        if err == nil {
+            c.JSON(http.StatusOK, gin.H{
+                "status":      "approved",
+                "reset_token": resetToken,
+            })
+            return
+        }
+    }
+
+    c.JSON(http.StatusOK, gin.H{"status": status})
+}
+
+// ConfirmResetQRHandler - подтверждение сброса через QR (вызывается из мобильного приложения)
+func ConfirmResetQRHandler(c *gin.Context) {
+    var req struct {
+        SessionToken string `json:"session_token" binding:"required"`
+        UserID       string `json:"user_id" binding:"required"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Проверяем существование сессии
+    var expiresAt time.Time
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT expires_at FROM qr_reset_sessions 
+        WHERE session_token = $1 AND status = 'pending'
+    `, req.SessionToken).Scan(&expiresAt)
+
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверная сессия"})
+        return
+    }
+
+    if time.Now().After(expiresAt) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Сессия истекла"})
+        return
+    }
+
+    // Обновляем статус
+    _, err = database.Pool.Exec(c.Request.Context(), `
+        UPDATE qr_reset_sessions 
+        SET status = 'approved', user_id = $1 
+        WHERE session_token = $2
+    `, req.UserID, req.SessionToken)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка подтверждения"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Сброс пароля подтвержден",
+    })
+}
+

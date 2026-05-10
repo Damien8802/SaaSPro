@@ -150,7 +150,8 @@ func RegisterPageHandler(c *gin.Context) {
     })
 }
 
-func ForgotPasswordHandler(c *gin.Context) {
+// ForgotPasswordPageHandler - отображает страницу восстановления пароля
+func ForgotPasswordPageHandler(c *gin.Context) {
     c.HTML(http.StatusOK, "forgot-password.html", gin.H{
         "Title":   "Восстановление пароля - SaaSPro",
         "Version": "3.0",
@@ -566,4 +567,5 @@ func IdentityLoginPageHandler(c *gin.Context) {
         "title": "Identity Hub | Вход и регистрация",
     })
 }
+
 
