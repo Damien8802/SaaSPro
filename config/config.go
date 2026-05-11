@@ -81,7 +81,7 @@ func Load() *Config {
 
         JWTSecret:        getEnv("JWT_ACCESS_SECRET", "default-access-secret"),
         JWTRefreshSecret: getEnv("JWT_REFRESH_SECRET", "default-refresh-secret"),
-        JWTAccessExpiry:  getEnvAsDuration("JWT_ACCESS_EXPIRY", 15*time.Minute),
+        JWTAccessExpiry:  getEnvAsDuration("JWT_ACCESS_EXPIRY", 6*time.Hour),
         JWTRefreshExpiry: getEnvAsDuration("JWT_REFRESH_EXPIRY", 30*24*time.Hour),
 
         SkipAuth: getEnvAsBool("SKIP_AUTH", false),
