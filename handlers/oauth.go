@@ -875,6 +875,7 @@ func IdentityHubLandingHandler(c *gin.Context) {
     })
 }
 
+
 // IdentityHubRouter - умный роутер для Identity Hub
 func IdentityHubRouter(c *gin.Context) {
     // ========== ОТЛАДОЧНЫЙ ВЫВОД ==========
@@ -888,6 +889,18 @@ func IdentityHubRouter(c *gin.Context) {
     fmt.Printf("🔍 role=%q, email=%q, userID=%q\n", role, email, userID)
     fmt.Println("========================================")
     
+    // ========== ВЛАДЕЛЕЦ ПЛАТФОРМЫ - ПОЛНЫЙ ДОСТУП ==========
+    if email == "dev@businesstack.ru" {
+        fmt.Println("👑 ВЛАДЕЛЕЦ - полный доступ к identity-hub.html")
+        c.HTML(http.StatusOK, "identity-hub.html", gin.H{
+            "title":  "Identity Hub | Центр управления идентификацией",
+            "userID": userID,
+            "email":  email,
+            "role":   role,
+        })
+        return
+    }
+    
     // ПРОВЕРКА: ЕСЛИ ПОЛЬЗОВАТЕЛЬ НЕ АВТОРИЗОВАН
     if userID == "" || userID == "00000000-0000-0000-0000-000000000000" {
         fmt.Println("❌ USER NOT AUTHENTICATED - showing identity-landing.html")
@@ -897,9 +910,9 @@ func IdentityHubRouter(c *gin.Context) {
         return
     }
     
-    // 1. ВЛАДЕЛЕЦ/РАЗРАБОТЧИК - полный доступ без триала
+    // 1. РАЗРАБОТЧИК/АДМИН - полный доступ без триала
     if role == "developer" || role == "admin" || email == "dev@saaspro.ru" {
-        fmt.Println("✅ OWNER/DEVELOPER - full access to identity-hub.html")
+        fmt.Println("✅ DEVELOPER/ADMIN - full access to identity-hub.html")
         c.HTML(http.StatusOK, "identity-hub.html", gin.H{
             "title":  "Identity Hub | Центр управления идентификацией",
             "userID": userID,
@@ -922,12 +935,12 @@ func IdentityHubRouter(c *gin.Context) {
     if err == nil {
         fmt.Println("✅ TRIAL ACTIVE - showing identity-hub.html")
         c.HTML(http.StatusOK, "identity-hub.html", gin.H{
-            "title":     "Identity Hub | Личный кабинет (Триал активен)",
-            "userID":    userID,
-            "email":     email,
-            "role":      role,
-            "trialEnd":  trialEnd,
-            "isTrial":   true,
+            "title":    "Identity Hub | Личный кабинет (Триал активен)",
+            "userID":   userID,
+            "email":    email,
+            "role":     role,
+            "trialEnd": trialEnd,
+            "isTrial":  true,
         })
         return
     }

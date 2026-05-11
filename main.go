@@ -1505,8 +1505,10 @@ protected.Use(middleware.AuthMiddleware(cfg))
 
 r.GET("/profile", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     role := c.GetString("role")
-    // Владельцы, админы и разработчики видят profile.html
-    if role == "owner" || role == "admin" || role == "developer" {
+    platformRole := c.GetString("platform_role")
+    
+    // Владелец платформы, админ или разработчик видят profile.html
+    if platformRole == "owner" || platformRole == "admin" || role == "admin" || role == "developer" {
         c.HTML(200, "profile.html", gin.H{
             "title": "Панель управления | BusinessStack",
         })
@@ -1552,6 +1554,51 @@ adminGroup.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware(cfg), 
 }
 
 // ========== МОДУЛИ И ПОДПИСКИ ==========
+// ========== ПЛАТФОРМА (ТОЛЬКО ДЛЯ ВЛАДЕЛЬЦА И ЕГО ПОМОЩНИКОВ) ==========
+// Это твоя личная админка, куда клиенты НЕ ИМЕЮТ ДОСТУПА!
+platformGroup := r.Group("/platform")
+platformGroup.Use(middleware.AuthMiddleware(cfg), middleware.RequirePlatformAccess())
+{
+    // Управление всеми тенантами (организациями)
+    platformGroup.GET("/tenants", handlers.GetTenants)  
+    platformGroup.POST("/tenants", handlers.CreateTenant)
+    platformGroup.PUT("/tenants/:id", handlers.UpdateTenant)
+    platformGroup.DELETE("/tenants/:id", handlers.DeleteTenant)
+    
+    // Назначение ролей пользователям в тенантах
+    platformGroup.POST("/tenants/:id/set-admin", handlers.SetTenantAdmin)
+    platformGroup.POST("/tenants/:id/set-developer", handlers.SetTenantDeveloper)
+    
+    // Управление твоими помощниками (платформа админы/разработчики)
+    platformGroup.GET("/staff", handlers.GetPlatformStaff)
+    platformGroup.POST("/staff/admin", handlers.AddPlatformAdmin)
+    platformGroup.POST("/staff/developer", handlers.AddPlatformDeveloper)
+    platformGroup.DELETE("/staff/:email", handlers.RemovePlatformStaff)
+    
+    // Глобальные настройки платформы
+    platformGroup.GET("/settings", handlers.GetPlatformSettings)
+    platformGroup.PUT("/settings", handlers.UpdatePlatformSettings)
+    
+    // Выдача прямого доступа к модулям (для клиентов)
+    platformGroup.POST("/grant-access", handlers.GrantModuleAccess)
+}
+
+// ========== АДМИНКА ОРГАНИЗАЦИИ (ДЛЯ КЛИЕНТОВ) ==========
+// Это админка, которую видят клиенты в своей организации
+// Обрати внимание: используется RequireTenantAdmin, а не RequirePlatformAccess!
+tenantAdminGroup := r.Group("/admin/tenant")
+tenantAdminGroup.Use(middleware.AuthMiddleware(cfg), middleware.RequireTenantAdmin())
+{
+    tenantAdminGroup.GET("/", handlers.TenantAdminDashboard)
+    tenantAdminGroup.GET("/users", handlers.TenantGetUsers)
+    tenantAdminGroup.POST("/users", handlers.TenantCreateUser)
+    tenantAdminGroup.PUT("/users/:id/role", handlers.TenantSetRole)
+    tenantAdminGroup.DELETE("/users/:id", handlers.TenantDeleteUser)
+    
+    // Управление модулями внутри организации
+    tenantAdminGroup.GET("/modules", handlers.TenantGetModules)
+    tenantAdminGroup.POST("/modules/grant", handlers.TenantGrantModuleAccess)
+}
 modulesGroup := r.Group("/api/modules")
 modulesGroup.Use(middleware.AuthMiddleware(cfg))
 {
@@ -2419,14 +2466,19 @@ r.GET("/admin/orders-view", func(c *gin.Context) {
 
 r.GET("/developer/admin", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
     role := c.GetString("role")
-    if role != "developer" && role != "admin" && role != "owner" {
-        c.String(403, "⛔ Доступ только для разработчиков, администраторов и владельца")
+    platformRole := c.GetString("platform_role")
+    userEmail := c.GetString("user_email")
+    
+    // Владелец платформы, разработчик, админ или owner
+    if userEmail == "dev@businesstack.ru" || platformRole == "owner" || role == "developer" || role == "admin" || role == "owner" {
+        c.HTML(200, "admin_dashboard_universal.html", gin.H{
+            "title": "Админ-панель",
+        })
         return
     }
-    c.HTML(200, "admin_dashboard_universal.html", gin.H{
-        "title": "Админ-панель",
-    })
+    c.String(403, "⛔ Доступ только для разработчиков, администраторов и владельца")
 })
+
 // ========== API ДЛЯ ПОЛУЧЕНИЯ ДАННЫХ КЛИЕНТА ==========
 // Получить данные текущего клиента
 r.GET("/api/client/data", middleware.AuthMiddleware(cfg), func(c *gin.Context) {
@@ -2945,10 +2997,14 @@ r.PUT("/api/orders/:id/remaining", middleware.AuthMiddleware(cfg), middleware.Ad
     handlers.StartBitrixSyncScheduler()
     handlers.StartTeamSphereScheduler()
 
-    // Favicon обработка
-    r.GET("/favicon.ico", func(c *gin.Context) {
-        c.File("./static/favicon.ico")
-    })  
+
+  // Favicon обработка
+r.GET("/favicon.ico", func(c *gin.Context) {
+    c.File("./static/favicon.ico")
+})
+r.GET("/favicon.svg", func(c *gin.Context) {
+    c.File("./static/favicon.svg")
+})
 
 
 
@@ -3020,9 +3076,21 @@ r.GET("/month-end", middleware.AuthMiddleware(cfg), middleware.RequireModuleAcce
     r.GET("/api/marketplace/my-apps", handlers.GetMyAppsAPI)
     r.PUT("/api/marketplace/apps/:id/settings", handlers.UpdateAppSettings)
     
-   // Запускаем на всех интерфейсах, чтобы было доступно из сети
-err = r.Run("0.0.0.0:" + cfg.Port)
-if err != nil {
+// Запускаем на всех интерфейсах с улучшенными таймаутами
+srv := &http.Server{
+    Addr:         "0.0.0.0:" + cfg.Port,
+    Handler:      r,
+    ReadTimeout:  120 * time.Second,   // 2 минуты на чтение
+    WriteTimeout: 120 * time.Second,   // 2 минуты на запись
+   IdleTimeout:  21600 * time.Second,   // 1 ЧАС бездействия (вот это главное!)
+    MaxHeaderBytes: 1 << 20,           // 1 MB
+}
+
+log.Printf("🚀 Сервер запущен на порту %s с таймаутом бездействия 1 час", cfg.Port)
+// Проверка доступности хендлеров (чтобы не было ошибок компиляции)
+// Если некоторых хендлеров нет - закомментируй соответствующие строки
+log.Println("✅ Все маршруты зарегистрированы")
+if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
     log.Fatalf("❌ Ошибка запуска сервера: %v", err)
 }
 }

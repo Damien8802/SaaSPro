@@ -10,6 +10,18 @@ import (
     "github.com/gin-gonic/gin"
 )
 
+// ========== ТВОИ ЛИЧНЫЕ ПОМОЩНИКИ (ДОСТУП К ТВОЕЙ ПЛАТФОРМЕ) ==========
+// Сюда добавляешь email тех, кому доверяешь администрировать твою платформу
+var platformAdmins = map[string]bool{
+    // "admin@example.com": true,   ← добавляй сюда своих админов
+    // "helper@businesstack.ru": true,
+}
+
+// Твои личные разработчики (кто помогает с кодом)
+var platformDevelopers = map[string]bool{
+    // "dev@example.com": true,     ← добавляй сюда своих разработчиков
+}
+
 func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
     return func(c *gin.Context) {
         path := c.Request.URL.Path
@@ -140,41 +152,147 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
         c.Set("role", claims.Role)
         c.Set("tenant_id", claims.TenantID)
 
-        // ========== ПРОВЕРКА ДЛЯ КОНКРЕТНЫХ EMAIL (ВРЕМЕННОЕ РЕШЕНИЕ) ==========
-        // Устанавливаем права на основе email
+        // ========== УРОВЕНЬ 1: ТВОЯ ПЛАТФОРМА (ТОЛЬКО ТЫ И ТВОИ ПОМОЩНИКИ) ==========
+        // Это ДОСТУП К УПРАВЛЕНИЮ ПЛАТФОРМОЙ (глобальная админка)
         if claims.Email == "dev@businesstack.ru" {
-            c.Set("role", "owner")
-            c.Set("is_owner", true)
-            c.Set("is_admin", true)
-            c.Set("is_developer", true)
-            c.Set("developer_level", 999)
-            c.Set("super_admin", true)
-            c.Set("can_manage_users", true)
-            c.Set("can_manage_system", true)
+            c.Set("platform_role", "owner")
+            c.Set("role", "platform_owner")
+            c.Set("is_platform_owner", true)
+            c.Set("is_platform_admin", true)
+            c.Set("can_manage_platform", true)
+            c.Set("can_manage_all_tenants", true)
             c.Set("can_view_all_data", true)
             c.Set("can_modify_schema", true)
             c.Set("can_deploy", true)
+            c.Set("can_manage_users", true)
+            c.Set("can_manage_system", true)
             c.Set("can_access_admin_panel", true)
             c.Set("can_manage_api_keys", true)
             c.Set("can_view_logs", true)
             c.Set("can_manage_backups", true)
-            log.Printf("[AUTH] 👑 ВЛАДЕЛЕЦ %s авторизован с полными правами", claims.Email)
+            log.Printf("[AUTH] 👑 ВЛАДЕЛЕЦ ПЛАТФОРМЫ %s авторизован с полными правами", claims.Email)
             c.Next()
             return
         }
 
-        // Для остальных пользователей - роль из JWT
-        if claims.Role == "admin" {
-            c.Set("is_admin", true)
-            log.Printf("[AUTH] ✅ АДМИН %s авторизован", claims.Email)
-        } else if claims.Role == "developer" {
-            c.Set("is_developer", true)
-            c.Set("is_admin", true)
-            log.Printf("[AUTH] ✅ РАЗРАБОТЧИК %s авторизован", claims.Email)
-        } else {
-            log.Printf("[AUTH] ✅ Авторизован: %s (%s), роль=%s", claims.UserName, claims.Email, claims.Role)
+        // Твои личные админы (помощники, которых ТЫ назначил)
+        if platformAdmins[claims.Email] {
+            c.Set("platform_role", "admin")
+            c.Set("role", "platform_admin")
+            c.Set("is_platform_admin", true)
+            c.Set("can_manage_platform", true)
+            c.Set("can_manage_all_tenants", true)
+            log.Printf("[AUTH] 🛡️ АДМИН ПЛАТФОРМЫ %s авторизован", claims.Email)
+            c.Next()
+            return
         }
 
+        // Твои личные разработчики (помощники, которых ТЫ нанял)
+        if platformDevelopers[claims.Email] {
+            c.Set("platform_role", "developer")
+            c.Set("role", "platform_developer")
+            c.Set("is_platform_developer", true)
+            c.Set("can_access_technical", true)
+            log.Printf("[AUTH] 🔧 РАЗРАБОТЧИК ПЛАТФОРМЫ %s авторизован", claims.Email)
+            c.Next()
+            return
+        }
+
+        // ========== УРОВЕНЬ 2: ОРГАНИЗАЦИИ КЛИЕНТОВ (НЕТ ДОСТУПА К ТВОЕЙ ПЛАТФОРМЕ) ==========
+        // Здесь идут админы и разработчики, которые работают ВНУТРИ своих организаций
+        // Они НЕ МОГУТ зайти в твою глобальную админку!
+        
+        c.Set("platform_role", "none") // Нет прав на управление платформой
+
+        // Админ организации клиента (управляет только своей компанией)
+        if claims.Role == "admin" {
+            c.Set("role", "tenant_admin")
+            c.Set("is_tenant_admin", true)
+            c.Set("can_manage_tenant", true)       // Управление своей организацией
+            c.Set("can_grant_tenant_access", true) // Может выдавать доступ внутри своей компании
+            log.Printf("[AUTH] 🏢 АДМИН ОРГАНИЗАЦИИ %s (tenant=%s) авторизован", claims.Email, claims.TenantID)
+            c.Next()
+            return
+        }
+
+        // Разработчик организации клиента (техническая роль внутри своей компании)
+        if claims.Role == "developer" {
+            c.Set("role", "tenant_developer")
+            c.Set("is_tenant_developer", true)
+            c.Set("can_access_technical", true)
+            log.Printf("[AUTH] 🔧 РАЗРАБОТЧИК ОРГАНИЗАЦИИ %s (tenant=%s) авторизован", claims.Email, claims.TenantID)
+            c.Next()
+            return
+        }
+
+        // Обычный клиент (пользователь организации)
+        c.Set("role", "customer")
+        c.Set("is_customer", true)
+        log.Printf("[AUTH] 👤 КЛИЕНТ %s (tenant=%s) авторизован", claims.Email, claims.TenantID)
+        c.Next()
+    }
+}
+
+// ========== НОВЫЕ MIDDLEWARE ДЛЯ РАЗГРАНИЧЕНИЯ ДОСТУПА ==========
+
+// RequirePlatformAccess - доступ только для твоих сотрудников (владелец, админ платформы, разработчик платформы)
+func RequirePlatformAccess() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        platformRole := c.GetString("platform_role")
+        
+        if platformRole == "" || platformRole == "none" {
+            c.JSON(http.StatusForbidden, gin.H{
+                "error":   "⛔ Доступ к панели управления платформой запрещён",
+                "code":    "PLATFORM_ACCESS_DENIED",
+                "message": "Эта страница доступна только владельцу и администраторам платформы",
+            })
+            c.Abort()
+            return
+        }
+        
+        c.Next()
+    }
+}
+
+// RequirePlatformAdmin - доступ только для владельца и админов платформы (без разработчиков)
+func RequirePlatformAdmin() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        platformRole := c.GetString("platform_role")
+        
+        if platformRole != "owner" && platformRole != "admin" {
+            c.JSON(http.StatusForbidden, gin.H{
+                "error": "⛔ Требуются права администратора платформы",
+                "code":  "PLATFORM_ADMIN_REQUIRED",
+            })
+            c.Abort()
+            return
+        }
+        
+        c.Next()
+    }
+}
+
+// RequireTenantAdmin - доступ для админа организации (но не для глобального админа платформы в чужой тенант)
+func RequireTenantAdmin() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        isTenantAdmin := c.GetBool("is_tenant_admin")
+        platformRole := c.GetString("platform_role")
+        
+        // Если это глобальный админ платформы - тоже пропускаем (он может всё)
+        if platformRole == "owner" || platformRole == "admin" {
+            c.Next()
+            return
+        }
+        
+        if !isTenantAdmin {
+            c.JSON(http.StatusForbidden, gin.H{
+                "error": "⛔ Требуются права администратора организации",
+                "code":  "TENANT_ADMIN_REQUIRED",
+            })
+            c.Abort()
+            return
+        }
+        
         c.Next()
     }
 }
@@ -262,11 +380,10 @@ func AdminMiddleware(cfg *config.Config) gin.HandlerFunc {
         path := c.Request.URL.Path
         method := c.Request.Method
 
-        // Проверяем роль из контекста
+        // Получаем роль и platform_role
         role, roleExists := c.Get("role")
-        isAdmin, adminExists := c.Get("is_admin")
-        isOwner, ownerExists := c.Get("is_owner")
-        isDeveloper, devExists := c.Get("is_developer")
+        platformRole := c.GetString("platform_role")
+        userEmail := c.GetString("user_email")
 
         // Если нет роли - запрещаем
         if !roleExists {
@@ -277,18 +394,13 @@ func AdminMiddleware(cfg *config.Config) gin.HandlerFunc {
             return
         }
 
-        // Разрешаем доступ владельцам, админам и разработчикам
+        // Разрешаем доступ владельцам платформы, админам и разработчикам
         hasAccess := false
         
-        if ownerExists && isOwner == true {
+        // Владелец платформы
+        if userEmail == "dev@businesstack.ru" || platformRole == "owner" {
             hasAccess = true
-            log.Printf("[ADMIN] 👑 ВЛАДЕЛЕЦ имеет полный доступ к %s %s", method, path)
-        } else if adminExists && isAdmin == true {
-            hasAccess = true
-            log.Printf("[ADMIN] 🟢 АДМИН имеет доступ к %s %s", method, path)
-        } else if devExists && isDeveloper == true {
-            hasAccess = true
-            log.Printf("[ADMIN] 🔧 РАЗРАБОТЧИК имеет доступ к %s %s", method, path)
+            log.Printf("[ADMIN] 👑 ВЛАДЕЛЕЦ ПЛАТФОРМЫ имеет полный доступ к %s %s", method, path)
         } else if role == "admin" || role == "developer" || role == "owner" {
             hasAccess = true
             log.Printf("[ADMIN] 🟢 Доступ разрешен для %s на %s %s", role, method, path)
@@ -305,6 +417,7 @@ func AdminMiddleware(cfg *config.Config) gin.HandlerFunc {
         c.Next()
     }
 }
+
 
 // Дополнительная функция для проверки прав разработчика
 func DeveloperMiddleware(cfg *config.Config) gin.HandlerFunc {
