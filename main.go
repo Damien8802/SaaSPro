@@ -1569,19 +1569,20 @@ platformGroup.Use(middleware.AuthMiddleware(cfg), middleware.RequirePlatformAcce
     platformGroup.POST("/tenants/:id/set-admin", handlers.SetTenantAdmin)
     platformGroup.POST("/tenants/:id/set-developer", handlers.SetTenantDeveloper)
     
-    // Управление твоими помощниками (платформа админы/разработчики)
-    platformGroup.GET("/staff", handlers.GetPlatformStaff)
-    platformGroup.POST("/staff/admin", handlers.AddPlatformAdmin)
-    platformGroup.POST("/staff/developer", handlers.AddPlatformDeveloper)
-    platformGroup.DELETE("/staff/:email", handlers.RemovePlatformStaff)
-    
+   // Управление твоими помощниками (платформа админы/разработчики)
+platformGroup.GET("/staff", handlers.GetPlatformStaffList)
+platformGroup.POST("/staff", handlers.AddPlatformStaff)
+platformGroup.POST("/staff/admin", handlers.AddPlatformAdmin)
+platformGroup.POST("/staff/developer", handlers.AddPlatformDeveloper)
+platformGroup.DELETE("/staff/:email", handlers.RemovePlatformStaffByEmail)
+
+
     // Глобальные настройки платформы
     platformGroup.GET("/settings", handlers.GetPlatformSettings)
     platformGroup.PUT("/settings", handlers.UpdatePlatformSettings)
     
     // Выдача прямого доступа к модулям (для клиентов)
     platformGroup.POST("/grant-access", handlers.GrantModuleAccess)
-    platformGroup.POST("/staff", handlers.AddPlatformStaff)
 }
 
 // ========== АДМИНКА ОРГАНИЗАЦИИ (ДЛЯ КЛИЕНТОВ) ==========
@@ -3006,6 +3007,7 @@ r.GET("/favicon.ico", func(c *gin.Context) {
 r.GET("/favicon.svg", func(c *gin.Context) {
     c.File("./static/favicon.svg")
 })
+
 
 
 

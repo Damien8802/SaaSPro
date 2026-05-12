@@ -2,8 +2,7 @@
 <html lang="ru">
 <head>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">`n    `n    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SaaSPro | Админ-панель разработчика</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -492,70 +491,6 @@
         <div class="modal-overlay" id="candidateModal"><div class="modal-content"><h3>➕ Добавить кандидата</h3><label>ФИО</label><input type="text" id="candidateName"><label>Вакансия</label><input type="text" id="candidateVacancy"><label>Опыт</label><input type="text" id="candidateExperience"><label>Зарплата</label><input type="number" id="candidateSalary"><label>Телефон</label><input type="text" id="candidatePhone"><label>Email</label><input type="email" id="candidateEmail"><div class="modal-buttons"><button class="btn-cancel" onclick="closeCandidateModal()">Отмена</button><button class="btn-save" onclick="addCandidate()">Добавить</button></div></div></div>
         <div class="modal-overlay" id="vacancyModal"><div class="modal-content"><h3>➕ Создать вакансию</h3><label>Название</label><input type="text" id="vacancyTitle"><label>ЗП от</label><input type="number" id="vacancySalaryFrom"><label>ЗП до</label><input type="number" id="vacancySalaryTo"><label>Описание</label><textarea id="vacancyDesc" rows="3"></textarea><div class="modal-buttons"><button class="btn-cancel" onclick="closeVacancyModal()">Отмена</button><button class="btn-save" onclick="createVacancy()">Создать</button></div></div></div>
         <div class="modal-overlay" id="payrollModal"><div class="modal-content" style="max-width:700px;"><h3>💰 Расчёт ФОТ</h3><div id="payrollResult"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closePayrollModal()">Закрыть</button><button class="btn-save" onclick="savePayroll()">Сохранить расчёт</button></div></div></div>
-
-        <!-- Модальное окно добавления сотрудника -->
-        <div class="modal fade" id="addStaffModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title"><i class="fas fa-user-plus"></i> Добавить сотрудника платформы</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Фамилия</label>
-                                <input type="text" class="form-control" id="staff_last_name" placeholder="Иванов">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Имя</label>
-                                <input type="text" class="form-control" id="staff_first_name" placeholder="Иван">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Отчество</label>
-                                <input type="text" class="form-control" id="staff_middle_name" placeholder="Иванович">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" id="staff_email" placeholder="ivan@example.com">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Телефон</label>
-                                <input type="tel" class="form-control" id="staff_phone" placeholder="+7 (999) 123-45-67">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Дата рождения</label>
-                                <input type="date" class="form-control" id="staff_birth_date">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Роль</label>
-                                <select class="form-select" id="staff_role">
-                                    <option value="admin">Администратор платформы</option>
-                                    <option value="developer">Разработчик платформы</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Адрес прописки</label>
-                                <input type="text" class="form-control" id="staff_address" placeholder="г. Москва, ул. Примерная, д. 1">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" id="staff_password" placeholder="••••••••">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Подтверждение пароля</label>
-                                <input type="password" class="form-control" id="staff_password_confirm" placeholder="••••••••">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                        <button type="button" class="btn btn-primary" onclick="addPlatformStaff()">Добавить</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <script>
             let ordersChart, revenueChart, profitChart, expensesChart;
             let expensesList = JSON.parse(localStorage.getItem('expensesList') || '[]');
@@ -808,7 +743,7 @@
             // ========== УПРАВЛЕНИЕ ПЕРСОНАЛОМ ПЛАТФОРМЫ ==========
             async function loadStaff() {
                 try {
-                    const response = await fetch('/api/platform/staff');
+                   const response = await fetch('/platform/staff');
                     const data = await response.json();
                     const tbody = document.getElementById('staffTable');
                     
@@ -843,7 +778,7 @@
             async function deleteStaff(email) {
                 if (!confirm(`Удалить сотрудника ${email}?`)) return;
                 try {
-                    const response = await fetch(`/api/platform/staff/${email}`, { method: 'DELETE' });
+                    const response = await fetch(`/platform/staff/${email}`, { method: 'DELETE' });
                     const result = await response.json();
                     if (result.success) {
                         alert('Сотрудник удалён');
@@ -883,7 +818,7 @@
                 }
                 
                 try {
-                    const response = await fetch('/api/platform/staff', {
+                    const response = await fetch('/platform/staff', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)

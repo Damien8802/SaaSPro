@@ -277,3 +277,65 @@ func AddPlatformStaff(c *gin.Context) {
 
     c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID})
 }
+
+// GetPlatformStaffList - получить список сотрудников платформы
+func GetPlatformStaffList(c *gin.Context) {
+    rows, err := database.Pool.Query(c.Request.Context(), `
+        SELECT id, email, first_name, last_name, middle_name, phone, 
+               COALESCE(birth_date::text, '') as birth_date, 
+               COALESCE(address, '') as address, role, created_at
+        FROM users 
+        WHERE role IN ('admin', 'developer') AND deleted_at IS NULL
+        ORDER BY created_at DESC
+    `)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    defer rows.Close()
+
+    var staff []gin.H
+    for rows.Next() {
+        var id, email, firstName, lastName, middleName, phone, birthDate, address, role string
+        var createdAt time.Time
+
+        rows.Scan(&id, &email, &firstName, &lastName, &middleName, &phone, &birthDate, &address, &role, &createdAt)
+
+        staff = append(staff, gin.H{
+            "id":          id,
+            "email":       email,
+            "first_name":  firstName,
+            "last_name":   lastName,
+            "middle_name": middleName,
+            "phone":       phone,
+            "birth_date":  birthDate,
+            "address":     address,
+            "role":        role,
+            "created_at":  createdAt,
+        })
+    }
+
+    c.JSON(http.StatusOK, gin.H{"success": true, "staff": staff})
+}
+
+// RemovePlatformStaffByEmail - удалить сотрудника платформы по email
+func RemovePlatformStaffByEmail(c *gin.Context) {
+    email := c.Param("email")
+
+    // Не даём удалить владельца
+    if email == "dev@businesstack.ru" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Нельзя удалить владельца платформы"})
+        return
+    }
+
+    _, err := database.Pool.Exec(c.Request.Context(), `
+        DELETE FROM users WHERE email = $1 AND role IN ('admin', 'developer')
+    `, email)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"success": true})
+}
