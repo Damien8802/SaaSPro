@@ -49,6 +49,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            backdrop-filter: blur(10px);
         }
         .profile-avatar {
             width: 44px;
@@ -82,13 +83,16 @@
             border-radius: 30px;
             cursor: pointer;
             font-size: 12px;
+            transition: all 0.2s;
         }
+        .logout-btn:hover { background: rgba(239,68,68,0.4); }
         
         .modules-select {
             background: rgba(30,30,46,0.95);
             border-radius: 20px;
             padding: 16px;
             margin-bottom: 16px;
+            backdrop-filter: blur(10px);
         }
         .modules-select h3 {
             font-size: 15px;
@@ -121,6 +125,7 @@
             border-radius: 20px;
             padding: 16px;
             margin-bottom: 16px;
+            backdrop-filter: blur(10px);
         }
         .selected-modules h3 {
             font-size: 15px;
@@ -133,13 +138,14 @@
             gap: 8px;
         }
         .module-tag {
-            background: rgba(99,102,241,0.2);
+            background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3));
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            backdrop-filter: blur(5px);
         }
         .no-modules {
             color: #64748b;
@@ -154,17 +160,106 @@
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 16px;
-            border: 1px solid rgba(99,102,241,0.2);
+            border: 1px solid rgba(99,102,241,0.3);
+            backdrop-filter: blur(10px);
         }
+        
+        /* КОНТЕЙНЕР QR-КОДА */
         .qr-code {
             background: white;
             padding: 12px;
-            border-radius: 16px;
+            border-radius: 20px;
             display: inline-block;
             margin-bottom: 12px;
             cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
         }
-        .qr-code canvas { width: 160px; height: 160px; }
+        .qr-code:active { transform: scale(0.98); }
+        .qr-code canvas { 
+            width: 200px; 
+            height: 200px; 
+            display: block;
+            border-radius: 8px;
+        }
+        
+        /* ========== ШИКАРНАЯ БУКВА S (НЕ МЕШАЕТ СКАНИРОВАНИЮ) ========== */
+        .qr-code.has-qr {
+            animation: qrGlow 2s ease-in-out infinite;
+        }
+        
+        .qr-code.has-qr::after {
+            content: "S";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 58px;
+            font-weight: 900;
+            font-family: "Segoe UI", "Arial", system-ui, -apple-system;
+            
+            /* Супер-градиент */
+            background: linear-gradient(135deg, 
+                #f093fb 0%, 
+                #f5576c 25%,
+                #6366f1 50%,
+                #8b5cf6 75%,
+                #d946ef 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            
+            /* Свечение */
+            text-shadow: 
+                0 0 10px rgba(99,102,241,0.8),
+                0 0 20px rgba(139,92,246,0.6);
+            
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            
+            /* Стеклянный эффект */
+            background-color: rgba(255,255,255,0.95);
+            
+            /* Тени */
+            box-shadow: 
+                0 0 20px rgba(99,102,241,0.6),
+                0 8px 20px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            
+            /* ВАЖНО: не блокирует сканирование QR */
+            pointer-events: none;
+            z-index: 10;
+            
+            /* Анимация пульсации */
+            animation: sPulse 2s ease-in-out infinite;
+        }
+        
+        /* Пульсация буквы S */
+        @keyframes sPulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                box-shadow: 0 0 20px rgba(99,102,241,0.6), 0 8px 20px rgba(0,0,0,0.3);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.05);
+                box-shadow: 0 0 35px rgba(99,102,241,0.9), 0 10px 25px rgba(0,0,0,0.4);
+            }
+        }
+        
+        /* Пульсация QR-кода */
+        @keyframes qrGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(99,102,241,0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(99,102,241,0.2), 0 0 0 12px rgba(139,92,246,0.1);
+            }
+        }
+        
         .qr-title { font-size: 16px; font-weight: 600; margin: 10px 0 4px; }
         .qr-subtitle { font-size: 12px; color: #94a3b8; }
         
@@ -183,7 +278,9 @@
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
             margin-top: 16px;
+            transition: all 0.2s;
         }
+        .download-btn:hover { opacity: 0.9; transform: scale(1.02); }
         .download-btn:active { transform: scale(0.98); }
         
         .info-card {
@@ -191,6 +288,7 @@
             border-radius: 20px;
             padding: 16px;
             margin-bottom: 16px;
+            backdrop-filter: blur(10px);
         }
         .info-card h3 { font-size: 15px; margin-bottom: 10px; color: #a78bfa; }
         .feature-list li {
@@ -228,6 +326,17 @@
             margin-top: 8px;
             text-align: center;
         }
+        
+        .qr-placeholder {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+            padding: 30px 20px;
+            border-radius: 20px;
+            color: #6366f1;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -260,7 +369,6 @@
         { id: "marketplace", name: "Маркетплейс", icon: "🛒" }
     ];
 
-    // Модули, которые автоматически подтягиваются с FinCore
     const fincoreDependencies = [
         { id: "finance", name: "Финансовый учёт", icon: "💰" },
         { id: "reports-analytics", name: "Отчёты и аналитика", icon: "📊" },
@@ -322,7 +430,6 @@
         }
     }
 
-    // Автоматическое добавление зависимостей при выборе FinCore
     function updateModulesOnFinCore() {
         const hasFinCore = selectedModules.some(m => m.id === 'fincore');
         let changed = false;
@@ -347,17 +454,71 @@
         }
     }
 
+    function updateQRCode() {
+        const qrContainer = document.getElementById('qrCode');
+        if (!qrContainer) return;
+        
+        // Убираем класс has-qr (скрываем букву S)
+        qrContainer.classList.remove('has-qr');
+        qrContainer.innerHTML = '';
+        
+        if (selectedModules.length === 0) {
+            qrContainer.innerHTML = '<div class="qr-placeholder">✨ Выберите модули</div>';
+            return;
+        }
+        
+        const token = localStorage.getItem('token');
+        const selectedData = encodeURIComponent(JSON.stringify(selectedModules));
+        let downloadUrl = `/api/mobile/download?modules=${selectedData}`;
+        if (token) {
+            downloadUrl += `&token=${encodeURIComponent(token)}`;
+        }
+        
+        console.log('📱 QR URL:', downloadUrl);
+        
+        // Создаём QR-код
+        new QRCode(qrContainer, {
+            text: downloadUrl,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        // Добавляем класс has-qr через задержку
+        setTimeout(() => {
+            qrContainer.classList.add('has-qr');
+        }, 100);
+    }
+
+    function downloadAPK() {
+        if (selectedModules.length === 0) {
+            alert('❌ Выберите хотя бы один модуль');
+            return;
+        }
+        
+        const token = localStorage.getItem('token');
+        const selectedData = encodeURIComponent(JSON.stringify(selectedModules));
+        let url = `/api/mobile/download?modules=${selectedData}`;
+        if (token) {
+            url += `&token=${encodeURIComponent(token)}`;
+        }
+        
+        window.location.href = url;
+    }
+
     function renderPage() {
         const container = document.getElementById('mainContent');
         if (!container) return;
         
         container.innerHTML = `
-            <div class="profile-card" id="profileCard">
-                <div class="profile-avatar" id="userAvatar">${currentUser?.name?.charAt(0).toUpperCase() || '👤'}</div>
+            <div class="profile-card">
+                <div class="profile-avatar">${currentUser?.name?.charAt(0).toUpperCase() || '👤'}</div>
                 <div class="profile-info">
-                    <div class="profile-name" id="userName">${currentUser?.name || currentUser?.email?.split('@')[0] || 'Пользователь'}</div>
-                    <div class="profile-email" id="userEmail">${currentUser?.email || '—'}</div>
-                    <div id="ownerBadge">${isOwner ? '<span class="owner-badge">👑 Владелец</span>' : ''}</div>
+                    <div class="profile-name">${currentUser?.name || currentUser?.email?.split('@')[0] || 'Пользователь'}</div>
+                    <div class="profile-email">${currentUser?.email || '—'}</div>
+                    ${isOwner ? '<div><span class="owner-badge">👑 Владелец</span></div>' : ''}
                 </div>
                 <button class="logout-btn" onclick="logout()">🚪</button>
             </div>
@@ -365,20 +526,20 @@
             <div class="modules-select">
                 <h3><i class="fas fa-cube"></i> Выберите модули для скачивания</h3>
                 <div id="modulesList"></div>
-                <div class="info-note">✅ При выборе FinCore автоматически добавляются связанные модули</div>
+                <div class="info-note">✨ При выборе FinCore автоматически добавляются связанные модули</div>
             </div>
             
-            <div class="selected-modules" id="selectedModulesBlock">
+            <div class="selected-modules">
                 <h3><i class="fas fa-check-circle"></i> Выбранные модули</h3>
                 <div id="selectedModulesList" class="modules-list"></div>
             </div>
             
-            <div class="qr-section" id="qrSection" style="display: none;">
+            <div class="qr-section">
                 <div class="qr-code" id="qrCode"></div>
                 <div class="qr-title">📱 Наведите камеру</div>
                 <div class="qr-subtitle">или нажмите на QR-код для скачивания</div>
                 <button class="download-btn" id="downloadBtn">
-                    <i class="fas fa-download"></i> Скачать APK
+                    <i class="fas fa-download"></i> Скачать приложение
                 </button>
             </div>
             
@@ -386,8 +547,8 @@
                 <h3><i class="fas fa-info-circle"></i> Как установить</h3>
                 <ul class="feature-list">
                     <li><i class="fas fa-qrcode"></i> Наведите камеру на QR-код</li>
-                    <li><i class="fas fa-download"></i> Нажмите "Скачать APK"</li>
-                    <li><i class="fas fa-lock"></i> Разрешите установку из неизвестных источников</li>
+                    <li><i class="fas fa-download"></i> Нажмите "Скачать"</li>
+                    <li><i class="fas fa-lock"></i> Разрешите установку</li>
                     <li><i class="fas fa-rocket"></i> Откройте приложение</li>
                 </ul>
             </div>
@@ -397,7 +558,7 @@
         
         renderModulesList();
         renderSelectedModules();
-        setTimeout(() => updateQRCode(), 100);
+        updateQRCode();
         
         const btn = document.getElementById('downloadBtn');
         if (btn) btn.addEventListener('click', downloadAPK);
@@ -407,15 +568,13 @@
         const container = document.getElementById('modulesList');
         if (!container) return;
         
-        const allModules = [...mainModules];
-        
-        container.innerHTML = allModules.map(mod => `
+        container.innerHTML = mainModules.map(mod => `
             <div class="module-item">
                 <div class="module-info">
                     <div class="module-icon">${mod.icon}</div>
                     <div class="module-name">${mod.name}</div>
                 </div>
-                <input type="checkbox" class="module-checkbox" data-id="${mod.id}" data-name="${mod.name}" data-main="${mod.isMain || false}" ${selectedModules.some(s => s.id === mod.id) ? 'checked' : ''}>
+                <input type="checkbox" class="module-checkbox" data-id="${mod.id}" data-name="${mod.name}" ${selectedModules.some(s => s.id === mod.id) ? 'checked' : ''}>
             </div>
         `).join('');
         
@@ -435,7 +594,7 @@
                 updateModulesOnFinCore();
                 renderSelectedModules();
                 renderModulesList();
-                setTimeout(() => updateQRCode(), 50);
+                updateQRCode();
             });
         });
     }
@@ -454,72 +613,6 @@
                 <i class="fas fa-cube"></i> ${mod.name}
             </div>
         `).join('');
-    }
-
-      function updateQRCode() {
-        const qrSection = document.getElementById('qrSection');
-        const qrDiv = document.getElementById('qrCode');
-        
-        if (!qrSection || !qrDiv) return;
-        
-        if (selectedModules.length === 0) {
-            qrSection.style.display = 'none';
-            return;
-        }
-        
-        qrSection.style.display = 'block';
-        
-        const token = localStorage.getItem('token');
-        // ✅ ТОЛЬКО ID модулей (коротко)
-        const moduleIds = selectedModules.map(m => m.id).join(',');
-        const selectedData = encodeURIComponent(moduleIds);
-        
-        let downloadUrl = `/api/mobile/download?modules=${selectedData}`;
-        if (token) {
-            downloadUrl += `&token=${encodeURIComponent(token)}`;
-        }
-        
-        // Ограничиваем длину (если всё ещё длинная - обрезаем)
-        let fullUrl = window.location.origin + downloadUrl;
-        if (fullUrl.length > 2000) {
-            // Берём первые 5 модулей
-            const shortIds = selectedModules.slice(0, 5).map(m => m.id).join(',');
-            const shortData = encodeURIComponent(shortIds);
-            fullUrl = window.location.origin + `/api/mobile/download?modules=${shortData}`;
-            console.warn('URL сокращён до 5 модулей');
-        }
-        
-        qrDiv.innerHTML = '';
-        
-        try {
-            new QRCode(qrDiv, {
-                text: fullUrl,
-                width: 160,
-                height: 160,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        } catch(e) {
-            console.error('QR ошибка:', e);
-            qrDiv.innerHTML = '<div style="color:#f87171; font-size:12px;">❌ Ошибка QR</div>';
-        }
-    }
-
-    async function downloadAPK() {
-        if (selectedModules.length === 0) {
-            alert('❌ Выберите хотя бы один модуль');
-            return;
-        }
-        
-        const token = localStorage.getItem('token');
-        const selectedData = encodeURIComponent(JSON.stringify(selectedModules));
-        let url = `/api/mobile/download?modules=${selectedData}`;
-        if (token) {
-            url += `&token=${encodeURIComponent(token)}`;
-        }
-        
-        window.location.href = url;
     }
 
     function renderNoAccess(message, link, linkText) {
