@@ -2939,6 +2939,54 @@ r.PUT("/api/orders/:id/remaining", middleware.AuthMiddleware(cfg), middleware.Ad
     c.JSON(200, gin.H{"success": true})
 })
 
+        // ========== УПРАВЛЕНЧЕСКИЙ УЧЁТ (ТЕГИ/ПРОЕКТЫ) ==========
+    fincoreTags := r.Group("/api/fincore/tags")
+    fincoreTags.Use(middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("fincore"))
+    {
+        fincoreTags.GET("", handlers.GetFincoreTags)
+        fincoreTags.POST("", handlers.CreateFincoreTag)
+        fincoreTags.PUT("/:id", handlers.UpdateFincoreTag)
+        fincoreTags.DELETE("/:id", handlers.DeleteFincoreTag)
+    }
+
+    // Отчёты по тегам
+    fincoreReports := r.Group("/api/fincore/reports")
+    fincoreReports.Use(middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("fincore"))
+    {
+        fincoreReports.GET("/by-tag", handlers.GetFincoreReportByTag)
+    }
+
+    // Привязка тегов к проводкам
+    fincoreAssign := r.Group("/api/fincore/assign")
+    fincoreAssign.Use(middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("fincore"))
+    {
+        fincoreAssign.POST("/entry", handlers.AssignTagToEntry)
+        fincoreAssign.DELETE("/entry/:entry_id/tag/:tag_id", handlers.RemoveTagFromEntry)
+    }
+
+    // Бюджеты (план-факт)
+    fincoreBudgets := r.Group("/api/fincore/budgets")
+    fincoreBudgets.Use(middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("fincore"))
+    {
+        fincoreBudgets.GET("", handlers.GetBudgets)
+        fincoreBudgets.POST("", handlers.UpdateBudget)
+    }
+
+    // Экспорт и топ тегов
+    fincoreExtra := r.Group("/api/fincore/extra")
+    fincoreExtra.Use(middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("fincore"))
+    {
+        fincoreExtra.GET("/export", handlers.ExportFincoreReport)
+        fincoreExtra.GET("/top-tags", handlers.GetTopTags)
+    }
+
+    // Страница управленческого учёта
+    r.GET("/management", middleware.AuthMiddleware(cfg), middleware.RequireModuleAccess("fincore"), func(c *gin.Context) {
+        c.HTML(http.StatusOK, "fincore_management", gin.H{
+            "title": "Управленческий учёт | FinCore",
+        })
+    })
+
       r.NoRoute(func(c *gin.Context) {
         c.HTML(http.StatusNotFound, "404.html", gin.H{
             "Title":   "Страница не найдена - SaaSPro",
