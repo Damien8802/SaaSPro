@@ -199,6 +199,13 @@
             animation: fadeInOut 2s ease forwards;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
+        .kpi-card { text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 20px; margin-bottom: 15px; }
+        .kpi-value { font-size: 28px; font-weight: 800; }
+        .kpi-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px; }
+        .kpi-trend { font-size: 11px; margin-top: 5px; }
+        .abc-category-a { background: rgba(16,185,129,0.15); border-left: 3px solid #10b981; }
+        .abc-category-b { background: rgba(245,158,11,0.15); border-left: 3px solid #f59e0b; }
+        .abc-category-c { background: rgba(239,68,68,0.15); border-left: 3px solid #ef4444; }
     </style>
 </head>
 <body>
@@ -285,6 +292,27 @@
         </div>
     </div>
 
+    <!-- KPI Дашборд -->
+    <div class="row mb-4">
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiRevenue">0 ₽</div><div class="kpi-label">Выручка</div><div id="kpiRevenueTrend" class="kpi-trend"></div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiProfit">0 ₽</div><div class="kpi-label">Прибыль</div><div id="kpiProfitTrend" class="kpi-trend"></div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiMargin">0%</div><div class="kpi-label">Маржинальность</div><div id="kpiMarginTrend" class="kpi-trend"></div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiProjects">0</div><div class="kpi-label">Активных проектов</div></div></div>
+    </div>
+
+    <!-- ABC-анализ -->
+    <div class="card animate">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4><i class="fas fa-chart-pie"></i> 📦 ABC-анализ (по выручке)</h4>
+            <select class="form-select" id="abcPeriodSelect" style="width: 150px;">
+                <option value="month">За месяц</option>
+                <option value="quarter">За квартал</option>
+                <option value="year" selected>За год</option>
+            </select>
+        </div>
+        <div id="abcContainer"><div class="text-center py-4">Загрузка...</div></div>
+    </div>
+
     <!-- Список тегов -->
     <div class="card animate">
         <div class="card-header"><h4><i class="fas fa-list"></i> Аналитика</h4></div>
@@ -295,9 +323,17 @@
     <div class="card animate">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4><i class="fas fa-chart-simple"></i> 📊 План-факт анализ</h4>
-            <select class="form-select" id="budgetTagSelect" style="width: 250px;"></select>
+            <div>
+                <select class="form-select" id="budgetTagSelect" style="width: 250px; display: inline-block; margin-right: 10px;"></select>
+                <select class="form-select" id="budgetYearSelect" style="width: 120px; display: inline-block;">
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                </select>
+                <button class="btn-outline" onclick="loadBudgetData()"><i class="fas fa-chart-line"></i> Показать</button>
+            </div>
         </div>
-        <div id="budgetContainer"><div class="text-center py-4">Выберите тег для анализа</div></div>
+        <div id="budgetContainer"><div class="text-center py-4">Выберите тег и год для анализа</div></div>
     </div>
 
     <!-- Отчёт по тегам -->
@@ -311,7 +347,7 @@
                 <button class="btn-outline" onclick="exportReport()"><i class="fas fa-file-excel"></i> Экспорт</button>
             </div>
         </div>
-        <div class="table-responsive"><table class="table"><thead><tr><th>Тег</th><th>Тип</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th><th>Доля</th></tr></thead><tbody id="reportTable"><tr><td colspan="6" class="text-center">Выберите период</td></tr></tbody></table>
+        <div class="table-responsive"><table class="table"><thead><tr><th>Тег</th><th>Тип</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th><th>Доля</th><tr></thead><tbody id="reportTable"><tr><td colspan="6" class="text-center">Выберите период</td></tr></tbody></table>
         </div>
     </div>
 </div>
@@ -331,35 +367,123 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.remove(), 2500);
 }
 
+async function loadKPIDashboard() {
+    const dateTo = document.getElementById('reportDateTo').value;
+    const dateFrom = document.getElementById('reportDateFrom').value;
+    if (!dateFrom || !dateTo) return;
+    try {
+        const res = await fetch(`/api/fincore/reports/by-tag?start_date=${dateFrom}&end_date=${dateTo}`, { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        if (!data.data) return;
+        const revenue = data.data.reduce((sum, i) => sum + i.total_debit, 0);
+        const profit = data.data.reduce((sum, i) => sum + i.balance, 0);
+        const margin = revenue === 0 ? 0 : (profit / revenue * 100).toFixed(1);
+        document.getElementById('kpiRevenue').innerHTML = revenue.toLocaleString() + ' ₽';
+        document.getElementById('kpiProfit').innerHTML = profit.toLocaleString() + ' ₽';
+        document.getElementById('kpiMargin').innerHTML = margin + '%';
+        document.getElementById('kpiProjects').innerHTML = allTags.filter(t => t.type === 'project').length;
+        
+        const prevDateFrom = new Date(new Date(dateFrom).setMonth(new Date(dateFrom).getMonth() - 1)).toISOString().split('T')[0];
+        const prevRes = await fetch(`/api/fincore/reports/by-tag?start_date=${prevDateFrom}&end_date=${dateFrom}`, { headers: { 'Authorization': 'Bearer ' + token } });
+        const prevData = await prevRes.json();
+        if (prevData.data) {
+            const prevRevenue = prevData.data.reduce((sum, i) => sum + i.total_debit, 0);
+            const revenueChange = prevRevenue === 0 ? 0 : ((revenue - prevRevenue) / prevRevenue * 100).toFixed(1);
+            document.getElementById('kpiRevenueTrend').innerHTML = `${revenueChange >= 0 ? '📈 +' : '📉 '}${Math.abs(revenueChange)}%`;
+            document.getElementById('kpiRevenueTrend').style.color = revenueChange >= 0 ? '#10b981' : '#ef4444';
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function loadABCAnalysis() {
+    const dateTo = document.getElementById('reportDateTo').value;
+    const dateFrom = document.getElementById('reportDateFrom').value;
+    if (!dateFrom || !dateTo) return;
+    try {
+        const res = await fetch(`/api/fincore/reports/by-tag?start_date=${dateFrom}&end_date=${dateTo}`, { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        if (!data.data) return;
+        const items = data.data.sort((a,b) => b.total_debit - a.total_debit);
+        let total = items.reduce((sum, i) => sum + i.total_debit, 0);
+        let cumulative = 0;
+        let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Категория</th><th>Тег</th><th>Сумма, ₽</th><th>Доля</th><th>Накоплено</th></tr></thead><tbody>';
+        items.forEach(item => {
+            cumulative += item.total_debit;
+            const percent = total === 0 ? 0 : (item.total_debit / total * 100).toFixed(1);
+            const cumulativePercent = total === 0 ? 0 : (cumulative / total * 100).toFixed(1);
+            let category = '', bgClass = '';
+            if (cumulativePercent <= 80) { category = 'A 🟢'; bgClass = 'abc-category-a'; }
+            else if (cumulativePercent <= 95) { category = 'B 🟡'; bgClass = 'abc-category-b'; }
+            else { category = 'C 🔴'; bgClass = 'abc-category-c'; }
+            html += `<tr class="${bgClass}"><td><strong>${category}</strong></td><td>${item.tag_name}</td><td class="amount">${item.total_debit.toLocaleString()} ₽</td><td>${percent}%</td><td>${cumulativePercent}%</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('abcContainer').innerHTML = html;
+    } catch(e) { console.error(e); }
+}
+
+async function loadBudgetData() {
+    const tagId = document.getElementById('budgetTagSelect').value;
+    const year = document.getElementById('budgetYearSelect').value;
+    if (!tagId) { showToast('Выберите тег для анализа', true); return; }
+    const container = document.getElementById('budgetContainer');
+    container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
+    try {
+        const res = await fetch(`/api/fincore/budgets?tag_id=${tagId}&year=${year}`, { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+        let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Месяц</th><th>План, ₽</th><th>Факт, ₽</th><th>Отклонение</th><th>Выполнение</th><th></th></tr></thead><tbody>';
+        let totalPlanned = 0, totalActual = 0;
+        for (let i = 1; i <= 12; i++) {
+            const budget = data.data?.find(b => parseInt(b.month) === i) || { planned: 0, actual: 0 };
+            totalPlanned += budget.planned;
+            totalActual += budget.actual;
+            const variance = budget.actual - budget.planned;
+            const percent = budget.planned === 0 ? (budget.actual === 0 ? 0 : 100) : (budget.actual / budget.planned * 100).toFixed(1);
+            const varianceClass = variance >= 0 ? 'budget-positive' : 'budget-negative';
+            html += `<tr><td><strong>${months[i-1]}</strong></td><td class="amount">${budget.planned.toLocaleString()} ₽</td><td class="amount">${budget.actual.toLocaleString()} ₽</td><td class="${varianceClass}">${variance >= 0 ? '+' : ''}${variance.toLocaleString()} ₽</td><td><div class="progress" style="height: 6px; width: 100px;"><div class="progress-bar ${percent >= 100 ? 'bg-success' : percent >= 80 ? 'bg-warning' : 'bg-danger'}" style="width: ${Math.min(percent, 100)}%"></div></div> ${percent}%</td><td><button class="btn-outline" style="padding: 5px 12px;" onclick="editBudget('${tagId}', '${year}', ${i}, ${budget.planned})"><i class="fas fa-edit"></i></button></td></tr>`;
+        }
+        const totalVariance = totalActual - totalPlanned;
+        const totalPercent = totalPlanned === 0 ? (totalActual === 0 ? 0 : 100) : (totalActual / totalPlanned * 100).toFixed(1);
+        html += `<tr class="total"><td><strong>ИТОГО</strong></td><td class="amount"><strong>${totalPlanned.toLocaleString()} ₽</strong></td><td class="amount"><strong>${totalActual.toLocaleString()} ₽</strong></td><td class="${totalVariance >= 0 ? 'budget-positive' : 'budget-negative'}"><strong>${totalVariance >= 0 ? '+' : ''}${totalVariance.toLocaleString()} ₽</strong></td><td><strong>${totalPercent}%</strong></td><td></td></tr>`;
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = '<div class="text-center py-4 text-danger">Ошибка загрузки данных</div>'; }
+}
+
+function editBudget(tagId, year, month, currentPlanned) {
+    const newPlanned = prompt(`Введите плановую сумму на ${month}-${year}:`, currentPlanned || 0);
+    if (newPlanned === null) return;
+    fetch('/api/fincore/budgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ tag_id: tagId, year: parseInt(year), month: month, planned: parseFloat(newPlanned) })
+    }).then(() => { loadBudgetData(); showToast('✅ Бюджет сохранён'); });
+}
+
 async function loadTags() {
     try {
         const res = await fetch('/api/fincore/tags', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error('Ошибка загрузки');
         allTags = await res.json();
         renderTags();
         updateStats();
         loadTopTags();
         loadBudgetSelect();
         loadReport();
+        loadKPIDashboard();
+        loadABCAnalysis();
     } catch(e) { console.error(e); showToast('Ошибка загрузки тегов', true); }
 }
 
 function renderTags() {
     const container = document.getElementById('tagsContainer');
+    if (!container) return;
     const projects = allTags.filter(t => t.type === 'project');
     const managers = allTags.filter(t => t.type === 'manager');
     const departments = allTags.filter(t => t.type === 'department');
-    const products = allTags.filter(t => t.type === 'product');
-    const cashflows = allTags.filter(t => t.type === 'cashflow');
-    const workshops = allTags.filter(t => t.type === 'workshop');
-    const stores = allTags.filter(t => t.type === 'store');
-    const regions = allTags.filter(t => t.type === 'region');
-    const teams = allTags.filter(t => t.type === 'team');
-    const campaigns = allTags.filter(t => t.type === 'campaign');
-    const channels = allTags.filter(t => t.type === 'channel');
-    const others = allTags.filter(t => !['project', 'manager', 'department', 'product', 'cashflow', 'workshop', 'store', 'region', 'team', 'campaign', 'channel'].includes(t.type));
-    
+    const others = allTags.filter(t => !['project', 'manager', 'department'].includes(t.type));
     let html = '<div class="row">';
-    
     if (projects.length) {
         html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-folder"></i> Проекты</h5><div class="tag-list">`;
         projects.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
@@ -375,46 +499,6 @@ function renderTags() {
         departments.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
         html += `</div></div>`;
     }
-    if (products.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-box"></i> Продукты</h5><div class="tag-list">`;
-        products.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
-    if (cashflows.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-money-bill-wave"></i> Статьи ДДС</h5><div class="tag-list">`;
-        cashflows.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
-    if (workshops.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-industry"></i> Цеха</h5><div class="tag-list">`;
-        workshops.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
-    if (stores.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-store"></i> Торговые точки</h5><div class="tag-list">`;
-        stores.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
-    if (regions.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-map-marker-alt"></i> Регионы</h5><div class="tag-list">`;
-        regions.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
-    if (teams.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-users"></i> Команды</h5><div class="tag-list">`;
-        teams.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
-    if (campaigns.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-bullhorn"></i> Кампании</h5><div class="tag-list">`;
-        campaigns.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
-    if (channels.length) {
-        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-tv"></i> Каналы продаж</h5><div class="tag-list">`;
-        channels.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
-        html += `</div></div>`;
-    }
     if (others.length) {
         html += `<div class="col-md-12 mt-3"><h5><i class="fas fa-tags"></i> Другие теги</h5><div class="tag-list">`;
         others.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
@@ -426,9 +510,12 @@ function renderTags() {
 }
 
 function updateStats() {
-    document.getElementById('totalProjects').innerHTML = allTags.filter(t => t.type === 'project').length;
-    document.getElementById('totalManagers').innerHTML = allTags.filter(t => t.type === 'manager').length;
-    document.getElementById('totalDepartments').innerHTML = allTags.filter(t => t.type === 'department').length;
+    const projectsEl = document.getElementById('totalProjects');
+    const managersEl = document.getElementById('totalManagers');
+    const departmentsEl = document.getElementById('totalDepartments');
+    if (projectsEl) projectsEl.innerHTML = allTags.filter(t => t.type === 'project').length;
+    if (managersEl) managersEl.innerHTML = allTags.filter(t => t.type === 'manager').length;
+    if (departmentsEl) departmentsEl.innerHTML = allTags.filter(t => t.type === 'department').length;
 }
 
 async function createTag() {
@@ -489,16 +576,18 @@ async function loadReport() {
         const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
         const data = await res.json();
         const tbody = document.getElementById('reportTable');
-        if (!data.data || !data.data.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center">Нет данных</td></tr>'; document.getElementById('totalAmount').innerHTML = '0 ₽'; return; }
+        if (!data.data || !data.data.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center">Нет данных<br>Выберите период и нажмите "Показать"</td></tr>'; document.getElementById('totalAmount').innerHTML = '0 ₽'; return; }
         let totalBalance = 0, html = '';
         for (let item of data.data) {
             totalBalance += item.balance;
             const percent = totalBalance ? (item.balance / totalBalance * 100).toFixed(1) : 0;
-            html += `<tr><td><span class="badge-project" style="background: ${item.tag_color}20; color: ${item.tag_color}">${item.tag_name}</span></td><td>${item.tag_type === 'project' ? '📁 Проект' : item.tag_type === 'manager' ? '👤 Менеджер' : item.tag_type === 'department' ? '🏢 Отдел' : '🏷️ Другое'}</td><td class="amount">${item.total_debit.toLocaleString()} ₽</td><td class="amount">${item.total_credit.toLocaleString()} ₽</td><td class="amount">${item.balance.toLocaleString()} ₽</td><td><div class="progress"><div class="progress-bar" style="width: ${percent}%; background: ${item.tag_color};"></div> <span class="ms-2">${percent}%</span></div></td></tr>`;
+            html += `<tr><td><span class="badge-project" style="background: ${item.tag_color}20; color: ${item.tag_color}">${item.tag_name}</span></td><td>${item.tag_type === 'project' ? '📁 Проект' : item.tag_type === 'manager' ? '👤 Менеджер' : '🏢 Отдел'}</td><td class="amount">${item.total_debit.toLocaleString()} ₽</td><td class="amount">${item.total_credit.toLocaleString()} ₽</td><td class="amount">${item.balance.toLocaleString()} ₽</td><td><div class="progress" style="height: 8px;"><div class="progress-bar" style="width: ${percent}%; background: ${item.tag_color};"></div></div> <span class="ms-2">${percent}%</span></td></tr>`;
         }
         tbody.innerHTML = html;
         document.getElementById('totalAmount').innerHTML = totalBalance.toLocaleString() + ' ₽';
         updateTrendChart();
+        loadKPIDashboard();
+        loadABCAnalysis();
     } catch(e) { console.error(e); }
 }
 
@@ -540,6 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reportDateFrom').value = monthAgo.toISOString().split('T')[0];
     document.getElementById('reportDateTo').value = today.toISOString().split('T')[0];
     loadTags();
+    document.getElementById('abcPeriodSelect').addEventListener('change', loadABCAnalysis);
 });
 </script>
 </body>
