@@ -289,8 +289,9 @@
 
 <nav class="navbar">
     <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-        <a class="navbar-brand" href="/"><i class="bi bi-rocket-takeoff-fill"></i> SaaSPro</a>
+        <a class="navbar-brand" href="/"><i class="bi bi-rocket-takeoff-fill" style="color: #667eea;"></i> SaaSPro</a>
         <div class="d-flex flex-wrap gap-2">
+            <a href="/dashboard-improved" class="nav-link"><i class="bi bi-speedometer2"></i> Главная</a>
             <a href="/finance" class="nav-link"><i class="bi bi-calculator"></i> Финансы</a>
             <a href="/reports" class="nav-link"><i class="bi bi-graph-up"></i> Отчёты</a>
             <a href="/reconciliation-acts" class="nav-link"><i class="bi bi-file-text"></i> Акты сверки</a>
@@ -304,7 +305,6 @@
         </div>
     </div>
 </nav>
-
 <div class="container">
     <div class="header">
         <h1><i class="bi bi-calculator-fill"></i> Расчёт зарплаты PRO</h1>
@@ -1246,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEmployees(true);
     loadHistory();
     calculateSalary();
-    initStatsHandlers();  // ✅ ДОБАВЬТЕ ЭТУ СТРОКУ
+    initStatsHandlers();  
     
     document.querySelectorAll('.modal-overlay').forEach(modal => {
         modal.addEventListener('click', (e) => {

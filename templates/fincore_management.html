@@ -36,6 +36,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            text-decoration: none;
         }
         .navbar-brand i { background: none; color: #667eea; margin-right: 8px; }
         .nav-link {
@@ -45,6 +46,8 @@
             border-radius: 12px;
             padding: 8px 16px;
             text-decoration: none;
+            font-size: 13px;
+            display: inline-block;
         }
         .nav-link:hover, .nav-link.active { color: #fff; background: rgba(102,126,234,0.2); }
         .nav-link i { margin-right: 8px; }
@@ -139,16 +142,6 @@
         select.form-select option:checked {
             background-color: #667eea !important;
         }
-        .stat-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 24px;
-            text-align: center;
-        }
-        .stat-value { font-size: 32px; font-weight: 800; }
-        .stat-label { color: rgba(255,255,255,0.6); font-size: 14px; }
         .table { color: #e2e8f0; }
         .table thead th { border-bottom: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); padding: 15px; }
         .table tbody td { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px; }
@@ -206,26 +199,109 @@
         .abc-category-a { background: rgba(16,185,129,0.15); border-left: 3px solid #10b981; }
         .abc-category-b { background: rgba(245,158,11,0.15); border-left: 3px solid #f59e0b; }
         .abc-category-c { background: rgba(239,68,68,0.15); border-left: 3px solid #ef4444; }
+
+        /* Карточки статистики */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .stat-card:hover {
+            background: rgba(102,126,234,0.1);
+            border-color: #667eea;
+            transform: translateY(-4px);
+        }
+
+        .stat-card-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(102,126,234,0.15);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .stat-info h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.2;
+        }
+
+        .stat-info p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin: 4px 0 0 0;
+        }
+
+        .stat-card .bi-chevron-right {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.3);
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .bi-chevron-right {
+            color: #667eea;
+            transform: translateY(-50%) translateX(4px);
+        }
+
+        @media (max-width: 768px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .stat-info h3 { font-size: 20px; }
+            .stat-icon { width: 45px; height: 45px; font-size: 20px; }
+        }
+        @media (max-width: 480px) {
+            .stats-row { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
 <nav class="navbar">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <i class="bi bi-rocket-takeoff-fill"></i> SaaSPro
-        </a>
-        <div class="d-flex">
-            <a href="/finance" class="nav-link"><i class="fas fa-calculator"></i> Финансовый учёт</a>
-            <a href="/reports" class="nav-link"><i class="fas fa-chart-bar"></i> Отчёты</a>
-            <a href="/reconciliation-acts" class="nav-link"><i class="fas fa-file-signature"></i> Акты сверки</a>
-            <a href="/journal" class="nav-link"><i class="fas fa-book"></i> Журнал проводок</a>
-            <a href="/management" class="nav-link active"><i class="fas fa-tags"></i> Управленческий учёт</a>
-            <a href="/bank" class="nav-link"><i class="fas fa-university"></i> Банк-клиент</a>
-            <a href="/payroll" class="nav-link"><i class="fas fa-calculator"></i> Расчёт зарплаты</a>
-            <a href="/tax-reports" class="nav-link"><i class="fas fa-file-invoice-dollar"></i> Налоги</a>
-            <a href="/import-excel" class="nav-link"><i class="fas fa-file-excel"></i> Импорт Excel</a>
-            <a href="/month-end" class="nav-link"><i class="fas fa-calendar-check"></i> Закрытие месяца</a>
+    <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <a class="navbar-brand" href="/">🚀 SaaSPro</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/dashboard-improved" class="nav-link">📊 Главная</a>
+            <a href="/finance" class="nav-link">📊 Финансы</a>
+            <a href="/reports" class="nav-link">📈 Отчёты</a>
+            <a href="/reconciliation-acts" class="nav-link">📄 Акты сверки</a>
+            <a href="/journal" class="nav-link">📓 Журнал</a>
+            <a href="/management" class="nav-link active">🏷️ Управленка</a>
+            <a href="/bank" class="nav-link">🏦 Банк</a>
+            <a href="/payroll" class="nav-link">💰 Зарплата</a>
+            <a href="/tax-reports" class="nav-link">📑 Налоги</a>
+            <a href="/import-excel" class="nav-link">📎 Импорт</a>
+            <a href="/month-end" class="nav-link">📅 Закрытие</a>
         </div>
     </div>
 </nav>
@@ -236,12 +312,56 @@
         <p class="mb-0">Проекты, менеджеры, центры ответственности — гибкая аналитика для принятия решений</p>
     </div>
 
-    <!-- Статистика -->
+    <!-- Карточки статистики -->
+    <div class="stats-row">
+        <div class="stat-card" onclick="loadTags()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="bi bi-folder"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalProjects">0</h3>
+                    <p>Проектов</p>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right"></i>
+        </div>
+        <div class="stat-card" onclick="loadTags()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalManagers">0</h3>
+                    <p>Менеджеров</p>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right"></i>
+        </div>
+        <div class="stat-card" onclick="loadTags()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="bi bi-building"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalDepartments">0</h3>
+                    <p>Отделов</p>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right"></i>
+        </div>
+        <div class="stat-card" onclick="loadReport()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="bi bi-coin"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalAmount">0 ₽</h3>
+                    <p>По тегам</p>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right"></i>
+        </div>
+    </div>
+
+    <!-- KPI Дашборд -->
     <div class="row mb-4">
-        <div class="col-md-3 mb-3"><div class="stat-card animate"><div class="stat-value" id="totalProjects">0</div><div class="stat-label"><i class="bi bi-folder"></i> Проектов</div></div></div>
-        <div class="col-md-3 mb-3"><div class="stat-card animate"><div class="stat-value" id="totalManagers">0</div><div class="stat-label"><i class="bi bi-people"></i> Менеджеров</div></div></div>
-        <div class="col-md-3 mb-3"><div class="stat-card animate"><div class="stat-value" id="totalDepartments">0</div><div class="stat-label"><i class="bi bi-building"></i> Отделов</div></div></div>
-        <div class="col-md-3 mb-3"><div class="stat-card animate"><div class="stat-value" id="totalAmount">0 ₽</div><div class="stat-label"><i class="bi bi-coin"></i> По тегам</div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiRevenue">0 ₽</div><div class="kpi-label">Выручка</div><div id="kpiRevenueTrend" class="kpi-trend"></div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiProfit">0 ₽</div><div class="kpi-label">Прибыль</div><div id="kpiProfitTrend" class="kpi-trend"></div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiMargin">0%</div><div class="kpi-label">Маржинальность</div><div id="kpiMarginTrend" class="kpi-trend"></div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiProjects">0</div><div class="kpi-label">Активных проектов</div></div></div>
     </div>
 
     <!-- Создание тега -->
@@ -292,14 +412,6 @@
         </div>
     </div>
 
-    <!-- KPI Дашборд -->
-    <div class="row mb-4">
-        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiRevenue">0 ₽</div><div class="kpi-label">Выручка</div><div id="kpiRevenueTrend" class="kpi-trend"></div></div></div>
-        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiProfit">0 ₽</div><div class="kpi-label">Прибыль</div><div id="kpiProfitTrend" class="kpi-trend"></div></div></div>
-        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiMargin">0%</div><div class="kpi-label">Маржинальность</div><div id="kpiMarginTrend" class="kpi-trend"></div></div></div>
-        <div class="col-md-3"><div class="kpi-card"><div class="kpi-value" id="kpiProjects">0</div><div class="kpi-label">Активных проектов</div></div></div>
-    </div>
-
     <!-- ABC-анализ -->
     <div class="card animate">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -347,8 +459,8 @@
                 <button class="btn-outline" onclick="exportReport()"><i class="fas fa-file-excel"></i> Экспорт</button>
             </div>
         </div>
-        <div class="table-responsive"><table class="table"><thead><tr><th>Тег</th><th>Тип</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th><th>Доля</th><tr></thead><tbody id="reportTable"><tr><td colspan="6" class="text-center">Выберите период</td></tr></tbody></table>
-        </div>
+        <div class="table-responsive"><table class="table"><thead><tr><th>Тег</th><th>Тип</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th><th>Доля</th></tr></thead><tbody id="reportTable"><tr><td colspan="6" class="text-center">Выберите период</td></tr></tbody>
+        </table></div>
     </div>
 </div>
 
@@ -464,7 +576,6 @@ function editBudget(tagId, year, month, currentPlanned) {
 async function loadTags() {
     try {
         const res = await fetch('/api/fincore/tags', { headers: { 'Authorization': 'Bearer ' + token } });
-        if (!res.ok) throw new Error('Ошибка загрузки');
         allTags = await res.json();
         renderTags();
         updateStats();
@@ -478,11 +589,18 @@ async function loadTags() {
 
 function renderTags() {
     const container = document.getElementById('tagsContainer');
-    if (!container) return;
     const projects = allTags.filter(t => t.type === 'project');
     const managers = allTags.filter(t => t.type === 'manager');
     const departments = allTags.filter(t => t.type === 'department');
-    const others = allTags.filter(t => !['project', 'manager', 'department'].includes(t.type));
+    const products = allTags.filter(t => t.type === 'product');
+    const cashflows = allTags.filter(t => t.type === 'cashflow');
+    const workshops = allTags.filter(t => t.type === 'workshop');
+    const stores = allTags.filter(t => t.type === 'store');
+    const regions = allTags.filter(t => t.type === 'region');
+    const teams = allTags.filter(t => t.type === 'team');
+    const campaigns = allTags.filter(t => t.type === 'campaign');
+    const channels = allTags.filter(t => t.type === 'channel');
+    const others = allTags.filter(t => !['project', 'manager', 'department', 'product', 'cashflow', 'workshop', 'store', 'region', 'team', 'campaign', 'channel'].includes(t.type));
     let html = '<div class="row">';
     if (projects.length) {
         html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-folder"></i> Проекты</h5><div class="tag-list">`;
@@ -499,6 +617,46 @@ function renderTags() {
         departments.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
         html += `</div></div>`;
     }
+    if (products.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-box"></i> Продукты</h5><div class="tag-list">`;
+        products.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
+    if (cashflows.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-money-bill-wave"></i> Статьи ДДС</h5><div class="tag-list">`;
+        cashflows.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
+    if (workshops.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-industry"></i> Цеха</h5><div class="tag-list">`;
+        workshops.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
+    if (stores.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-store"></i> Торговые точки</h5><div class="tag-list">`;
+        stores.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
+    if (regions.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-map-marker-alt"></i> Регионы</h5><div class="tag-list">`;
+        regions.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
+    if (teams.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-users"></i> Команды</h5><div class="tag-list">`;
+        teams.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
+    if (campaigns.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-bullhorn"></i> Кампании</h5><div class="tag-list">`;
+        campaigns.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
+    if (channels.length) {
+        html += `<div class="col-md-4 mb-3"><h5><i class="fas fa-tv"></i> Каналы продаж</h5><div class="tag-list">`;
+        channels.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
+        html += `</div></div>`;
+    }
     if (others.length) {
         html += `<div class="col-md-12 mt-3"><h5><i class="fas fa-tags"></i> Другие теги</h5><div class="tag-list">`;
         others.forEach(t => html += `<div class="tag-item" style="background: ${t.color}20; border-left: 3px solid ${t.color}"><span class="tag-color" style="background: ${t.color}"></span>${t.name}<i class="fas fa-edit tag-delete" onclick="editTag('${t.id}','${t.name}','${t.color}')"></i><i class="fas fa-trash tag-delete" onclick="deleteTag('${t.id}')"></i></div>`);
@@ -510,12 +668,9 @@ function renderTags() {
 }
 
 function updateStats() {
-    const projectsEl = document.getElementById('totalProjects');
-    const managersEl = document.getElementById('totalManagers');
-    const departmentsEl = document.getElementById('totalDepartments');
-    if (projectsEl) projectsEl.innerHTML = allTags.filter(t => t.type === 'project').length;
-    if (managersEl) managersEl.innerHTML = allTags.filter(t => t.type === 'manager').length;
-    if (departmentsEl) departmentsEl.innerHTML = allTags.filter(t => t.type === 'department').length;
+    document.getElementById('totalProjects').innerHTML = allTags.filter(t => t.type === 'project').length;
+    document.getElementById('totalManagers').innerHTML = allTags.filter(t => t.type === 'manager').length;
+    document.getElementById('totalDepartments').innerHTML = allTags.filter(t => t.type === 'department').length;
 }
 
 async function createTag() {
@@ -581,7 +736,13 @@ async function loadReport() {
         for (let item of data.data) {
             totalBalance += item.balance;
             const percent = totalBalance ? (item.balance / totalBalance * 100).toFixed(1) : 0;
-            html += `<tr><td><span class="badge-project" style="background: ${item.tag_color}20; color: ${item.tag_color}">${item.tag_name}</span></td><td>${item.tag_type === 'project' ? '📁 Проект' : item.tag_type === 'manager' ? '👤 Менеджер' : '🏢 Отдел'}</td><td class="amount">${item.total_debit.toLocaleString()} ₽</td><td class="amount">${item.total_credit.toLocaleString()} ₽</td><td class="amount">${item.balance.toLocaleString()} ₽</td><td><div class="progress" style="height: 8px;"><div class="progress-bar" style="width: ${percent}%; background: ${item.tag_color};"></div></div> <span class="ms-2">${percent}%</span></td></tr>`;
+            html += `<tr><td><span class="badge-project" style="background: ${item.tag_color}20; color: ${item.tag_color}">${item.tag_name}</span></td>
+                    <td>${item.tag_type === 'project' ? '📁 Проект' : item.tag_type === 'manager' ? '👤 Менеджер' : item.tag_type === 'department' ? '🏢 Отдел' : '🏷️ Другое'}</td>
+                    <td class="amount">${item.total_debit.toLocaleString()} ₽</td>
+                    <td class="amount">${item.total_credit.toLocaleString()} ₽</td>
+                    <td class="amount">${item.balance.toLocaleString()} ₽</td>
+                    <td><div class="progress" style="height: 8px;"><div class="progress-bar" style="width: ${percent}%; background: ${item.tag_color};"></div></div> <span class="ms-2">${percent}%</span></td>
+                </tr>`;
         }
         tbody.innerHTML = html;
         document.getElementById('totalAmount').innerHTML = totalBalance.toLocaleString() + ' ₽';

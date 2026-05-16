@@ -2,6 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinCore | Отчёты и аналитика</title>
     
@@ -159,9 +161,63 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+
+.navbar {
+    background: rgba(15, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, #a5b4fc, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-decoration: none;
+}
+.navbar-brand i { background: none; color: #667eea; margin-right: 8px; }
+.nav-link {
+    color: rgba(255,255,255,0.7);
+    transition: all 0.3s;
+    margin: 0 5px;
+    border-radius: 12px;
+    padding: 8px 16px;
+    text-decoration: none;
+    font-size: 13px;
+    display: inline-block;
+}
+.nav-link:hover, .nav-link.active { 
+    color: #fff; 
+    background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
+}
+.nav-link i { margin-right: 8px; }
     </style>
 </head>
 <body>
+
+<nav class="navbar">
+    <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <a class="navbar-brand" href="/">🚀 SaaSPro</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/dashboard-improved" class="nav-link">📊 Главная</a>
+            <a href="/finance" class="nav-link">📊 Финансы</a>
+            <a href="/reports" class="nav-link active">📈 Отчёты</a>
+            <a href="/reconciliation-acts" class="nav-link">📄 Акты сверки</a>
+            <a href="/journal" class="nav-link">📓 Журнал</a>
+            <a href="/management" class="nav-link">🏷️ Управленка</a>
+            <a href="/bank" class="nav-link">🏦 Банк</a>
+            <a href="/payroll" class="nav-link">💰 Зарплата</a>
+            <a href="/tax-reports" class="nav-link">📑 Налоги</a>
+            <a href="/import-excel" class="nav-link">📎 Импорт</a>
+            <a href="/month-end" class="nav-link">📅 Закрытие</a>
+        </div>
+    </div>
+</nav>
     <div class="container">
         <div class="header animate">
             <h1><i class="fas fa-chart-bar"></i> FinCore | Отчёты и аналитика</h1>

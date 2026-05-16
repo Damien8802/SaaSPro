@@ -8,6 +8,7 @@
     <title>FinCore | Финансовый учёт</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -102,60 +103,111 @@
             z-index: 1;
         }
         
-        /* Статистические карточки */
+        /* Навигация */
+        .navbar {
+            background: rgba(15, 25, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #a5b4fc, #c4b5fd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-decoration: none;
+        }
+        .navbar-brand i { background: none; color: #667eea; margin-right: 8px; }
+        .nav-link {
+            color: rgba(255,255,255,0.7);
+            transition: all 0.3s;
+            margin: 0 5px;
+            border-radius: 12px;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-size: 13px;
+            display: inline-block;
+        }
+        .nav-link:hover, .nav-link.active { color: #fff; background: rgba(102,126,234,0.2); }
+        .nav-link i { margin-right: 8px; }
+        
+        /* Карточки статистики (как на reports) */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
         .stat-card {
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 24px;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(102,126,234,0.5);
-            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.3);
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
-        }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 20px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .stat-card:hover {
+            background: rgba(102,126,234,0.1);
+            border-color: #667eea;
+            transform: translateY(-4px);
+        }
+
+        .stat-card-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-card .stat-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(102,126,234,0.15);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            margin: 0 auto 20px auto;
+            font-size: 26px;
+            margin: 0;
         }
-        
-        .stat-number {
-            font-size: 32px;
-            font-weight: 800;
+
+        .stat-info h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
             background: linear-gradient(135deg, #fff, #a5b4fc);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
-        
-        .text-muted {
-            color: rgba(255,255,255,0.6) !important;
-            font-size: 14px;
-            margin-top: 8px;
+
+        .stat-info p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin: 4px 0 0 0;
+        }
+
+        .stat-card .bi-chevron-right {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.3);
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .bi-chevron-right {
+            color: #667eea;
+            transform: translateY(-50%) translateX(4px);
         }
         
         /* Карточка с платежами */
@@ -246,93 +298,132 @@
         /* Адаптивность */
         @media (max-width: 768px) {
             .header h1 { font-size: 1.8rem; }
-            .stat-number { font-size: 24px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 15px; }
             .stat-card { padding: 16px; }
-            .stat-icon { width: 45px; height: 45px; font-size: 20px; }
+            .stat-card .stat-icon { width: 45px; height: 45px; font-size: 20px; }
+            .stat-info h3 { font-size: 20px; }
+        }
+        @media (max-width: 480px) {
+            .stats-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1><i class="fas fa-chart-line"></i> FinCore</h1>
-            <p class="mb-0">Управление финансами и отчётами в реальном времени</p>
+
+<nav class="navbar">
+    <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <a class="navbar-brand" href="/"><i class="bi bi-rocket-takeoff-fill"></i> SaaSPro</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/dashboard-improved" class="nav-link"><i class="bi bi-speedometer2"></i> Главная</a>
+            <a href="/finance" class="nav-link active"><i class="bi bi-calculator"></i> Финансы</a>
+            <a href="/reports" class="nav-link"><i class="bi bi-graph-up"></i> Отчёты</a>
+            <a href="/reconciliation-acts" class="nav-link"><i class="bi bi-file-text"></i> Акты сверки</a>
+            <a href="/journal" class="nav-link"><i class="bi bi-journal"></i> Журнал</a>
+            <a href="/management" class="nav-link"><i class="bi bi-tags"></i> Управленка</a>
+            <a href="/bank" class="nav-link"><i class="bi bi-bank"></i> Банк</a>
+            <a href="/payroll" class="nav-link"><i class="bi bi-calculator-fill"></i> Зарплата</a>
+            <a href="/tax-reports" class="nav-link"><i class="bi bi-file-earmark-spreadsheet"></i> Налоги</a>
+            <a href="/import-excel" class="nav-link"><i class="bi bi-file-excel"></i> Импорт</a>
+            <a href="/month-end" class="nav-link"><i class="bi bi-calendar-check"></i> Закрытие</a>
         </div>
-        
-        <div class="row mb-4">
-            <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
-                    <div class="stat-number" id="totalIncome">0 ₽</div>
-                    <div class="text-muted">Доход</div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-chart-line"></i> FinCore</h1>
+        <p class="mb-0">Управление финансами и отчётами в реальном времени</p>
+    </div>
+    
+    <!-- Карточки статистики -->
+    <div class="stats-row">
+        <div class="stat-card" onclick="refreshFinanceData()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalIncome">0 ₽</h3>
+                    <p>Доход</p>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
-                    <div class="stat-number" id="totalExpenses">0 ₽</div>
-                    <div class="text-muted">Расходы</div>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-chart-simple"></i></div>
-                    <div class="stat-number" id="totalProfit">0 ₽</div>
-                    <div class="text-muted">Прибыль</div>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
-                    <div class="stat-number" id="totalPayments">0</div>
-                    <div class="text-muted">Платежей</div>
-                </div>
-            </div>
+            <i class="bi bi-chevron-right"></i>
         </div>
-        
-        <div class="card">
-            <h3><i class="fas fa-clock"></i> Последние платежи</h3>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Сумма</th>
-                            <th>Статус</th>
-                            <th>Дата</th>
-                            <th>Тариф</th>
-                        </tr>
-                    </thead>
-                    <tbody id="paymentsTable">
-                        <tr>
-                            <td colspan="5" class="text-center">
-                                <div class="skeleton-text" style="width: 200px; margin: 0 auto; padding: 10px;">Загрузка...</div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="stat-card" onclick="refreshFinanceData()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalExpenses">0 ₽</h3>
+                    <p>Расходы</p>
+                </div>
             </div>
+            <i class="bi bi-chevron-right"></i>
+        </div>
+        <div class="stat-card" onclick="refreshFinanceData()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="fas fa-chart-simple"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalProfit">0 ₽</h3>
+                    <p>Прибыль</p>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right"></i>
+        </div>
+        <div class="stat-card" onclick="refreshFinanceData()">
+            <div class="stat-card-left">
+                <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalPayments">0</h3>
+                    <p>Платежей</p>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right"></i>
         </div>
     </div>
     
-   <script>
+    <div class="card">
+        <h3><i class="fas fa-clock"></i> Последние платежи</h3>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Сумма</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                        <th>Тариф</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentsTable">
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <div class="skeleton-text" style="width: 200px; margin: 0 auto; padding: 10px;">Загрузка...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
 // Загрузка статистики платежей
-fetch('/api/admin/payment-stats')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        var totalIncome = d.total_amount || 0;
-        var paymentsCount = d.payments_count || 0;
-        
-        document.getElementById('totalIncome').innerHTML = totalIncome.toLocaleString() + ' ₽';
-        document.getElementById('totalPayments').innerHTML = paymentsCount;
-        document.getElementById('totalExpenses').innerHTML = '0 ₽';
-        document.getElementById('totalProfit').innerHTML = totalIncome.toLocaleString() + ' ₽';
-    })
-    .catch(function(e) {
-        console.error('Ошибка загрузки статистики:', e);
-        document.getElementById('totalIncome').innerHTML = '0 ₽';
-        document.getElementById('totalPayments').innerHTML = '0';
-    });
+function refreshFinanceData() {
+    fetch('/api/admin/payment-stats')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var totalIncome = d.total_amount || 0;
+            var paymentsCount = d.payments_count || 0;
+            
+            document.getElementById('totalIncome').innerHTML = totalIncome.toLocaleString() + ' ₽';
+            document.getElementById('totalPayments').innerHTML = paymentsCount;
+            document.getElementById('totalExpenses').innerHTML = '0 ₽';
+            document.getElementById('totalProfit').innerHTML = totalIncome.toLocaleString() + ' ₽';
+        })
+        .catch(function(e) {
+            console.error('Ошибка загрузки статистики:', e);
+            document.getElementById('totalIncome').innerHTML = '0 ₽';
+            document.getElementById('totalPayments').innerHTML = '0';
+        });
+}
 
 // Загрузка последних платежей
 function loadRecentPayments() {
@@ -361,15 +452,17 @@ function loadRecentPayments() {
                 }
                 tbody.innerHTML = html;
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Нет платежей</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Нет платежей</td><\/tr>';
             }
         })
         .catch(function(e) {
             console.error('Ошибка загрузки платежей:', e);
-            document.getElementById('paymentsTable').innerHTML = '<tr><td colspan="5" class="text-center">Ошибка загрузки данных</td></tr>';
+            document.getElementById('paymentsTable').innerHTML = '<tr><td colspan="5" class="text-center">Ошибка загрузки данных</td><\/tr>';
         });
 }
 
+// Вызов функций
+refreshFinanceData();
 loadRecentPayments();
 setInterval(loadRecentPayments, 30000);
 </script>

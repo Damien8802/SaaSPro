@@ -160,9 +160,69 @@
             }
             .stat-value { font-size: 24px; }
         }
+
+/* Стили для навигации */
+.navbar {
+    background: rgba(15, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, #a5b4fc, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-decoration: none;
+}
+.nav-link {
+    color: rgba(255,255,255,0.7);
+    transition: all 0.3s;
+    margin: 0 5px;
+    border-radius: 12px;
+    padding: 8px 16px;
+    text-decoration: none;
+    font-size: 13px;
+    display: inline-block;
+}
+.nav-link:hover {
+    color: #fff;
+    background: rgba(102,126,234,0.2);
+}
+.nav-link.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
+}
+.nav-link i, .nav-link .bi {
+    margin-right: 8px;
+}
     </style>
 </head>
 <body>
+
+<nav class="navbar">
+    <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <a class="navbar-brand" href="/">🚀 SaaSPro</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/dashboard-improved" class="nav-link">📊 Главная</a>
+            <a href="/finance" class="nav-link">📊 Финансы</a>
+            <a href="/reports" class="nav-link">📈 Отчёты</a>
+            <a href="/reconciliation-acts" class="nav-link">📄 Акты сверки</a>
+            <a href="/journal" class="nav-link active">📓 Журнал</a>
+            <a href="/management" class="nav-link">🏷️ Управленка</a>
+            <a href="/bank" class="nav-link">🏦 Банк</a>
+            <a href="/payroll" class="nav-link">💰 Зарплата</a>
+            <a href="/tax-reports" class="nav-link">📑 Налоги</a>
+            <a href="/import-excel" class="nav-link">📎 Импорт</a>
+            <a href="/month-end" class="nav-link">📅 Закрытие</a>
+        </div>
+    </div>
+</nav>
 
 <div class="hero-section">
     <div class="container" style="max-width: 1600px; margin: 0 auto; padding: 0 20px;">
