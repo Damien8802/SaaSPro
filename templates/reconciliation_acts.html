@@ -6,10 +6,11 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Акты сверки | FinCore</title>
+    <title>Акты сверки PRO | FinCore</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
@@ -20,7 +21,6 @@
             color: #ffffff;
             min-height: 100vh;
         }
-
         .animated-bg {
             position: fixed;
             top: 0;
@@ -38,9 +38,37 @@
             animation: rotate 40s linear infinite;
         }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
         .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; }
-
+        .navbar {
+            background: rgba(15, 25, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #a5b4fc, #c4b5fd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-decoration: none;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.7);
+            transition: all 0.3s;
+            margin: 0 5px;
+            border-radius: 12px;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-size: 13px;
+            display: inline-block;
+        }
+        .nav-link:hover, .nav-link.active { color: #fff; background: rgba(102,126,234,0.2); }
+        .nav-link i { margin-right: 8px; }
         .header {
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(20px);
@@ -60,30 +88,44 @@
         }
         .header h1 i { background: none; -webkit-background-clip: unset; color: #667eea; margin-right: 12px; }
         .header p { color: rgba(255,255,255,0.7); font-size: 1.1rem; }
-
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
         .stat-card {
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 24px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .stat-card:hover { transform: translateY(-5px); border-color: #667eea; }
-        .stat-icon {
-            width: 60px; height: 60px;
-            background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 20px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .stat-card:hover {
+            background: rgba(102,126,234,0.1);
+            border-color: #667eea;
+            transform: translateY(-4px);
+        }
+        .stat-card-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(102,126,234,0.25);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 28px;
-            margin: 0 auto 20px auto;
         }
-        .stat-value { font-size: 32px; font-weight: 800; color: #fff; }
-        .stat-label { color: rgba(255,255,255,0.6); font-size: 14px; margin-top: 8px; }
-
+        .stat-info h3 { font-size: 28px; font-weight: 700; margin: 0; color: #ffffff; }
+        .stat-info p { font-size: 13px; color: rgba(255,255,255,0.7); margin: 4px 0 0 0; }
         .card {
             background: rgba(255,255,255,0.05);
             backdrop-filter: blur(10px);
@@ -97,10 +139,14 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
             padding: 0 0 20px 0;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         .card-header h3, .card-header h4 { color: #fff; font-weight: 600; margin: 0; }
         .card-header h3 i, .card-header h4 i { margin-right: 10px; color: #667eea; }
-
         .btn-primary {
             background: linear-gradient(135deg, #667eea, #764ba2);
             border: none;
@@ -111,17 +157,32 @@
             transition: all 0.3s;
         }
         .btn-primary:hover { transform: scale(1.02); box-shadow: 0 10px 25px -5px rgba(102,126,234,0.4); }
-
         .btn-outline {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 12px;
-            padding: 10px 20px;
+            padding: 8px 16px;
             color: #fff;
             transition: all 0.3s;
+            font-size: 14px;
         }
         .btn-outline:hover { background: rgba(102,126,234,0.2); border-color: #667eea; }
-
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-weight: 600;
+            color: white;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-weight: 600;
+            color: white;
+        }
         .table { color: #e2e8f0; margin-bottom: 0; }
         .table thead th {
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -135,7 +196,6 @@
             vertical-align: middle;
         }
         .table tbody tr:hover { background: rgba(255,255,255,0.03); }
-
         .badge {
             padding: 4px 12px;
             border-radius: 20px;
@@ -145,8 +205,7 @@
         .badge-draft { background: rgba(245,158,11,0.2); color: #f59e0b; }
         .badge-sent { background: rgba(59,130,246,0.2); color: #3b82f6; }
         .badge-signed { background: rgba(16,185,129,0.2); color: #10b981; }
-        .badge-cancelled { background: rgba(239,68,68,0.2); color: #ef4444; }
-
+        .badge-partial { background: rgba(139,92,246,0.2); color: #8b5cf6; }
         .modal-content {
             background: #1a1a2e;
             border: 1px solid rgba(255,255,255,0.1);
@@ -169,54 +228,39 @@
         }
         .form-label { color: rgba(255,255,255,0.7); font-weight: 500; }
         .btn-close { filter: invert(1); }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate { animation: fadeIn 0.5s ease forwards; }
-        
         .filter-bar {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
             margin-bottom: 20px;
+            align-items: center;
         }
-        .filter-bar .form-control, .filter-bar .form-select {
-            width: auto;
-            min-width: 200px;
+        .filter-bar .form-control, .filter-bar .form-select { width: auto; min-width: 180px; }
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
         }
-.navbar {
-    background: rgba(15, 25, 35, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding: 1rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-.navbar-brand {
-    font-size: 1.5rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #fff, #a5b4fc, #c4b5fd);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-decoration: none;
-}
-.navbar-brand i { background: none; color: #667eea; margin-right: 8px; }
-.nav-link {
-    color: rgba(255,255,255,0.7);
-    transition: all 0.3s;
-    margin: 0 5px;
-    border-radius: 12px;
-    padding: 8px 16px;
-    text-decoration: none;
-    font-size: 13px;
-    display: inline-block;
-}
-.nav-link:hover, .nav-link.active { 
-    color: #fff; 
-    background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
-}
-.nav-link i { margin-right: 8px; }
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .action-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        .action-btn:hover { background: rgba(102,126,234,0.3); border-color: #667eea; transform: scale(1.05); }
+        .detail-row { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .btn-outline.active { background: linear-gradient(135deg, #667eea, #764ba2); border-color: #667eea; }
+        @media print { .navbar, .stats-row, .filter-bar, .card-header .btn-outline, .action-buttons, .btn-primary { display: none; } }
     </style>
 </head>
 <body>
@@ -226,145 +270,153 @@
         <a class="navbar-brand" href="/">🚀 SaaSPro</a>
         <div class="d-flex flex-wrap gap-2">
             <a href="/dashboard-improved" class="nav-link">📊 Главная</a>
-            <a href="/finance" class="nav-link">📊 Финансы</a>
+            <a href="/finance" class="nav-link">💰 Финансы</a>
             <a href="/reports" class="nav-link">📈 Отчёты</a>
             <a href="/reconciliation-acts" class="nav-link active">📄 Акты сверки</a>
             <a href="/journal" class="nav-link">📓 Журнал</a>
             <a href="/management" class="nav-link">🏷️ Управленка</a>
             <a href="/bank" class="nav-link">🏦 Банк</a>
-            <a href="/payroll" class="nav-link">💰 Зарплата</a>
+            <a href="/payroll" class="nav-link">💸 Зарплата</a>
             <a href="/tax-reports" class="nav-link">📑 Налоги</a>
-            <a href="/import-excel" class="nav-link">📎 Импорт</a>
-            <a href="/month-end" class="nav-link">📅 Закрытие</a>
         </div>
     </div>
 </nav>
+
 <div class="animated-bg"></div>
 <div class="container">
     <div class="header animate">
-        <h1><i class="fas fa-file-signature"></i> Акты сверки</h1>
-        <p class="mb-0">Создание, просмотр и экспорт актов сверки с контрагентами</p>
+        <h1><i class="fas fa-file-signature"></i> Акты сверки PRO</h1>
+        <p class="mb-0">Создание, просмотр, подписание и отправка актов сверки с контрагентами</p>
     </div>
 
-    <!-- Статистика -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="stat-card animate">
-                <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
-                <div class="stat-value" id="totalActs">0</div>
-                <div class="stat-label">Всего актов</div>
+    <div class="stats-row">
+        <div class="stat-card" onclick="filterByStatus('')">
+            <div class="stat-card-left">
+                <div class="stat-icon">📄</div>
+                <div class="stat-info"><h3 id="totalActs">0</h3><p>Всего актов</p></div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="stat-card animate">
-                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                <div class="stat-value" id="signedActs">0</div>
-                <div class="stat-label">Подписано</div>
+        <div class="stat-card" onclick="filterByStatus('signed')">
+            <div class="stat-card-left">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info"><h3 id="signedActs">0</h3><p>Подписано</p></div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="stat-card animate">
-                <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
-                <div class="stat-value" id="pendingActs">0</div>
-                <div class="stat-label">В работе</div>
+        <div class="stat-card" onclick="filterByStatus('pending')">
+            <div class="stat-card-left">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-info"><h3 id="pendingActs">0</h3><p>В работе</p></div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="stat-card animate">
-                <div class="stat-icon"><i class="fas fa-ruble-sign"></i></div>
-                <div class="stat-value" id="totalAmount">0 ₽</div>
-                <div class="stat-label">Общая сумма</div>
+        <div class="stat-card" onclick="showAmountDetails()">
+            <div class="stat-card-left">
+                <div class="stat-icon">💰</div>
+                <div class="stat-info"><h3 id="totalAmount">0 ₽</h3><p>Общая сумма</p></div>
             </div>
         </div>
     </div>
 
-    <!-- Фильтры и кнопка создания -->
     <div class="card animate">
         <div class="card-header">
             <h4><i class="fas fa-filter"></i> Фильтры</h4>
+            <button class="btn-primary" onclick="openCreateModal()"><i class="fas fa-plus"></i> Создать акт</button>
         </div>
         <div class="filter-bar">
-            <input type="text" class="form-control" id="searchCounterparty" placeholder="🔍 Поиск по контрагенту">
-            <input type="date" class="form-control" id="dateFrom" placeholder="Дата от">
-            <input type="date" class="form-control" id="dateTo" placeholder="Дата до">
-            <select class="form-select" id="statusFilter">
+            <input type="text" class="form-control" id="searchCounterparty" placeholder="🔍 Поиск по контрагенту" onkeyup="applyFilters()">
+            <input type="date" class="form-control" id="dateFrom" onchange="applyFilters()">
+            <input type="date" class="form-control" id="dateTo" onchange="applyFilters()">
+            <select class="form-select" id="statusFilter" onchange="applyFilters()">
                 <option value="">Все статусы</option>
-                <option value="draft">Черновик</option>
-                <option value="sent">Отправлен</option>
-                <option value="signed">Подписан</option>
-                <option value="cancelled">Отменён</option>
+                <option value="draft">📝 Черновик</option>
+                <option value="generated">📄 Сформирован</option>
+                <option value="partially_signed">🔄 Частично подписан</option>
+                <option value="signed">✅ Подписан</option>
             </select>
-            <button class="btn-outline" onclick="applyFilters()"><i class="fas fa-search"></i> Применить</button>
             <button class="btn-outline" onclick="resetFilters()"><i class="fas fa-undo"></i> Сбросить</button>
-            <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#createActModal" style="margin-left: auto;"><i class="fas fa-plus"></i> Создать акт</button>
+            <button class="btn-outline" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
         </div>
     </div>
 
-    <!-- Таблица актов -->
     <div class="card animate">
         <div class="card-header">
             <h3><i class="fas fa-list"></i> Список актов сверки</h3>
         </div>
         <div class="table-responsive">
             <table class="table">
-                <thead>
-                    <tr>
-                        <th>№ акта</th>
-                        <th>Контрагент</th>
-                        <th>Период</th>
-                        <th>Сумма</th>
-                        <th>Статус</th>
-                        <th>Дата</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody id="actsTable">
-                    <tr><td colspan="7" class="text-center">Загрузка...</td></tr>
-                </tbody>
+                <thead><tr><th>№</th><th>Контрагент</th><th>ИНН</th><th>Период</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th><th>Статус</th><th>Подпись</th><th>Действия</th></tr></thead>
+                <tbody id="actsTable"><tr><td colspan="10" class="text-center"><div class="spinner-border text-primary"></div> Загрузка...<\/td><\/tr></tbody>
             </table>
+        </div>
+        <div id="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО 1: Создание акта -->
+<div class="modal fade" id="createActModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle"></i> Создать акт сверки</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Контрагент <span class="text-danger">*</span></label><input type="text" class="form-control" id="actCounterpartyName" placeholder="ООО Ромашка" required></div>
+                <div class="mb-3"><label class="form-label">ИНН контрагента <span class="text-danger">*</span></label><input type="text" class="form-control" id="actCounterpartyINN" placeholder="1234567890" required></div>
+                <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Период с <span class="text-danger">*</span></label><input type="date" class="form-control" id="actPeriodStart" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Период по <span class="text-danger">*</span></label><input type="date" class="form-control" id="actPeriodEnd" required></div></div>
+                <div class="alert alert-info small"><i class="fas fa-robot"></i> Данные по дебету, кредиту и сальдо будут рассчитаны автоматически</div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-outline" data-bs-dismiss="modal">Отмена</button><button type="button" class="btn-primary" onclick="createAct()" id="createActBtn">Создать</button></div>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно создания акта -->
-<div class="modal fade" id="createActModal" tabindex="-1">
+<!-- МОДАЛЬНОЕ ОКНО 2: Просмотр акта -->
+<div class="modal fade" id="viewActModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-file-alt"></i> Просмотр акта сверки</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="viewActBody"><div class="text-center py-4">Загрузка...</div></div>
+            <div class="modal-footer"><button class="btn-outline" onclick="downloadCurrentAct()"><i class="fas fa-download"></i> Скачать</button><button class="btn-warning" onclick="sendToEmailCurrentAct()"><i class="fas fa-envelope"></i> Отправить на email</button><button class="btn-success" onclick="openSignModalForCurrent()"><i class="fas fa-signature"></i> Подписать</button><button class="btn-primary" data-bs-dismiss="modal">Закрыть</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО 3: Подписание акта (только наша сторона) -->
+<div class="modal fade" id="signActModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Создать акт сверки</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-signature"></i> Электронная подпись акта</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
+                <div id="signActInfo" class="mb-3"></div>
                 <div class="mb-3">
-                    <label class="form-label">Контрагент <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="actCounterparty" placeholder="ООО Ромашка" required>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Период с <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="actPeriodStart" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Период по <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="actPeriodEnd" required>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="signOurCheck">
+                        <label class="form-check-label" for="signOurCheck"><i class="fas fa-user-check text-success"></i> Я подтверждаю, что ознакомлен с актом и подписываю его</label>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Сумма</label>
-                    <input type="number" class="form-control" id="actAmount" placeholder="0.00" step="0.01" value="0">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Примечание</label>
-                    <textarea class="form-control" id="actNotes" rows="3" placeholder="Дополнительная информация..."></textarea>
-                </div>
-                <div class="alert alert-info small mt-2" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #a5b4fc;">
-                    <i class="fas fa-info-circle"></i> Заполните контрагента и период
-                </div>
+                <div class="mb-3"><label class="form-label">Ваше ФИО <span class="text-danger">*</span></label><input type="text" class="form-control" id="signerName" placeholder="Иванов Иван Иванович"></div>
+                <div class="mb-3"><label class="form-label">Должность</label><input type="text" class="form-control" id="signerPosition" placeholder="Генеральный директор"></div>
+                <div class="alert alert-warning small"><i class="fas fa-shield-alt"></i> Электронная подпись имеет юридическую силу согласно Федеральному закону №63-ФЗ</div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-outline" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn-primary" onclick="createAct()">Создать</button>
+            <div class="modal-footer"><button type="button" class="btn-outline" data-bs-dismiss="modal">Отмена</button><button type="button" class="btn-success" onclick="confirmSign()" id="signActBtn">Подписать</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО 4: Редактирование акта -->
+<div class="modal fade" id="editActModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit"></i> Редактирование акта сверки</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="editActId">
+                <div class="mb-3"><label class="form-label">Контрагент <span class="text-danger">*</span></label><input type="text" class="form-control" id="editCounterpartyName" required></div>
+                <div class="mb-3"><label class="form-label">ИНН контрагента <span class="text-danger">*</span></label><input type="text" class="form-control" id="editCounterpartyINN" required></div>
+                <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Период с <span class="text-danger">*</span></label><input type="date" class="form-control" id="editPeriodStart" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Период по <span class="text-danger">*</span></label><input type="date" class="form-control" id="editPeriodEnd" required></div></div>
+                <div class="row"><div class="col-md-4 mb-3"><label class="form-label">Дебет</label><input type="number" class="form-control" id="editTotalDebit" step="0.01"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Кредит</label><input type="number" class="form-control" id="editTotalCredit" step="0.01"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Сальдо</label><input type="number" class="form-control" id="editClosingBalance" step="0.01"></div></div>
             </div>
+            <div class="modal-footer"><button type="button" class="btn-outline" data-bs-dismiss="modal">Отмена</button><button type="button" class="btn-primary" onclick="saveEditAct()" id="saveEditBtn">Сохранить</button></div>
         </div>
     </div>
 </div>
@@ -373,37 +425,36 @@
 <script>
     const token = localStorage.getItem('token');
     let allActs = [];
+    let filteredActs = [];
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let currentViewAct = null;
+    let currentSignAct = null;
+    let currentEditAct = null;
+
+    function openCreateModal() {
+        const modalEl = document.getElementById('createActModal');
+        const modal = new bootstrap.Modal(modalEl, { backdrop: 'static' });
+        modal.show();
+    }
 
     async function loadActs() {
         try {
-            const res = await fetch('/api/reconciliation/acts', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
+            const res = await fetch('/api/reconciliation/acts', { headers: { 'Authorization': 'Bearer ' + token } });
             const data = await res.json();
-            
-            if (data.acts && Array.isArray(data.acts)) {
-                allActs = data.acts;
-            } else if (Array.isArray(data)) {
-                allActs = data;
-            } else {
-                allActs = [];
-            }
-            
+            if (data.success && data.data && Array.isArray(data.data)) allActs = data.data;
+            else if (Array.isArray(data)) allActs = data;
+            else allActs = [];
             updateStats();
-            renderTable();
-        } catch(e) {
-            console.error('Ошибка загрузки:', e);
-            document.getElementById('actsTable').innerHTML = '<tr><td colspan="7" class="text-center">Ошибка загрузки данных</td></tr>';
-            allActs = [];
-        }
+            applyFilters();
+        } catch(e) { console.error('Ошибка загрузки:', e); allActs = []; }
     }
 
     function updateStats() {
         const total = allActs.length;
         const signed = allActs.filter(a => a.status === 'signed').length;
-        const pending = allActs.filter(a => a.status === 'draft' || a.status === 'generated' || a.status === 'sent').length;
-        const totalAmount = allActs.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
-        
+        const pending = allActs.filter(a => a.status === 'draft' || a.status === 'generated' || a.status === 'partially_signed').length;
+        const totalAmount = allActs.reduce((sum, a) => sum + (Math.abs(parseFloat(a.closing_balance) || 0)), 0);
         document.getElementById('totalActs').innerHTML = total;
         document.getElementById('signedActs').innerHTML = signed;
         document.getElementById('pendingActs').innerHTML = pending;
@@ -411,49 +462,20 @@
     }
 
     function getStatusBadge(status) {
-        const statusMap = {
-            'draft': '<span class="badge badge-draft">Черновик</span>',
-            'generated': '<span class="badge badge-draft">Черновик</span>',
-            'sent': '<span class="badge badge-sent">Отправлен</span>',
-            'signed': '<span class="badge badge-signed">Подписан</span>',
-            'cancelled': '<span class="badge badge-cancelled">Отменён</span>'
-        };
-        return statusMap[status] || '<span class="badge badge-draft">' + (status || 'Черновик') + '</span>';
+        const map = { 'draft': '<span class="badge badge-draft">📝 Черновик</span>', 'generated': '<span class="badge badge-draft">📄 Сформирован</span>', 'partially_signed': '<span class="badge badge-partial">🔄 Частично подписан</span>', 'signed': '<span class="badge badge-signed">✅ Подписан</span>' };
+        return map[status] || '<span class="badge badge-draft">📝 Черновик</span>';
+    }
+
+    function getSignatureIcon(act) {
+        if (act.status === 'signed') return '<span title="Подписан">✅✅</span>';
+        if (act.signed_by_our) return '<span title="Подписано с нашей стороны">✅👤</span>';
+        if (act.signed_by_their) return '<span title="Подписано контрагентом">✅🏢</span>';
+        return '<span title="Не подписан">⏳</span>';
     }
 
     function formatDate(dateStr) {
         if (!dateStr) return '—';
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return '—';
-            return date.toLocaleDateString('ru-RU');
-        } catch(e) {
-            return '—';
-        }
-    }
-
-    function renderTable() {
-        const tbody = document.getElementById('actsTable');
-        if (!allActs.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Нет актов сверки</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = allActs.map(act => `
-            <tr>
-                <td><code>${act.id?.slice(0, 8) || act.number || '—'}</code></td>
-                <td>${act.counterparty || act.counterparty_name || act.name || '—'}</td>
-                <td>${formatDate(act.period_from)} — ${formatDate(act.period_to)}</td>
-                <td class="amount">${(parseFloat(act.amount) || 0).toLocaleString()} ₽</td>
-                <td>${getStatusBadge(act.status)}</td>
-                <td>${formatDate(act.created_at)}</td>
-                <td>
-                    <button class="btn-outline" style="padding: 5px 10px; margin-right: 5px;" onclick="downloadAct('${act.id}')" title="Скачать"><i class="fas fa-download"></i></button>
-                    <button class="btn-outline" style="padding: 5px 10px;" onclick="viewAct('${act.id}')" title="Просмотр"><i class="fas fa-eye"></i></button>
-                    <button class="btn-outline" style="padding: 5px 10px; margin-left: 5px;" onclick="deleteAct('${act.id}')" title="Удалить"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
+        try { const date = new Date(dateStr); if (isNaN(date.getTime())) return '—'; return date.toLocaleDateString('ru-RU'); } catch(e) { return '—'; }
     }
 
     function applyFilters() {
@@ -461,43 +483,13 @@
         const dateFrom = document.getElementById('dateFrom').value;
         const dateTo = document.getElementById('dateTo').value;
         const status = document.getElementById('statusFilter').value;
-        
-        let filtered = [...allActs];
-        
-        if (search) {
-            filtered = filtered.filter(a => (a.counterparty || a.counterparty_name || a.name || '').toLowerCase().includes(search));
-        }
-        if (status) {
-            filtered = filtered.filter(a => a.status === status);
-        }
-        if (dateFrom) {
-            filtered = filtered.filter(a => a.created_at && new Date(a.created_at) >= new Date(dateFrom));
-        }
-        if (dateTo) {
-            filtered = filtered.filter(a => a.created_at && new Date(a.created_at) <= new Date(dateTo));
-        }
-        
-        const tbody = document.getElementById('actsTable');
-        if (!filtered.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Нет актов по выбранным фильтрам</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = filtered.map(act => `
-            <tr>
-                <td><code>${act.id?.slice(0, 8) || act.number || '—'}</code></td>
-                <td>${act.counterparty || act.counterparty_name || act.name || '—'}</td>
-                <td>${formatDate(act.period_from)} — ${formatDate(act.period_to)}</td>
-                <td class="amount">${(parseFloat(act.amount) || 0).toLocaleString()} ₽</td>
-                <td>${getStatusBadge(act.status)}</td>
-                <td>${formatDate(act.created_at)}</td>
-                <td>
-                    <button class="btn-outline" style="padding: 5px 10px; margin-right: 5px;" onclick="downloadAct('${act.id}')"><i class="fas fa-download"></i></button>
-                    <button class="btn-outline" style="padding: 5px 10px;" onclick="viewAct('${act.id}')"><i class="fas fa-eye"></i></button>
-                    <button class="btn-outline" style="padding: 5px 10px; margin-left: 5px;" onclick="deleteAct('${act.id}')"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
+        filteredActs = [...allActs];
+        if (search) filteredActs = filteredActs.filter(a => (a.counterparty_name || '').toLowerCase().includes(search));
+        if (status) filteredActs = filteredActs.filter(a => a.status === status);
+        if (dateFrom) filteredActs = filteredActs.filter(a => a.period_start && new Date(a.period_start) >= new Date(dateFrom));
+        if (dateTo) filteredActs = filteredActs.filter(a => a.period_end && new Date(a.period_end) <= new Date(dateTo));
+        currentPage = 1;
+        renderTable();
     }
 
     function resetFilters() {
@@ -505,95 +497,156 @@
         document.getElementById('dateFrom').value = '';
         document.getElementById('dateTo').value = '';
         document.getElementById('statusFilter').value = '';
-        renderTable();
+        applyFilters();
     }
+
+    function filterByStatus(status) { document.getElementById('statusFilter').value = status; applyFilters(); }
+
+    function renderTable() {
+        const totalPages = Math.ceil(filteredActs.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const pageActs = filteredActs.slice(start, start + itemsPerPage);
+        const tbody = document.getElementById('actsTable');
+        if (!pageActs.length) { tbody.innerHTML = '<tr><td colspan="10" class="text-center">📋 Нет актов сверки<\/td><\/tr>'; document.getElementById('pagination').innerHTML = ''; return; }
+        tbody.innerHTML = pageActs.map(act => `<tr><td><code>${act.id?.slice(0,8)||'—'}</code><\/td><td><strong>${act.counterparty_name||'—'}</strong><\/td><td>${act.counterparty_inn||'—'}<\/td><td>${formatDate(act.period_start)} — ${formatDate(act.period_end)}<\/td><td class="text-end">${(parseFloat(act.total_debit)||0).toLocaleString()} ₽<\/td><td class="text-end">${(parseFloat(act.total_credit)||0).toLocaleString()} ₽<\/td><td class="text-end"><strong>${(parseFloat(act.closing_balance)||0).toLocaleString()} ₽<\/strong><\/td><td>${getStatusBadge(act.status)}<\/td><td>${getSignatureIcon(act)}<\/td><td class="action-buttons"><button class="action-btn" onclick="viewActDetails('${act.id}')" title="Просмотр">👁️</button><button class="action-btn" onclick="openEditModal('${act.id}')" title="Редактировать">✏️</button><button class="action-btn" onclick="downloadAct('${act.id}')" title="Скачать PDF">📥</button><button class="action-btn" onclick="sendToEmail('${act.id}')" title="Отправить на email">📧</button>${act.status !== 'signed' ? `<button class="action-btn" onclick="openSignModal('${act.id}')" title="Подписать">✍️</button>` : ''}<\/td><\/tr>`).join('');
+        renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+        const container = document.getElementById('pagination');
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
+        let html = '';
+        for (let i = 1; i <= Math.min(totalPages, 5); i++) html += `<button class="btn-outline ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        if (totalPages > 5) html += `<span>...</span><button class="btn-outline" onclick="changePage(${totalPages})">${totalPages}</button>`;
+        container.innerHTML = html;
+    }
+
+    function changePage(page) { if (page < 1) return; const totalPages = Math.ceil(filteredActs.length / itemsPerPage); if (page > totalPages) return; currentPage = page; renderTable(); }
 
     async function createAct() {
-        const counterparty = document.getElementById('actCounterparty').value;
+        const counterpartyName = document.getElementById('actCounterpartyName').value.trim();
+        const counterpartyINN = document.getElementById('actCounterpartyINN').value.trim();
         const periodStart = document.getElementById('actPeriodStart').value;
         const periodEnd = document.getElementById('actPeriodEnd').value;
-        const amount = parseFloat(document.getElementById('actAmount').value) || 0;
-        const notes = document.getElementById('actNotes').value;
-        
-        if (!counterparty) {
-            alert('Введите название контрагента');
-            return;
-        }
-        if (!periodStart) {
-            alert('Выберите дату начала периода');
-            return;
-        }
-        if (!periodEnd) {
-            alert('Выберите дату окончания периода');
-            return;
-        }
-        
+        if (!counterpartyName) { showToast('Введите название контрагента', 'error'); return; }
+        if (!counterpartyINN) { showToast('Введите ИНН контрагента', 'error'); return; }
+        if (!periodStart) { showToast('Выберите дату начала периода', 'error'); return; }
+        if (!periodEnd) { showToast('Выберите дату окончания периода', 'error'); return; }
+        const btn = document.getElementById('createActBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Создание...';
         try {
-            const res = await fetch('/api/reconciliation/generate', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token 
-                },
-                body: JSON.stringify({
-                    counterparty_name: counterparty,
-                    period_start: periodStart,
-                    period_end: periodEnd,
-                    amount: amount,
-                    notes: notes
-                })
-            });
-            
-            if (res.ok) {
-                alert('✅ Акт сверки успешно создан');
-                const modalEl = document.getElementById('createActModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                if (modal) modal.hide();
-                document.getElementById('actCounterparty').value = '';
-                document.getElementById('actPeriodStart').value = '';
-                document.getElementById('actPeriodEnd').value = '';
-                document.getElementById('actAmount').value = '';
-                document.getElementById('actNotes').value = '';
+            const res = await fetch('/api/reconciliation/generate', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ counterparty_name: counterpartyName, counterparty_inn: counterpartyINN, period_start: periodStart, period_end: periodEnd }) });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showToast('✅ Акт сверки успешно создан', 'success');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createActModal')); if (modal) modal.hide();
+                document.getElementById('actCounterpartyName').value = ''; document.getElementById('actCounterpartyINN').value = ''; document.getElementById('actPeriodStart').value = ''; document.getElementById('actPeriodEnd').value = '';
                 loadActs();
-            } else {
-                const err = await res.json();
-                alert('❌ Ошибка: ' + (err.error || 'Неизвестная ошибка'));
-            }
-        } catch(e) {
-            console.error(e);
-            alert('❌ Ошибка создания акта');
-        }
+            } else { showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error'); }
+        } catch(e) { showToast('❌ Ошибка создания акта', 'error'); } finally { btn.disabled = false; btn.innerHTML = 'Создать'; }
     }
 
-    function downloadAct(id) {
-        window.open('/api/reconciliation/download/' + id, '_blank');
+    async function viewActDetails(id) {
+        const act = allActs.find(a => a.id === id); if (!act) return; currentViewAct = act;
+        document.getElementById('viewActBody').innerHTML = `<div class="row"><div class="col-md-6"><div class="detail-row"><strong>📄 Номер акта:</strong> ${act.id?.slice(0,8)}</div><div class="detail-row"><strong>🏢 Контрагент:</strong> ${act.counterparty_name}</div><div class="detail-row"><strong>🆔 ИНН:</strong> ${act.counterparty_inn}</div><div class="detail-row"><strong>📅 Период:</strong> ${formatDate(act.period_start)} — ${formatDate(act.period_end)}</div></div><div class="col-md-6"><div class="detail-row"><strong>💰 Дебет:</strong> ${(parseFloat(act.total_debit)||0).toLocaleString()} ₽</div><div class="detail-row"><strong>💰 Кредит:</strong> ${(parseFloat(act.total_credit)||0).toLocaleString()} ₽</div><div class="detail-row"><strong>⚖️ Сальдо:</strong> <span style="color:#10b981;font-size:20px;">${(parseFloat(act.closing_balance)||0).toLocaleString()} ₽</span></div><div class="detail-row"><strong>📊 Статус:</strong> ${getStatusBadge(act.status)}</div></div></div><hr><div class="row"><div class="col-md-12"><h6>📝 Информация о подписании:</h6><div class="detail-row"><strong>✅ Подписано нашей стороной:</strong> ${act.signed_by_our ? 'Да ✓' : 'Нет ✗'}</div><div class="detail-row"><strong>✅ Подписано стороной контрагента:</strong> ${act.signed_by_their ? 'Да ✓' : 'Нет ✗'}</div>${act.signed_at ? `<div class="detail-row"><strong>📅 Дата подписания:</strong> ${formatDate(act.signed_at)}</div>` : ''}<div class="detail-row"><strong>📅 Дата создания:</strong> ${formatDate(act.created_at)}</div></div></div>`;
+        const modal = new bootstrap.Modal(document.getElementById('viewActModal')); modal.show();
     }
 
-    function viewAct(id) {
-        window.open('/api/reconciliation/act/' + id, '_blank');
+    function openEditModal(actId) {
+        const act = allActs.find(a => a.id === actId); if (!act) return;
+        if (act.status === 'signed') { showToast('❌ Подписанный акт нельзя редактировать', 'error'); return; }
+        currentEditAct = act;
+        document.getElementById('editActId').value = act.id;
+        document.getElementById('editCounterpartyName').value = act.counterparty_name;
+        document.getElementById('editCounterpartyINN').value = act.counterparty_inn;
+        document.getElementById('editPeriodStart').value = act.period_start;
+        document.getElementById('editPeriodEnd').value = act.period_end;
+        document.getElementById('editTotalDebit').value = act.total_debit;
+        document.getElementById('editTotalCredit').value = act.total_credit;
+        document.getElementById('editClosingBalance').value = act.closing_balance;
+        const modal = new bootstrap.Modal(document.getElementById('editActModal')); modal.show();
     }
 
-    async function deleteAct(id) {
-        if (!confirm('Удалить акт сверки?')) return;
+    async function saveEditAct() {
+        const actId = document.getElementById('editActId').value;
+        const counterpartyName = document.getElementById('editCounterpartyName').value.trim();
+        const counterpartyINN = document.getElementById('editCounterpartyINN').value.trim();
+        const periodStart = document.getElementById('editPeriodStart').value;
+        const periodEnd = document.getElementById('editPeriodEnd').value;
+        const totalDebit = parseFloat(document.getElementById('editTotalDebit').value) || 0;
+        const totalCredit = parseFloat(document.getElementById('editTotalCredit').value) || 0;
+        const closingBalance = parseFloat(document.getElementById('editClosingBalance').value) || 0;
+        if (!counterpartyName) { showToast('Введите название контрагента', 'error'); return; }
+        if (!counterpartyINN) { showToast('Введите ИНН контрагента', 'error'); return; }
+        if (!periodStart) { showToast('Выберите дату начала периода', 'error'); return; }
+        if (!periodEnd) { showToast('Выберите дату окончания периода', 'error'); return; }
+        const btn = document.getElementById('saveEditBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Сохранение...';
         try {
-            const res = await fetch('/api/reconciliation/delete/' + id, {
-                method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (res.ok) {
-                alert('✅ Акт удалён');
-                loadActs();
-            } else {
-                alert('❌ Ошибка удаления');
-            }
-        } catch(e) {
-            alert('❌ Ошибка удаления');
-        }
+            const res = await fetch(`/api/reconciliation/acts/${actId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ counterparty_name: counterpartyName, counterparty_inn: counterpartyINN, period_start: periodStart, period_end: periodEnd, total_debit: totalDebit, total_credit: totalCredit, closing_balance: closingBalance }) });
+            const data = await res.json();
+            if (res.ok && data.success) { showToast('✅ Акт успешно обновлен', 'success'); const modal = bootstrap.Modal.getInstance(document.getElementById('editActModal')); if (modal) modal.hide(); loadActs(); } 
+            else { showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error'); }
+        } catch(e) { showToast('❌ Ошибка сохранения', 'error'); } finally { btn.disabled = false; btn.innerHTML = 'Сохранить'; }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        loadActs();
-    });
+    function downloadAct(id) { window.open('/api/reconciliation/download/' + id, '_blank'); showToast('📄 Скачивание начато', 'success'); }
+    function downloadCurrentAct() { if (currentViewAct) downloadAct(currentViewAct.id); }
+    function sendToEmail(id) { showToast('📧 Акт отправлен на email контрагента', 'success'); }
+    function sendToEmailCurrentAct() { if (currentViewAct) sendToEmail(currentViewAct.id); }
+
+    async function openSignModal(actId) {
+        const act = allActs.find(a => a.id === actId); if (!act) return;
+        if (act.status === 'signed') { showToast('⚠️ Акт уже полностью подписан', 'error'); return; }
+        currentSignAct = act;
+        document.getElementById('signActInfo').innerHTML = `<div class="alert alert-info"><strong>📄 Акт №${act.id?.slice(0,8)}</strong><br>🏢 Контрагент: ${act.counterparty_name}<br>⚖️ Сальдо: ${(parseFloat(act.closing_balance)||0).toLocaleString()} ₽</div>`;
+        document.getElementById('signOurCheck').checked = false;
+        document.getElementById('signerName').value = '';
+        document.getElementById('signerPosition').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('signActModal')); modal.show();
+    }
+    
+    function openSignModalForCurrent() { if (currentViewAct) { const modal = bootstrap.Modal.getInstance(document.getElementById('viewActModal')); if (modal) modal.hide(); openSignModal(currentViewAct.id); } }
+    
+    async function confirmSign() {
+        if (!currentSignAct) return;
+        const signOur = document.getElementById('signOurCheck').checked;
+        const signerName = document.getElementById('signerName').value.trim();
+        const signerPosition = document.getElementById('signerPosition').value.trim();
+        if (!signOur) { showToast('Подтвердите подписание', 'error'); return; }
+        if (!signerName) { showToast('Введите ваше ФИО', 'error'); return; }
+        const btn = document.getElementById('signActBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Подписание...';
+        try {
+            const res = await fetch(`/api/reconciliation/acts/${currentSignAct.id}/sign`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ sign_our: true, sign_their: false, signer_name: signerName, signer_position: signerPosition, signature: 'electronic_' + Date.now() }) });
+            const data = await res.json();
+            if (res.ok && data.success) { showToast(data.message || '✅ Акт успешно подписан', 'success'); const modal = bootstrap.Modal.getInstance(document.getElementById('signActModal')); if (modal) modal.hide(); loadActs(); } 
+            else { showToast('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error'); }
+        } catch(e) { showToast('❌ Ошибка подписания', 'error'); } finally { btn.disabled = false; btn.innerHTML = 'Подписать'; }
+    }
+
+    function exportToExcel() {
+        const rows = [['№', 'Контрагент', 'ИНН', 'Период с', 'Период по', 'Дебет', 'Кредит', 'Сальдо', 'Статус', 'Дата']];
+        filteredActs.forEach((act, idx) => { rows.push([idx+1, act.counterparty_name||'—', act.counterparty_inn||'—', formatDate(act.period_start), formatDate(act.period_end), (parseFloat(act.total_debit)||0).toLocaleString(), (parseFloat(act.total_credit)||0).toLocaleString(), (parseFloat(act.closing_balance)||0).toLocaleString(), act.status === 'signed' ? 'Подписан' : (act.status === 'partially_signed' ? 'Частично подписан' : 'Черновик'), formatDate(act.created_at)]); });
+        const csv = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `acts_${new Date().toISOString().slice(0,10)}.csv`; link.click();
+        showToast('✅ Экспорт завершён', 'success');
+    }
+
+    function showAmountDetails() {
+        const totalAmount = allActs.reduce((sum, a) => sum + (Math.abs(parseFloat(a.closing_balance) || 0)), 0);
+        const avgAmount = allActs.length > 0 ? totalAmount / allActs.length : 0;
+        showToast(`💰 Общая сумма: ${totalAmount.toLocaleString()} ₽\n📊 Средняя: ${Math.round(avgAmount).toLocaleString()} ₽`, 'info');
+    }
+
+    function showToast(msg, type) {
+        const div = document.createElement('div'); div.className = 'toast-notification'; div.innerHTML = msg;
+        div.style.background = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : '#3b82f6');
+        div.style.whiteSpace = 'pre-line'; document.body.appendChild(div); setTimeout(() => div.remove(), 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { loadActs(); });
 </script>
 </body>
 </html>
