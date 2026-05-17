@@ -32,6 +32,9 @@ func GenerateReconciliationAct(c *gin.Context) {
         CounterpartyINN  string `json:"counterparty_inn"`
         PeriodStart      string `json:"period_start"`
         PeriodEnd        string `json:"period_end"`
+        TotalDebit       float64 `json:"total_debit"`
+        TotalCredit      float64 `json:"total_credit"`
+        ClosingBalance   float64 `json:"closing_balance"`
     }
     
     if err := c.ShouldBindJSON(&req); err != nil {
@@ -43,8 +46,8 @@ func GenerateReconciliationAct(c *gin.Context) {
         return
     }
     
-    log.Printf("📝 Распарсенные данные: Name=%s, INN=%s, Start=%s, End=%s", 
-        req.CounterpartyName, req.CounterpartyINN, req.PeriodStart, req.PeriodEnd)
+    log.Printf("📝 Распарсенные данные: Name=%s, INN=%s, Start=%s, End=%s, Debit=%v, Credit=%v", 
+        req.CounterpartyName, req.CounterpartyINN, req.PeriodStart, req.PeriodEnd, req.TotalDebit, req.TotalCredit)
     
     if req.CounterpartyName == "" {
         c.JSON(http.StatusBadRequest, gin.H{"error": "counterparty_name обязателен"})
@@ -84,9 +87,9 @@ func GenerateReconciliationAct(c *gin.Context) {
     
     actID := uuid.New()
     
-    totalDebit := 0.0
-    totalCredit := 0.0
-    closingBalance := 0.0
+    totalDebit := req.TotalDebit
+    totalCredit := req.TotalCredit
+    closingBalance := req.ClosingBalance
     
     query := `
         INSERT INTO reconciliation_acts (
@@ -720,9 +723,33 @@ func DeleteReconciliationAct(c *gin.Context) {
     actID := c.Param("id")
     tenantID := middleware.GetTenantIDFromContext(c)
     
+    log.Printf("🗑️ Удаление акта: ID=%s", actID)
+    
+    // Сначала получаем статус акта
+    var status string
+    var counterpartyName string
+    err := database.Pool.QueryRow(c.Request.Context(), `
+        SELECT status, counterparty_name FROM reconciliation_acts 
+        WHERE id = $1 AND tenant_id = $2
+    `, actID, tenantID).Scan(&status, &counterpartyName)
+    
+    if err != nil {
+        log.Printf("❌ Акт не найден: %v", err)
+        c.JSON(http.StatusNotFound, gin.H{"error": "Акт не найден"})
+        return
+    }
+    
+    // Проверяем, можно ли удалить акт (только draft, generated, partially_signed)
+    if status == "signed" {
+        log.Printf("❌ Нельзя удалить подписанный акт: %s", actID)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Нельзя удалить подписанный акт"})
+        return
+    }
+    
+    // Удаляем акт
     result, err := database.Pool.Exec(c.Request.Context(), `
         DELETE FROM reconciliation_acts 
-        WHERE id = $1 AND tenant_id = $2 AND status IN ('draft', 'generated')
+        WHERE id = $1 AND tenant_id = $2
     `, actID, tenantID)
     
     if err != nil {
@@ -733,11 +760,14 @@ func DeleteReconciliationAct(c *gin.Context) {
     
     rowsAffected := result.RowsAffected()
     if rowsAffected == 0 {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Акт не найден или не может быть удален"})
+        c.JSON(http.StatusNotFound, gin.H{"error": "Акт не найден"})
         return
     }
     
-    log.Printf("✅ Акт %s удален", actID)
+    log.Printf("✅ Акт %s (%s) успешно удален", actID, counterpartyName)
     
-    c.JSON(http.StatusOK, gin.H{"success": true})
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "message": "Акт успешно удален",
+    })
 }
